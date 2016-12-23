@@ -25,7 +25,7 @@ dbash::user_confirm ">> Update dependencies?" "n"
 if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
     ${PYENV}/bin/pip install --upgrade pip
     ${PYENV}/bin/pip install --upgrade \
-             numpy scipy matplotlib python-gflags google-apputils
+             numpy scipy matplotlib joblib ipdb python-gflags google-apputils
 fi
 
 dbash::user_confirm ">> Install tensorflow gpu MAC?" "n"
@@ -48,3 +48,6 @@ if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
     export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0rc2-cp27-none-linux_x86_64.whl
     ${PYENV}/bin/pip install --ignore-installed --upgrade $TF_BINARY_URL
 fi
+
+dbash::pp "# We register our modules as develop modules."
+python setup.py develop
