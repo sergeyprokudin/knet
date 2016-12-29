@@ -50,14 +50,22 @@ def knet_layer(object_features, pairwise_features, n_objects, n_pair_features, n
     knet_ops['h_conv1'] = h_conv1
     knet_ops['h_conv1_relu'] = h_conv1_relu
 
-    W_conv2 = weight_variable([1, 1, hlayer_size, n_kernels])
-    b_conv2 = bias_variable([n_kernels])
-    h_conv2 =  conv2d(h_conv1_relu, W_conv2) + b_conv2
+    W_conv2 = weight_variable([1, 1, hlayer_size, hlayer_size])
+    b_conv2 = bias_variable([hlayer_size])
+    h_conv2 = conv2d(h_conv1_relu, W_conv2) + b_conv2
+    h_conv2_relu = tf.nn.relu(h_conv2)
     knet_ops['W_conv2'] = W_conv2
     knet_ops['h_conv2'] = h_conv2
+    knet_ops['h_conv2_relu'] = h_conv2_relu
 
-    h_conv2_t = tf.transpose(h_conv2)
-    kernels = tf.reshape(h_conv2_t,[n_kernels, n_objects, n_objects])
+    W_conv3 = weight_variable([1, 1, hlayer_size, n_kernels])
+    b_conv3 = bias_variable([n_kernels])
+    h_conv3 =  conv2d(h_conv2_relu, W_conv3) + b_conv3
+    knet_ops['W_conv3'] = W_conv3
+    knet_ops['h_conv3'] = h_conv3
+
+    h_conv3_t = tf.transpose(h_conv3)
+    kernels = tf.reshape(h_conv3_t,[n_kernels, n_objects, n_objects])
 
     knet_ops['kernels'] = kernels
 

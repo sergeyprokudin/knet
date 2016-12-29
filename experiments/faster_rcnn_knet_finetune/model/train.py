@@ -29,10 +29,10 @@ from tf_layers import knet, spatial
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string('log_dir', None, 'directory to save logs and trained models')
 gflags.DEFINE_integer('data_loader_num_threads', 5, 'Number of threads used during data loading and preprocessing')
-gflags.DEFINE_integer('n_kernels', 1, 'Number of kernels to used in knet layer')
+gflags.DEFINE_integer('n_kernels', 8, 'Number of kernels to used in knet layer')
 gflags.DEFINE_float('best_iou_thres', 0.5, 'Number of threads used during data loading and preprocessing')
 gflags.DEFINE_boolean('logging_to_stdout', True, 'Whether to write logs to stdout or to logfile')
-gflags.DEFINE_integer('n_epochs', 1000000, 'Number of training epochs')
+gflags.DEFINE_integer('n_epochs', 1000, 'Number of training epochs')
 
 FLAGS = gflags.FLAGS
 
@@ -110,8 +110,8 @@ def main(_):
 
     if (not os.path.exists(FLAGS.log_dir)):
         os.makedirs(FLAGS.log_dir)
-    #else :
-        #shutil.rmtree(FLAGS.log_dir)
+    else :
+        shutil.rmtree(FLAGS.log_dir)
     log_file=os.path.join(FLAGS.log_dir, 'training.log')
     set_logging(FLAGS.logging_to_stdout, log_file)
 
@@ -184,7 +184,7 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%100==0):
+                if (step_id%1000==0):
                     loss, loss_final, inference, iou_feature,   knet_ops = sess.run([loss_tf, loss_final_tf, inference_tf, iou_feature_tf, knet_ops_tf],
                                                                     feed_dict=feed_dict)
                     logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
@@ -196,7 +196,7 @@ def main(_):
                     num_gt = int(np.sum(frame_data[DT_LABELS]))
                     num_pos_inference = int(np.sum(inference>0))
                     logging.info("frame %d num_gt : %d , num_pos_inf : %d"%(fid, num_gt, num_pos_inference))
-                    import ipdb; ipdb.set_trace() #; ipdb.set_trace=False
+                    #import ipdb; ipdb.set_trace() #; ipdb.set_trace=False
                     saver.save(sess, model_file, global_step=step_id)
     return
 
