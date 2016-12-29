@@ -1,6 +1,7 @@
 """Collection of different general purpose layers
 """
 
+
 def prelu(data, name_or_scope=None):
     with tf.variable_scope(
             name_or_scope,

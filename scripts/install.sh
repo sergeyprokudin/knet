@@ -33,21 +33,21 @@ if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
     dbash::pp "Please install cuda 8.0 from nvidia!"
     dbash::pp "Please install cudnn 5.0 from nvidia!"
     dbash::pp "Notice, symbolic links for libcudnn.dylib and libcuda.dylib have to be added."
-    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/gpu/tensorflow-0.11.0rc0-py2-none-any.whl
+    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/gpu/tensorflow_gpu-0.12.0-py2-none-any.whl
     ${PYENV}/bin/pip install --ignore-installed --upgrade $TF_BINARY_URL
 fi
 
 dbash::user_confirm ">> Install tensorflow cpu MAC?" "n"
 if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
-    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0rc0-py2-none-any.whl
+    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.12.0-py2-none-any.whl
     ${PYENV}/bin/pip install --ignore-installed --upgrade $TF_BINARY_URL
 fi
 
 dbash::user_confirm ">> Install tensorflow gpu ubuntu?" "n"
 if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
-    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0rc2-cp27-none-linux_x86_64.whl
+    export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-0.12.0-cp27-none-linux_x86_64.whl
     ${PYENV}/bin/pip install --ignore-installed --upgrade $TF_BINARY_URL
 fi
 
 dbash::pp "# We register our modules as develop modules."
-python setup.py develop
+python "${PROJECT_DIR}/setup.py" develop
