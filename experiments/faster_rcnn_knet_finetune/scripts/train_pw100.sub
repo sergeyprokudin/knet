@@ -1,8 +1,8 @@
 executable = /bin/bash
-arguments = train.sh
-error = train.job.err
-output = train.job.out
-log = train.job.log
+arguments = train_pw100.sh
+error = train_pw100.job.err
+output = train_pw100.job.out
+log = train_pw100.job.log
 request_memory = 20000
 request_gpus = 1
 requirements=TARGET.CUDAGlobalMemoryMb>11000

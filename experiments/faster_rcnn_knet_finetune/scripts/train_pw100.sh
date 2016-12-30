@@ -17,4 +17,6 @@ set -x
 
 ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/train" \
-            --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/train/debug"
+            --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/train" \
+            --pos_weight=100 \
+            --start_from_scratch=True

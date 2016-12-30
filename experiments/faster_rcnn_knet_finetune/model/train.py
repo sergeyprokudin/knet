@@ -32,7 +32,10 @@ gflags.DEFINE_integer('data_loader_num_threads', 5, 'Number of threads used duri
 gflags.DEFINE_integer('n_kernels', 8, 'Number of kernels to used in knet layer')
 gflags.DEFINE_float('best_iou_thres', 0.5, 'Number of threads used during data loading and preprocessing')
 gflags.DEFINE_boolean('logging_to_stdout', True, 'Whether to write logs to stdout or to logfile')
-gflags.DEFINE_integer('n_epochs', 1000, 'Number of training epochs')
+gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
+gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
+gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
+gflags.DEFINE_boolean('start_from_scratch', True, 'Whether to load checkpoint (if it exists) or completely retrain the model')
 
 FLAGS = gflags.FLAGS
 
@@ -108,11 +111,17 @@ def bias_variable(shape):
 
 def main(_):
 
-    if (not os.path.exists(FLAGS.log_dir)):
-        os.makedirs(FLAGS.log_dir)
+    experiment_name = 'pw_'+str(FLAGS.pos_weight)+'_lr_'+str(FLAGS.optimizer_step)
+    exp_log_dir = os.path.join(FLAGS.log_dir,experiment_name)
+
+    if (not os.path.exists(exp_log_dir)):
+        os.makedirs(exp_log_dir)
     else :
-        shutil.rmtree(FLAGS.log_dir)
-    log_file=os.path.join(FLAGS.log_dir, 'training.log')
+        if (FLAGS.start_from_scratch):
+            shutil.rmtree(exp_log_dir)
+            os.makedirs(exp_log_dir)
+
+    log_file=os.path.join(exp_log_dir, 'training.log')
     set_logging(FLAGS.logging_to_stdout, log_file)
 
     #loading data
@@ -125,6 +134,7 @@ def main(_):
         frames_data = load_data(FLAGS.data_dir)
         joblib.dump(frames_data, frames_data_cache_file)
 
+    logging.info('defining the model..')
     n_frames = len(frames_data.keys())
     #model definition
     dt_coords_tf = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_COORDS], name=DT_COORDS)
@@ -145,7 +155,7 @@ def main(_):
 
     inference_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
 
-    loss_tf = tf.nn.weighted_cross_entropy_with_logits(inference_tf, dt_labels_tf, pos_weight=1000)
+    loss_tf = tf.nn.weighted_cross_entropy_with_logits(inference_tf, dt_labels_tf, pos_weight=FLAGS.pos_weight)
 
     loss_final_tf = tf.reduce_mean(loss_tf)
 
@@ -155,6 +165,7 @@ def main(_):
 
     train_step = tf.train.AdamOptimizer(0.001).minimize(loss_final_tf)
 
+    logging.info('training started..')
     with tf.Session() as sess:
         step_id = 0
         sess.run(tf.global_variables_initializer())
@@ -162,16 +173,15 @@ def main(_):
             max_to_keep=5,
             keep_checkpoint_every_n_hours=1.0)
 
-        if (os.path.exists(FLAGS.log_dir)):
-            ckpt_path = tf.train.latest_checkpoint(FLAGS.log_dir)
+        if (not FLAGS.start_from_scratch):
+            ckpt_path = tf.train.latest_checkpoint(exp_log_dir)
             if (ckpt_path is not None):
                 ckpt_name=ntpath.basename(ckpt_path)
                 step_id=int(ckpt_name.split('-')[1])
                 saver.restore(sess, ckpt_path)
 
-        model_file = os.path.join(FLAGS.log_dir, 'model')
-
-        summary_writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
+        model_file = os.path.join(exp_log_dir, 'model')
+        summary_writer = tf.summary.FileWriter(exp_log_dir, sess.graph)
 
         for epoch_id in range(0, FLAGS.n_epochs):
             for fid in shuffle_samples(n_frames):
@@ -188,7 +198,7 @@ def main(_):
                     loss, loss_final, inference, iou_feature,   knet_ops = sess.run([loss_tf, loss_final_tf, inference_tf, iou_feature_tf, knet_ops_tf],
                                                                     feed_dict=feed_dict)
                     logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
-                    #logging.info("initail scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
+                    #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
                     logging.info("non-neg kernel elements : %d"%np.sum(knet_ops['kernels']>0))
                     logging.info("inference for pos values : %s"%inference[np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
                     #logging.info("pairwise_features : %s"%knet_ops['pairwise_features'])
