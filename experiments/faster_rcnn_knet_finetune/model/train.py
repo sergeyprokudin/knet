@@ -23,7 +23,7 @@ import gflags
 import logging
 from google.apputils import app
 
-from tools import bbox_utils
+from tools import bbox_utils, nms, metrics
 from tf_layers import knet, spatial
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
@@ -44,7 +44,9 @@ GT_COORDS='gt_coords'
 GT_LABELS='gt_labels'
 DT_LABELS='dt_labels'
 DT_FEATURES='dt_features'
+DT_INFERENCE='dt_inference'
 DT_GT_IOU='dt_gt_iou'
+DT_DT_IOU='dt_dt_iou'
 N_DT_COORDS=4
 N_DT_FEATURES=21
 N_OBJECTS=300
@@ -59,6 +61,7 @@ def get_frame_data(fid, data):
     frame_data[GT_COORDS] = data[GT_COORDS][fid_gt_ix, 1:5]
     frame_data[GT_LABELS] = data[GT_COORDS][fid_gt_ix, 5]-1
     frame_data[DT_GT_IOU] = bbox_utils.compute_sets_iou(frame_data[DT_COORDS], frame_data[GT_COORDS])
+    #frame_data[DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[DT_COORDS], frame_data[DT_COORDS])
     frame_data[DT_LABELS] = np.zeros([N_OBJECTS, N_CLASSES])
     for class_id in range(0, N_CLASSES):
         class_gt_boxes = frame_data[GT_LABELS]==class_id
@@ -72,17 +75,27 @@ def split_by_frames(data):
     unique_fids = np.unique(np.hstack([data[DT_COORDS][:,0], data[GT_COORDS][:,0]])).astype(int)
     pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
     get_frame_data_partial = partial(get_frame_data, data=data)
-    frames_data = dict(zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
-    return frames_data
+    frames_data_train = dict(zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
+    return frames_data_train
 
-def load_data(data_dir):
+def preprocess_data(data_dir):
     data = {}
     data[DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
     data[DT_FEATURES] = joblib.load(os.path.join(data_dir, 'dt_features.pkl'))
     data[GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
-    frames_data = split_by_frames(data)
-    return frames_data
+    frames_data_train = split_by_frames(data)
+    return frames_data_train
 
+def load_data(data_dir):
+    frames_data_cache_file = os.path.join(data_dir, 'frames_data.pkl')
+    if (os.path.exists(frames_data_cache_file)):
+        logging.info('loading frame bbox data info from cash..')
+        frames_data = joblib.load(frames_data_cache_file)
+    else :
+        logging.info('computing frame bbox data (IoU, labels, etc) - this could take some time..')
+        frames_data = preprocess_data(data_dir)
+        joblib.dump(frames_data, frames_data_cache_file)
+    return frames_data
 
 def set_logging(to_stdout=True, log_file=None):
     if (to_stdout):
@@ -109,6 +122,49 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
+
+def eval_model(sess, inference_op, input_ops, iou_op, frames_data_train, n_frames=100):
+    dt_gt_match_orig = []
+    dt_gt_match_new = []
+    dt_gt_match_orig_nms = []
+    dt_gt_match_new_nms = []
+    inference_orig_all = []
+    inference_new_all = []
+    gt_labels_all = []
+    for fid in range(0, n_frames):
+        frame_data = frames_data_train[fid]
+        gt_labels_all.append(frame_data[GT_LABELS].reshape(-1,1))
+        feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS][0:N_OBJECTS],
+                    input_ops[DT_FEATURES]:frame_data[DT_FEATURES][0:N_OBJECTS],
+                    input_ops[DT_LABELS]:frame_data[DT_LABELS][0:N_OBJECTS]}
+        inference_orig = frame_data[DT_FEATURES][:,1:]
+        inference_orig_all.append(inference_orig)
+        inference_new, dt_dt_iou  = sess.run([inference_op,iou_op], feed_dict=feed_dict)
+        inference_new_all.append(inference_new)
+        dt_gt_match_orig.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_orig))
+        dt_gt_match_new.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_new))
+        is_suppressed_orig = nms.nms_all_classes(dt_dt_iou, inference_orig)
+        is_suppressed_new  = nms.nms_all_classes(dt_dt_iou, inference_new)
+        dt_gt_match_orig_nms.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_orig, dt_is_suppressed_info=is_suppressed_orig))
+        dt_gt_match_new_nms.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_new, dt_is_suppressed_info=is_suppressed_new))
+    gt_labels = np.vstack(gt_labels_all)
+    inference_orig = np.vstack(inference_orig_all)
+    inference_new = np.vstack(inference_new_all)
+    dt_gt_match_orig = np.vstack(dt_gt_match_orig)
+    dt_gt_match_new = np.vstack(dt_gt_match_new )
+    dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
+    dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
+    ap_orig, _ = metrics.average_precision_all_classes(dt_gt_match_orig, inference_orig, gt_labels)
+    ap_orig_nms, _ = metrics.average_precision_all_classes(dt_gt_match_orig_nms, inference_orig, gt_labels)
+    ap_new, _ = metrics.average_precision_all_classes(dt_gt_match_new, inference_new, gt_labels)
+    ap_new_nms, _  = metrics.average_precision_all_classes(dt_gt_match_new_nms, inference_new, gt_labels)
+    logging.info('mAP original inference : %f'%(np.nanmean(ap_orig)))
+    logging.info('mAP original inference (NMS) : %f'%(np.nanmean(ap_orig_nms)))
+    logging.info('mAP knet inference : %f'%(np.nanmean(ap_new)))
+    logging.info('mAP knet inference (NMS) : %f'%(np.nanmean(ap_new_nms)))
+    return
+
+
 def main(_):
 
     experiment_name = 'pw_'+str(FLAGS.pos_weight)+'_lr_'+str(FLAGS.optimizer_step)
@@ -125,37 +181,37 @@ def main(_):
     set_logging(FLAGS.logging_to_stdout, log_file)
 
     #loading data
-    frames_data_cache_file = os.path.join(FLAGS.data_dir, 'frames_data.pkl')
-    if (os.path.exists(frames_data_cache_file)):
-        logging.info('loading frame bbox data info from cash..')
-        frames_data = joblib.load(frames_data_cache_file)
-    else :
-        logging.info('computing frame bbox data (IoU, labels, etc) - this could take some time..')
-        frames_data = load_data(FLAGS.data_dir)
-        joblib.dump(frames_data, frames_data_cache_file)
+    logging.info('loading data..')
+    logging.info('train..')
+    train_data_dir = os.path.join(FLAGS.data_dir, 'train')
+    frames_data_train = load_data(train_data_dir)
+    logging.info('test..')
+    test_data_dir = os.path.join(FLAGS.data_dir, 'test')
+    frames_data_test = load_data(test_data_dir)
 
     logging.info('defining the model..')
-    n_frames = len(frames_data.keys())
+    n_frames = len(frames_data_train.keys())
     #model definition
-    dt_coords_tf = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_COORDS], name=DT_COORDS)
-    dt_features_tf = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_FEATURES], name=DT_FEATURES)
-    dt_labels_tf = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_CLASSES], name=DT_LABELS)
+    input_ops = {}
+    input_ops[DT_COORDS]  = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_COORDS], name=DT_COORDS)
+    input_ops[DT_FEATURES] = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_FEATURES], name=DT_FEATURES)
+    input_ops[DT_LABELS] = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_CLASSES], name=DT_LABELS)
 
-    pairwise_features_tf = spatial.construct_pairwise_features_tf(dt_coords_tf)
+    pairwise_features_tf = spatial.construct_pairwise_features_tf(input_ops[DT_COORDS])
     iou_feature_tf = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_features_tf)
 
-    pairwise_scores_tf =  spatial.construct_pairwise_features_tf(dt_features_tf)
+    pairwise_scores_tf =  spatial.construct_pairwise_features_tf(input_ops[DT_FEATURES])
     spatial_features_tf = tf.concat(2, [iou_feature_tf, pairwise_scores_tf])
     n_spatial_features = N_DT_FEATURES*2+1
 
-    dt_new_features_tf, knet_ops_tf = knet.knet_layer(dt_features_tf, spatial_features_tf, n_kernels=FLAGS.n_kernels, n_objects=N_OBJECTS, n_pair_features=n_spatial_features, n_object_features=N_DT_FEATURES)
+    dt_new_features_tf, knet_ops_tf = knet.knet_layer(input_ops[DT_FEATURES], spatial_features_tf, n_kernels=FLAGS.n_kernels, n_objects=N_OBJECTS, n_pair_features=n_spatial_features, n_object_features=N_DT_FEATURES)
 
     W_fc1 = weight_variable([FLAGS.n_kernels*N_DT_FEATURES, N_CLASSES])
     b_fc1 = bias_variable([N_CLASSES])
 
     inference_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
 
-    loss_tf = tf.nn.weighted_cross_entropy_with_logits(inference_tf, dt_labels_tf, pos_weight=FLAGS.pos_weight)
+    loss_tf = tf.nn.weighted_cross_entropy_with_logits(inference_tf, input_ops[DT_LABELS] , pos_weight=FLAGS.pos_weight)
 
     loss_final_tf = tf.reduce_mean(loss_tf)
 
@@ -185,29 +241,31 @@ def main(_):
 
         for epoch_id in range(0, FLAGS.n_epochs):
             for fid in shuffle_samples(n_frames):
-                frame_data = frames_data[fid]
-                feed_dict = {dt_coords_tf:frame_data[DT_COORDS][0:N_OBJECTS],
-                            dt_features_tf:frame_data[DT_FEATURES][0:N_OBJECTS],
-                            dt_labels_tf:frame_data[DT_LABELS][0:N_OBJECTS]}
+                frame_data = frames_data_train[fid]
+                feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS][0:N_OBJECTS],
+                            input_ops[DT_FEATURES]:frame_data[DT_FEATURES][0:N_OBJECTS],
+                            input_ops[DT_LABELS]:frame_data[DT_LABELS][0:N_OBJECTS]}
                 summary, _ = sess.run([merged_summaries, train_step],
                                                 feed_dict=feed_dict)
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%1000==0):
-                    loss, loss_final, inference, iou_feature,   knet_ops = sess.run([loss_tf, loss_final_tf, inference_tf, iou_feature_tf, knet_ops_tf],
-                                                                    feed_dict=feed_dict)
-                    logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
-                    #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-                    logging.info("non-neg kernel elements : %d"%np.sum(knet_ops['kernels']>0))
-                    logging.info("inference for pos values : %s"%inference[np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-                    #logging.info("pairwise_features : %s"%knet_ops['pairwise_features'])
-                    logging.info("kernel : %s"%knet_ops['kernels'])
-                    num_gt = int(np.sum(frame_data[DT_LABELS]))
-                    num_pos_inference = int(np.sum(inference>0))
-                    logging.info("frame %d num_gt : %d , num_pos_inf : %d"%(fid, num_gt, num_pos_inference))
-                    #import ipdb; ipdb.set_trace() #; ipdb.set_trace=False
-                    saver.save(sess, model_file, global_step=step_id)
+            if (step_id%10000==0):
+                logging.info('current step : %d'%step_id)
+                logging.info('evaluating on TRAIN..')
+                eval_model(sess, inference_tf, input_ops, iou_feature_tf, frames_data_train, n_frames=1000)
+                logging.info('evaluating on TEST..')
+                eval_model(sess, inference_tf, input_ops,  iou_feature_tf, frames_data_test, n_frames=1000)
+                saver.save(sess, model_file, global_step=step_id)
+                    # logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
+                    # #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
+                    # logging.info("non-neg kernel elements : %d"%np.sum(knet_ops['kernels']>0))
+                    # logging.info("inference for pos values : %s"%inference_new[np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
+                    # #logging.info("pairwise_features : %s"%knet_ops['pairwise_features'])
+                    # logging.info("kernel : %s"%knet_ops['kernels'])
+                    # num_gt = int(np.sum(frame_data[DT_LABELS]))
+                    # num_pos_inference = int(np.sum(inference_new>0))
+                    # logging.info("frame %d num_gt : %d , num_pos_inf : %d"%(fid, num_gt, num_pos_inference))
     return
 
 if __name__ == '__main__':
