@@ -317,11 +317,11 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%1000==0):
+                if (step_id%5000==0):
                     logging.info('current step : %d'%step_id)
                     full_eval = False
                     n_eval_frames=100
-                    if (step_id%10000==0):
+                    if (step_id%100000==0):
                         full_eval=True
                     #logging.info('evaluating on TRAIN..')
                     #eval_model(sess, inference_tf, input_ops, iou_feature_tf, frames_data_train, n_frames=n_train_frames)
