@@ -38,6 +38,7 @@ gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
 gflags.DEFINE_boolean('start_from_scratch', True, 'Whether to load checkpoint (if it exists) or completely retrain the model')
 gflags.DEFINE_boolean('use_softmax', True, 'Whether to use softmax inference (this will make classes mutually exclusive)')
 gflags.DEFINE_float('nms_thres', 0.3, 'NMS threshold')
+gflags.DEFINE_integer('n_eval_frames', 100, 'Number of frames to use for intermediate evaluation')
 
 FLAGS = gflags.FLAGS
 
@@ -130,10 +131,19 @@ def softmax(logits):
 def print_debug_info():
     """ Print current values of kernel, inference, etc
     """
+    # logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
+    # #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
+    # logging.info("non-neg kernel elements : %d"%np.sum(knet_ops['kernels']>0))
+    # logging.info("inference for pos values : %s"%inference_new[np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
+    # #logging.info("pairwise_features : %s"%knet_ops['pairwise_features'])
+    # logging.info("kernel : %s"%knet_ops['kernels'])
+    # num_gt = int(np.sum(frame_data[DT_LABELS]))
+    # num_pos_inference = int(np.sum(inference_new>0))
+    # logging.info("frame %d num_gt : %d , num_pos_inf : %d"%(fid, num_gt, num_pos_inference))
     return
 
 
-def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_writer, global_step, out_dir, n_eval_frames=None):
+def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_writer, global_step, out_dir, full_eval=False, n_eval_frames=100):
 
     dt_gt_match_orig = []
     dt_gt_match_new = []
@@ -142,14 +152,21 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
 
     inference_orig_all = []
     inference_new_all = []
+    coords = []
     gt_labels_all = []
 
     n_total_frames=len(frames_data.keys())
 
-    if (n_eval_frames is None):
+    if (full_eval):
         n_eval_frames = n_total_frames
 
-    for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
+    eval_data = {}
+
+    #for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
+    for fid in range(0, n_eval_frames):
+
+        eval_data[fid] = {}
+
         frame_data = frames_data[fid]
 
         gt_labels_all.append(frame_data[GT_LABELS].reshape(-1,1))
@@ -160,10 +177,13 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
 
         dt_scores = frame_data[DT_FEATURES]
         inference_orig = softmax(dt_scores)
+        eval_data[fid]['dt_coords'] = frame_data[DT_COORDS]
         inference_orig_all.append(inference_orig)
+        eval_data[fid]['inference_orig'] = inference_orig
 
         inference_new, dt_dt_iou  = sess.run([inference_op,iou_op], feed_dict=feed_dict)
         inference_new_all.append(inference_new)
+        eval_data[fid]['inference_new'] = inference_new
 
         dt_gt_match_orig.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_orig))
         dt_gt_match_new.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_new))
@@ -183,31 +203,28 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
-    knet_file = os.path.join(out_dir, 'dt_probs_knet_'+str(global_step)+'.pkl')
-    orig_file = os.path.join(out_dir, 'dt_probs_orig.pkl')
+    if (True):
+        eval_data_file = os.path.join(out_dir, 'eval_data_step'+str(global_step)+'.pkl')
+        joblib.dump(eval_data, eval_data_file)
 
-    if (not os.path.exists(orig_file)):
-        joblib.dump(inference_orig, orig_file)
-    joblib.dump(inference_new, knet_file)
+    ap_orig, _ = metrics.average_precision_all_classes(dt_gt_match_orig, inference_orig, gt_labels)
+    ap_orig_nms, _ = metrics.average_precision_all_classes(dt_gt_match_orig_nms, inference_orig, gt_labels)
+    ap_new, _ = metrics.average_precision_all_classes(dt_gt_match_new, inference_new, gt_labels)
+    ap_new_nms, _  = metrics.average_precision_all_classes(dt_gt_match_new_nms, inference_new, gt_labels)
 
-    # ap_orig, _ = metrics.average_precision_all_classes(dt_gt_match_orig, inference_orig, gt_labels)
-    # ap_orig_nms, _ = metrics.average_precision_all_classes(dt_gt_match_orig_nms, inference_orig, gt_labels)
-    # ap_new, _ = metrics.average_precision_all_classes(dt_gt_match_new, inference_new, gt_labels)
-    # ap_new_nms, _  = metrics.average_precision_all_classes(dt_gt_match_new_nms, inference_new, gt_labels)
-    #
-    # logging.info('mAP original inference : %f'%(np.nanmean(ap_orig)))
-    # logging.info('mAP original inference (NMS) : %f'%(np.nanmean(ap_orig_nms)))
-    # logging.info('mAP knet inference : %f'%(np.nanmean(ap_new)))
-    # logging.info('mAP knet inference (NMS) : %f'%(np.nanmean(ap_new_nms)))
-    #
-    # map_orig = tf.Summary(value=[tf.Summary.Value(tag="map_orig", simple_value=np.nanmean(ap_orig)), ])
-    # summary_writer.add_summary(map_orig, global_step=global_step)
-    # map_orig_nms = tf.Summary(value=[tf.Summary.Value(tag="map_orig_nms", simple_value=np.nanmean(ap_orig_nms)), ])
-    # summary_writer.add_summary(map_orig_nms, global_step=global_step)
-    # map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
-    # summary_writer.add_summary(map_knet, global_step=global_step)
-    # map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
-    # summary_writer.add_summary(map_knet_nms, global_step=global_step)
+    logging.info('mAP original inference : %f'%(np.nanmean(ap_orig)))
+    logging.info('mAP original inference (NMS) : %f'%(np.nanmean(ap_orig_nms)))
+    logging.info('mAP knet inference : %f'%(np.nanmean(ap_new)))
+    logging.info('mAP knet inference (NMS) : %f'%(np.nanmean(ap_new_nms)))
+
+    map_orig = tf.Summary(value=[tf.Summary.Value(tag="map_orig", simple_value=np.nanmean(ap_orig)), ])
+    summary_writer.add_summary(map_orig, global_step=global_step)
+    map_orig_nms = tf.Summary(value=[tf.Summary.Value(tag="map_orig_nms", simple_value=np.nanmean(ap_orig_nms)), ])
+    summary_writer.add_summary(map_orig_nms, global_step=global_step)
+    map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
+    summary_writer.add_summary(map_knet, global_step=global_step)
+    map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
+    summary_writer.add_summary(map_knet_nms, global_step=global_step)
 
     return
 
@@ -300,25 +317,24 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%10==0):
+                if (step_id%1000==0):
                     logging.info('current step : %d'%step_id)
+                    full_eval = False
+                    n_eval_frames=100
+                    if (step_id%10000==0):
+                        full_eval=True
                     #logging.info('evaluating on TRAIN..')
                     #eval_model(sess, inference_tf, input_ops, iou_feature_tf, frames_data_train, n_frames=n_train_frames)
                     logging.info('evaluating on TEST..')
+                    out_dir = os.path.join(exp_log_dir, 'test')
+                    if (not os.path.exists(out_dir)):
+                        os.makedirs(out_dir)
                     eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_test, summary_writer,
-                              global_step=step_id, n_eval_frames=None,
-                              out_dir=test_data_dir)
+                              global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                              out_dir=out_dir,
+                              full_eval=full_eval)
                     saver.save(sess, model_file, global_step=step_id)
-                    # logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
-                    # #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-                    # logging.info("non-neg kernel elements : %d"%np.sum(knet_ops['kernels']>0))
-                    # logging.info("inference for pos values : %s"%inference_new[np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-                    # #logging.info("pairwise_features : %s"%knet_ops['pairwise_features'])
-                    # logging.info("kernel : %s"%knet_ops['kernels'])
-                    # num_gt = int(np.sum(frame_data[DT_LABELS]))
-                    # num_pos_inference = int(np.sum(inference_new>0))
-                    # logging.info("frame %d num_gt : %d , num_pos_inf : %d"%(fid, num_gt, num_pos_inference))
     return
 
 if __name__ == '__main__':
