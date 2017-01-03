@@ -203,7 +203,7 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
-    if (True):
+    if (full_eval):
         eval_data_file = os.path.join(out_dir, 'eval_data_step'+str(global_step)+'.pkl')
         joblib.dump(eval_data, eval_data_file)
 
