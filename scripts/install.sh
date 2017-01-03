@@ -25,7 +25,7 @@ dbash::user_confirm ">> Update dependencies?" "n"
 if [[ "y" == "${USER_CONFIRM_RESULT}" ]];then
     ${PYENV}/bin/pip install --upgrade pip
     ${PYENV}/bin/pip install --upgrade \
-             numpy scipy matplotlib joblib ipdb python-gflags google-apputils
+             numpy scipy matplotlib joblib ipdb python-gflags google-apputils autopep8
 fi
 
 dbash::user_confirm ">> Install tensorflow gpu MAC?" "n"

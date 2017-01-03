@@ -3,14 +3,19 @@
 
 import numpy as np
 
-def compute_iou(bb_xywh1, bb_xywh2):
+def compute_iou(bb1, bb2):
     """compute intersection over union between 2 boxes
+    of format [x1, y1, x2, y2]
     """
-    x1, y1, w1, h1 = bb_xywh1[:4].tolist()
-    x2, y2, w2, h2 = bb_xywh2[:4].tolist()
-    x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
-    y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
+    bb1_x1, bb1_y1, bb1_x2, bb1_y2 = bb1[:4].tolist()
+    bb2_x1, bb2_y1, bb2_x2, bb2_y2 = bb2[:4].tolist()
+    x_overlap = max(0, min(bb1_x2, bb2_x2) - max(bb1_x1, bb2_x1))
+    y_overlap = max(0, min(bb1_y2, bb2_y2) - max(bb1_y1, bb2_y1))
     intersection_area = x_overlap * y_overlap
+    w1 = bb1_x2-bb1_x1
+    h1 = bb1_y2-bb1_y1
+    w2 = bb2_x2-bb2_x1
+    h2 = bb2_y2-bb2_y1
     union_area = w1 * h1 + w2 * h2 - intersection_area
     ratio = float(intersection_area) / union_area
     return ratio
