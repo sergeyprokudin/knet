@@ -275,9 +275,12 @@ def main(_):
 
     logits_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
 
-    inference_tf = tf.nn.sigmoid(logits_tf)
-
-    loss_tf = tf.nn.weighted_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS] , pos_weight=FLAGS.pos_weight)
+    if (FLAGS.use_softmax):
+        inference_tf = tf.nn.softmax(logits_tf)
+        loss_tf = tf.nn.softmax_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS])
+    else :
+        inference_tf = tf.nn.sigmoid(logits_tf)
+        loss_tf = tf.nn.weighted_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS] , pos_weight=FLAGS.pos_weight)
 
     loss_final_tf = tf.reduce_mean(loss_tf)
 
