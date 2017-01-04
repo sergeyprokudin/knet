@@ -36,7 +36,7 @@ gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
 gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
 gflags.DEFINE_boolean('start_from_scratch', True, 'Whether to load checkpoint (if it exists) or completely retrain the model')
-gflags.DEFINE_boolean('use_softmax', True, 'Whether to use softmax inference (this will make classes mutually exclusive)')
+gflags.DEFINE_boolean('use_softmax_loss', True, 'Whether to use softmax inference (this will make classes mutually exclusive)')
 gflags.DEFINE_float('nms_thres', 0.3, 'NMS threshold')
 gflags.DEFINE_integer('n_eval_frames', 100, 'Number of frames to use for intermediate evaluation')
 
@@ -231,7 +231,7 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
 
 def main(_):
 
-    experiment_name = 'pw_'+str(FLAGS.pos_weight)+'_lr_'+str(FLAGS.optimizer_step)
+    experiment_name = 'pw_'+str(FLAGS.pos_weight)+'_lr_'+str(FLAGS.optimizer_step) + '_softmaxloss_' + str(FLAGS.use_softmax_loss)
     exp_log_dir = os.path.join(FLAGS.log_dir,experiment_name)
 
     if (not os.path.exists(exp_log_dir)):
@@ -275,7 +275,7 @@ def main(_):
 
     logits_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
 
-    if (FLAGS.use_softmax):
+    if (FLAGS.use_softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
         loss_tf = tf.nn.softmax_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS])
     else :
