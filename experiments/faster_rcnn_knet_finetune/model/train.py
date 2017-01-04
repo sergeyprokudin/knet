@@ -215,21 +215,22 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     ap_new, _ = metrics.average_precision_all_classes(dt_gt_match_new, inference_new, gt_labels)
     ap_new_nms, _  = metrics.average_precision_all_classes(dt_gt_match_new_nms, inference_new, gt_labels)
 
-    logging.info('mAP original inference : %f'%(np.nanmean(ap_orig)))
-    logging.info('mAP original inference (NMS) : %f'%(np.nanmean(ap_orig_nms)))
-    logging.info('mAP knet inference : %f'%(np.nanmean(ap_new)))
-    logging.info('mAP knet inference (NMS) : %f'%(np.nanmean(ap_new_nms)))
+    map_orig = np.nanmean(ap_orig)
+    map_orig_nms = np.nanmean(ap_orig_nms)
+    map_knet = np.nanmean(ap_new)
+    map_knet_nms = np.nanmean(ap_new_nms)
 
-    #map_orig = tf.Summary(value=[tf.Summary.Value(tag="map_orig", simple_value=np.nanmean(ap_orig)), ])
-    #summary_writer.add_summary(map_orig, global_step=global_step)
-    #map_orig_nms = tf.Summary(value=[tf.Summary.Value(tag="map_orig_nms", simple_value=np.nanmean(ap_orig_nms)), ])
-    #summary_writer.add_summary(map_orig_nms, global_step=global_step)
-    map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
-    summary_writer.add_summary(map_knet, global_step=global_step)
-    map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
-    summary_writer.add_summary(map_knet_nms, global_step=global_step)
+    logging.info('mAP original inference : %f'%(map_orig))
+    logging.info('mAP original inference (NMS) : %f'%(map_orig_nms))
+    logging.info('mAP knet inference : %f'%(map_knet))
+    logging.info('mAP knet inference (NMS) : %f'%(map_knet_nms))
 
-    return
+    # map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
+    # summary_writer.add_summary(map_knet, global_step=global_step)
+    # map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
+    # summary_writer.add_summary(map_knet_nms, global_step=global_step)
+
+    return map_knet
 
 
 def main(_):
@@ -323,25 +324,29 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%5000==0):
+                if (step_id%500==0):
                     logging.info('current step : %d'%step_id)
                     full_eval = False
                     if (step_id%100000==0):
                         full_eval=True
                     logging.info('evaluating on TRAIN..')
                     train_out_dir = os.path.join(exp_log_dir, 'train')
-                    eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
+                    train_map = eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_train, summary_writer,
                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                               out_dir=train_out_dir,
                               full_eval=full_eval)
+                    train_map_summ = tf.Summary(value=[tf.Summary.Value(tag="map_train", simple_value=train_map), ])
+                    summary_writer.add_summary(train_map_summ, global_step=step_id)
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
-                    eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
+                    test_map = eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_test, summary_writer,
                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                               out_dir=test_out_dir,
                               full_eval=full_eval)
+                    test_map_summ = tf.Summary(value=[tf.Summary.Value(tag="map_test", simple_value=test_map), ])
+                    summary_writer.add_summary(test_map_summ, global_step=step_id)
                     saver.save(sess, model_file, global_step=step_id)
     return
 
