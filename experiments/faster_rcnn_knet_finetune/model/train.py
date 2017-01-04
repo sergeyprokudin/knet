@@ -323,19 +323,25 @@ def main(_):
                 if (step_id%5000==0):
                     logging.info('current step : %d'%step_id)
                     full_eval = False
-                    n_eval_frames=100
                     if (step_id%100000==0):
                         full_eval=True
-                    #logging.info('evaluating on TRAIN..')
-                    #eval_model(sess, inference_tf, input_ops, iou_feature_tf, frames_data_train, n_frames=n_train_frames)
+                    logging.info('evaluating on TRAIN..')
+                    train_out_dir = os.path.join(exp_log_dir, 'train')
+                    if (not os.path.exists(out_dir)):
+                        os.makedirs(out_dir)
+                    eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
+                              frames_data_train, summary_writer,
+                              global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                              out_dir=train_out_dir,
+                              full_eval=full_eval)
                     logging.info('evaluating on TEST..')
-                    out_dir = os.path.join(exp_log_dir, 'test')
+                    test_out_dir = os.path.join(exp_log_dir, 'test')
                     if (not os.path.exists(out_dir)):
                         os.makedirs(out_dir)
                     eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_test, summary_writer,
                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                              out_dir=out_dir,
+                              out_dir=test_out_dir,
                               full_eval=full_eval)
                     saver.save(sess, model_file, global_step=step_id)
     return

@@ -1,0 +1,13 @@
+executable = /bin/bash
+arguments = train_pw1000.sh
+error = train_pw10000.job.err
+output = train_pw10000.job.out
+log = train_pw10000.job.log
+request_memory = 20000
+request_gpus = 1
+requirements=TARGET.CUDAGlobalMemoryMb>11000
+request_cpus = 5
+MaxTime = 64800
+periodic_hold = (CurrentTime - JobCurrentStartDate) >= $(MaxTime)
+periodic_hold_reason = "Job runtime exceeded"
+queue 1
