@@ -145,6 +145,9 @@ def print_debug_info():
 
 def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_writer, global_step, out_dir, full_eval=False, n_eval_frames=100):
 
+    if (not os.path.exists(out_dir)):
+        os.makedirs(out_dir)
+
     dt_gt_match_orig = []
     dt_gt_match_new = []
     dt_gt_match_orig_nms = []
@@ -217,10 +220,10 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     logging.info('mAP knet inference : %f'%(np.nanmean(ap_new)))
     logging.info('mAP knet inference (NMS) : %f'%(np.nanmean(ap_new_nms)))
 
-    map_orig = tf.Summary(value=[tf.Summary.Value(tag="map_orig", simple_value=np.nanmean(ap_orig)), ])
-    summary_writer.add_summary(map_orig, global_step=global_step)
-    map_orig_nms = tf.Summary(value=[tf.Summary.Value(tag="map_orig_nms", simple_value=np.nanmean(ap_orig_nms)), ])
-    summary_writer.add_summary(map_orig_nms, global_step=global_step)
+    #map_orig = tf.Summary(value=[tf.Summary.Value(tag="map_orig", simple_value=np.nanmean(ap_orig)), ])
+    #summary_writer.add_summary(map_orig, global_step=global_step)
+    #map_orig_nms = tf.Summary(value=[tf.Summary.Value(tag="map_orig_nms", simple_value=np.nanmean(ap_orig_nms)), ])
+    #summary_writer.add_summary(map_orig_nms, global_step=global_step)
     map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
     summary_writer.add_summary(map_knet, global_step=global_step)
     map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
@@ -327,8 +330,6 @@ def main(_):
                         full_eval=True
                     logging.info('evaluating on TRAIN..')
                     train_out_dir = os.path.join(exp_log_dir, 'train')
-                    if (not os.path.exists(out_dir)):
-                        os.makedirs(out_dir)
                     eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_train, summary_writer,
                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
@@ -336,8 +337,6 @@ def main(_):
                               full_eval=full_eval)
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
-                    if (not os.path.exists(out_dir)):
-                        os.makedirs(out_dir)
                     eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
                               frames_data_test, summary_writer,
                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
