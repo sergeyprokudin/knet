@@ -128,7 +128,7 @@ def softmax(logits):
     n_classes=logits.shape[1]
     return np.exp(logits) / np.tile( np.sum(np.exp(logits), axis=1).reshape(-1,1), [1, n_classes])
 
-def print_debug_info():
+def print_debug_info(sess, loss_op, frames_data):
     """ Print current values of kernel, inference, etc
     """
     # logging.info("epoch %d loss for frame %d : %f"%(epoch_id, fid, loss_final))
@@ -202,7 +202,7 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     inference_new = np.vstack(inference_new_all)
 
     dt_gt_match_orig = np.vstack(dt_gt_match_orig)
-    dt_gt_match_new = np.vstack(dt_gt_match_new )
+    dt_gt_match_new = np.vstack(dt_gt_match_new)
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
@@ -224,11 +224,6 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     logging.info('mAP original inference (NMS) : %f'%(map_orig_nms))
     logging.info('mAP knet inference : %f'%(map_knet))
     logging.info('mAP knet inference (NMS) : %f'%(map_knet_nms))
-
-    # map_knet = tf.Summary(value=[tf.Summary.Value(tag="map_knet", simple_value=np.nanmean(ap_new)), ])
-    # summary_writer.add_summary(map_knet, global_step=global_step)
-    # map_knet_nms = tf.Summary(value=[tf.Summary.Value(tag="map_knet_nms", simple_value=np.nanmean(ap_new_nms)), ])
-    # summary_writer.add_summary(map_knet_nms, global_step=global_step)
 
     return map_knet
 
@@ -281,7 +276,7 @@ def main(_):
 
     if (FLAGS.use_softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
-        loss_tf = tf.nn.softmax_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS])
+        loss_tf = tf.nn.softmax_cross_entropy_with_logits(tf.mul(logits_tf, FLAGS.pos_weight), input_ops[DT_LABELS])
     else :
         inference_tf = tf.nn.sigmoid(logits_tf)
         loss_tf = tf.nn.weighted_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS] , pos_weight=FLAGS.pos_weight)
@@ -324,7 +319,7 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id+=1
-                if (step_id%500==0):
+                if (step_id%5000==0):
                     logging.info('current step : %d'%step_id)
                     full_eval = False
                     if (step_id%100000==0):
