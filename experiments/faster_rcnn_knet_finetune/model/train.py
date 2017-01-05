@@ -27,58 +27,93 @@ from tools import bbox_utils, nms, metrics
 from tf_layers import knet, spatial
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
-gflags.DEFINE_string('log_dir', None, 'directory to save logs and trained models')
-gflags.DEFINE_integer('data_loader_num_threads', 5, 'Number of threads used during data loading and preprocessing')
-gflags.DEFINE_integer('n_kernels', 8, 'Number of kernels to used in knet layer')
-gflags.DEFINE_float('best_iou_thres', 0.5, 'Number of threads used during data loading and preprocessing')
-gflags.DEFINE_boolean('logging_to_stdout', True, 'Whether to write logs to stdout or to logfile')
+gflags.DEFINE_string(
+    'log_dir',
+    None,
+    'directory to save logs and trained models')
+gflags.DEFINE_integer(
+    'data_loader_num_threads',
+    5,
+    'Number of threads used during data loading and preprocessing')
+gflags.DEFINE_integer(
+    'n_kernels',
+    8,
+    'Number of kernels to used in knet layer')
+gflags.DEFINE_float(
+    'best_iou_thres',
+    0.5,
+    'Number of threads used during data loading and preprocessing')
+gflags.DEFINE_boolean(
+    'logging_to_stdout',
+    False,
+    'Whether to write logs to stdout or to logfile')
 gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
 gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
-gflags.DEFINE_boolean('start_from_scratch', True, 'Whether to load checkpoint (if it exists) or completely retrain the model')
-gflags.DEFINE_boolean('use_softmax_loss', True, 'Whether to use softmax inference (this will make classes mutually exclusive)')
+gflags.DEFINE_boolean(
+    'start_from_scratch',
+    True,
+    'Whether to load checkpoint (if it exists) or completely retrain the model')
+gflags.DEFINE_boolean(
+    'softmax_loss',
+    False,
+    'Whether to use softmax inference (this will make classes mutually exclusive)')
+gflags.DEFINE_boolean(
+    'softmax_kernel',
+    True,
+    'Whether to use softmax inference (this will make classes mutually exclusive)')
 gflags.DEFINE_float('nms_thres', 0.3, 'NMS threshold')
-gflags.DEFINE_integer('n_eval_frames', 100, 'Number of frames to use for intermediate evaluation')
+gflags.DEFINE_integer(
+    'n_eval_frames',
+    100,
+    'Number of frames to use for intermediate evaluation')
 
 FLAGS = gflags.FLAGS
 
-DT_COORDS='dt_coords'
-GT_COORDS='gt_coords'
-GT_LABELS='gt_labels'
-DT_LABELS='dt_labels'
-DT_FEATURES='dt_features'
-DT_INFERENCE='dt_inference'
-DT_GT_IOU='dt_gt_iou'
-DT_DT_IOU='dt_dt_iou'
-N_DT_COORDS=4
-N_DT_FEATURES=21
-N_OBJECTS=300
-N_CLASSES=21
+DT_COORDS = 'dt_coords'
+GT_COORDS = 'gt_coords'
+GT_LABELS = 'gt_labels'
+DT_LABELS = 'dt_labels'
+DT_FEATURES = 'dt_features'
+DT_INFERENCE = 'dt_inference'
+DT_GT_IOU = 'dt_gt_iou'
+DT_DT_IOU = 'dt_dt_iou'
+N_DT_COORDS = 4
+N_DT_FEATURES = 21
+N_OBJECTS = 300
+N_CLASSES = 21
+
 
 def get_frame_data(fid, data):
     frame_data = {}
-    fid_dt_ix = data[DT_COORDS][:,0]==fid
+    fid_dt_ix = data[DT_COORDS][:, 0] == fid
     frame_data[DT_COORDS] = data[DT_COORDS][fid_dt_ix, 1:]
     frame_data[DT_FEATURES] = data[DT_FEATURES][fid_dt_ix]
-    fid_gt_ix = data[GT_COORDS][:,0]==fid
+    fid_gt_ix = data[GT_COORDS][:, 0] == fid
     frame_data[GT_COORDS] = data[GT_COORDS][fid_gt_ix, 1:5]
     frame_data[GT_LABELS] = data[GT_COORDS][fid_gt_ix, 5]
-    frame_data[DT_GT_IOU] = bbox_utils.compute_sets_iou(frame_data[DT_COORDS], frame_data[GT_COORDS])
+    frame_data[DT_GT_IOU] = bbox_utils.compute_sets_iou(
+        frame_data[DT_COORDS], frame_data[GT_COORDS])
     #frame_data[DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[DT_COORDS], frame_data[DT_COORDS])
     frame_data[DT_LABELS] = np.zeros([N_OBJECTS, N_CLASSES])
     for class_id in range(0, N_CLASSES):
-        class_gt_boxes = frame_data[GT_LABELS]==class_id
+        class_gt_boxes = frame_data[GT_LABELS] == class_id
         class_dt_gt = frame_data[DT_GT_IOU][:, class_gt_boxes]
-        if (class_dt_gt.shape[1]!=0):
-            frame_data[DT_LABELS][:,class_id] = np.max(bbox_utils.compute_best_iou(class_dt_gt),axis=1)
+        if (class_dt_gt.shape[1] != 0):
+            frame_data[DT_LABELS][:, class_id] = np.max(
+                bbox_utils.compute_best_iou(class_dt_gt), axis=1)
     return frame_data
 
+
 def split_by_frames(data):
-    unique_fids = np.unique(np.hstack([data[DT_COORDS][:,0], data[GT_COORDS][:,0]])).astype(int)
+    unique_fids = np.unique(
+        np.hstack([data[DT_COORDS][:, 0], data[GT_COORDS][:, 0]])).astype(int)
     pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
     get_frame_data_partial = partial(get_frame_data, data=data)
-    frames_data_train = dict(zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
+    frames_data_train = dict(
+        zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
     return frames_data_train
+
 
 def preprocess_data(data_dir):
     data = {}
@@ -88,67 +123,84 @@ def preprocess_data(data_dir):
     frames_data_train = split_by_frames(data)
     return frames_data_train
 
+
 def load_data(data_dir):
     frames_data_cache_file = os.path.join(data_dir, 'frames_data.pkl')
     if (os.path.exists(frames_data_cache_file)):
         logging.info('loading frame bbox data info from cash..')
         frames_data = joblib.load(frames_data_cache_file)
-    else :
-        logging.info('computing frame bbox data (IoU, labels, etc) - this could take some time..')
+    else:
+        logging.info(
+            'computing frame bbox data (IoU, labels, etc) - this could take some time..')
         frames_data = preprocess_data(data_dir)
         joblib.dump(frames_data, frames_data_cache_file)
     return frames_data
 
+
 def set_logging(to_stdout=True, log_file=None):
     if (to_stdout):
         logging.basicConfig(
-        format='%(asctime)s : %(message)s',
-        level=logging.INFO,
-        stream=sys.stdout)
-    else :
+            format='%(asctime)s : %(message)s',
+            level=logging.INFO,
+            stream=sys.stdout)
+    else:
         logging.basicConfig(
-        format='%(asctime)s : %(message)s',
-        level=logging.INFO,
-        filename=log_file)
-        print("logs could be found at %s"%log_file)
+            format='%(asctime)s : %(message)s',
+            level=logging.INFO,
+            filename=log_file)
+        print("logs could be found at %s" % log_file)
     return
+
 
 def shuffle_samples(n_frames):
     return np.random.choice(n_frames, n_frames, replace=False)
 
+
 def weight_variable(shape):
-  initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
+
 
 def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
+
 
 def softmax(logits):
-    n_classes=logits.shape[1]
-    return np.exp(logits) / np.tile( np.sum(np.exp(logits), axis=1).reshape(-1,1), [1, n_classes])
+    n_classes = logits.shape[1]
+    return np.exp(logits) / np.tile(np.sum(np.exp(logits),
+                                           axis=1).reshape(-1, 1), [1, n_classes])
 
-def print_debug_info(sess, input_ops, loss_op, knet_ops, inference_op, frame_data):
-    """ Print current values of kernel, inference, etc
+
+def print_debug_info(sess, input_ops, loss_op, knet_ops,
+                     inference_op, frame_data):
+    """ Print current values of kernel, inference, number of positive elements, etc.
     """
-    feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS],
-                input_ops[DT_FEATURES]:frame_data[DT_FEATURES],
-                input_ops[DT_LABELS]:frame_data[DT_LABELS]}
+    feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS],
+                 input_ops[DT_FEATURES]: frame_data[DT_FEATURES],
+                 input_ops[DT_LABELS]: frame_data[DT_LABELS]}
     inference_orig = frame_data[DT_FEATURES]
-    inference, loss, knet_data = sess.run([inference_op, loss_op, knet_ops], feed_dict=feed_dict)
-    logging.info("loss : %f"%loss)
+    inference, loss, knet_data = sess.run(
+        [inference_op, loss_op, knet_ops], feed_dict=feed_dict)
+    logging.info("loss : %f" % loss)
     # #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-    logging.info("non-neg kernel elements : %d"%np.sum(knet_data['kernels']>0))
-    logging.info("initial scores for matching bboxes : %s"%inference_orig[np.where(frame_data[DT_LABELS]>0)])
-    logging.info("new knet scores for matching bboxes : %s"%inference[np.where(frame_data[DT_LABELS]>0)])
+    logging.info("non-neg kernel elements : %d" %
+                 np.sum(knet_data['kernels'] > 0))
+    logging.info("initial scores for matching bboxes : %s" %
+                 inference_orig[np.where(frame_data[DT_LABELS] > 0)])
+    logging.info("new knet scores for matching bboxes : %s" %
+                 inference[np.where(frame_data[DT_LABELS] > 0)])
     num_gt = int(np.sum(frame_data[DT_LABELS]))
-    num_pos_inf_orig = int(np.sum(inference_orig[:,1:]>0))
-    num_pos_inf = int(np.sum(inference[:,1:]>0))
-    logging.info("frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d"%( num_gt, num_pos_inf_orig, num_pos_inf))
+    num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0))
+    num_pos_inf = int(np.sum(inference[:, 1:] > 0))
+    logging.info(
+        "frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d" %
+        (num_gt, num_pos_inf_orig, num_pos_inf))
     return
 
 
-def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_writer, global_step, out_dir, full_eval=False, n_eval_frames=100):
+def eval_model(sess, inference_op, input_ops, iou_op, frames_data,
+               summary_writer, global_step, out_dir, full_eval=False, n_eval_frames=100):
 
     if (not os.path.exists(out_dir)):
         os.makedirs(out_dir)
@@ -163,25 +215,25 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     coords = []
     gt_labels_all = []
 
-    n_total_frames=len(frames_data.keys())
+    n_total_frames = len(frames_data.keys())
 
     if (full_eval):
         n_eval_frames = n_total_frames
 
     eval_data = {}
 
-    #for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
+    # for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
     for fid in range(0, n_eval_frames):
 
         eval_data[fid] = {}
 
         frame_data = frames_data[fid]
 
-        gt_labels_all.append(frame_data[GT_LABELS].reshape(-1,1))
+        gt_labels_all.append(frame_data[GT_LABELS].reshape(-1, 1))
 
-        feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS][0:N_OBJECTS],
-                    input_ops[DT_FEATURES]:frame_data[DT_FEATURES][0:N_OBJECTS],
-                    input_ops[DT_LABELS]:frame_data[DT_LABELS][0:N_OBJECTS]}
+        feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS][0:N_OBJECTS],
+                     input_ops[DT_FEATURES]: frame_data[DT_FEATURES][0:N_OBJECTS],
+                     input_ops[DT_LABELS]: frame_data[DT_LABELS][0:N_OBJECTS]}
 
         dt_scores = frame_data[DT_FEATURES]
         inference_orig = softmax(dt_scores)
@@ -189,18 +241,39 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, dt_dt_iou  = sess.run([inference_op,iou_op], feed_dict=feed_dict)
+        inference_new, dt_dt_iou = sess.run(
+            [inference_op, iou_op], feed_dict=feed_dict)
         inference_new_all.append(inference_new)
         eval_data[fid]['inference_new'] = inference_new
 
-        dt_gt_match_orig.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_orig))
-        dt_gt_match_new.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_new))
+        dt_gt_match_orig.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[DT_GT_IOU],
+                frame_data[GT_LABELS],
+                inference_orig))
+        dt_gt_match_new.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[DT_GT_IOU],
+                frame_data[GT_LABELS],
+                inference_new))
 
-        is_suppressed_orig = nms.nms_all_classes(dt_dt_iou, inference_orig, iou_thr=FLAGS.nms_thres)
-        is_suppressed_new  = nms.nms_all_classes(dt_dt_iou, inference_new, iou_thr=FLAGS.nms_thres)
+        is_suppressed_orig = nms.nms_all_classes(
+            dt_dt_iou, inference_orig, iou_thr=FLAGS.nms_thres)
+        is_suppressed_new = nms.nms_all_classes(
+            dt_dt_iou, inference_new, iou_thr=FLAGS.nms_thres)
 
-        dt_gt_match_orig_nms.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_orig, dt_is_suppressed_info=is_suppressed_orig))
-        dt_gt_match_new_nms.append(metrics.match_dt_gt_all_classes(frame_data[DT_GT_IOU], frame_data[GT_LABELS],  inference_new, dt_is_suppressed_info=is_suppressed_new))
+        dt_gt_match_orig_nms.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[DT_GT_IOU],
+                frame_data[GT_LABELS],
+                inference_orig,
+                dt_is_suppressed_info=is_suppressed_orig))
+        dt_gt_match_new_nms.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[DT_GT_IOU],
+                frame_data[GT_LABELS],
+                inference_new,
+                dt_is_suppressed_info=is_suppressed_new))
 
     gt_labels = np.vstack(gt_labels_all)
     inference_orig = np.vstack(inference_orig_all)
@@ -212,43 +285,53 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data, summary_write
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
     if (full_eval):
-        eval_data_file = os.path.join(out_dir, 'eval_data_step'+str(global_step)+'.pkl')
+        eval_data_file = os.path.join(
+            out_dir, 'eval_data_step' + str(global_step) + '.pkl')
         joblib.dump(eval_data, eval_data_file)
 
-    ap_orig, _ = metrics.average_precision_all_classes(dt_gt_match_orig, inference_orig, gt_labels)
-    ap_orig_nms, _ = metrics.average_precision_all_classes(dt_gt_match_orig_nms, inference_orig, gt_labels)
-    ap_new, _ = metrics.average_precision_all_classes(dt_gt_match_new, inference_new, gt_labels)
-    ap_new_nms, _  = metrics.average_precision_all_classes(dt_gt_match_new_nms, inference_new, gt_labels)
+    ap_orig, _ = metrics.average_precision_all_classes(
+        dt_gt_match_orig, inference_orig, gt_labels)
+    ap_orig_nms, _ = metrics.average_precision_all_classes(
+        dt_gt_match_orig_nms, inference_orig, gt_labels)
+    ap_new, _ = metrics.average_precision_all_classes(
+        dt_gt_match_new, inference_new, gt_labels)
+    ap_new_nms, _ = metrics.average_precision_all_classes(
+        dt_gt_match_new_nms, inference_new, gt_labels)
 
     map_orig = np.nanmean(ap_orig)
     map_orig_nms = np.nanmean(ap_orig_nms)
     map_knet = np.nanmean(ap_new)
     map_knet_nms = np.nanmean(ap_new_nms)
 
-    logging.info('mAP original inference : %f'%(map_orig))
-    logging.info('mAP original inference (NMS) : %f'%(map_orig_nms))
-    logging.info('mAP knet inference : %f'%(map_knet))
-    logging.info('mAP knet inference (NMS) : %f'%(map_knet_nms))
+    logging.info('mAP original inference : %f' % (map_orig))
+    logging.info('mAP original inference (NMS) : %f' % (map_orig_nms))
+    logging.info('mAP knet inference : %f' % (map_knet))
+    logging.info('mAP knet inference (NMS) : %f' % (map_knet_nms))
 
     return map_knet
 
 
 def main(_):
 
-    experiment_name = 'pw_'+str(FLAGS.pos_weight)+'_lr_'+str(FLAGS.optimizer_step) + '_softmaxloss_' + str(FLAGS.use_softmax_loss)
-    exp_log_dir = os.path.join(FLAGS.log_dir,experiment_name)
+    experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
+                     '_lr_' + str(FLAGS.optimizer_step) +\
+                     '_sml_' + str(FLAGS.softmax_loss) +\
+                     '_smk_' + str(FLAGS.softmax_kernel) +\
+                     '_nk_' + str(FLAGS.n_kernels)
+
+    exp_log_dir = os.path.join(FLAGS.log_dir, experiment_name)
 
     if (not os.path.exists(exp_log_dir)):
         os.makedirs(exp_log_dir)
-    else :
+    else:
         if (FLAGS.start_from_scratch):
             shutil.rmtree(exp_log_dir)
             os.makedirs(exp_log_dir)
 
-    log_file=os.path.join(exp_log_dir, 'training.log')
+    log_file = os.path.join(exp_log_dir, 'training.log')
     set_logging(FLAGS.logging_to_stdout, log_file)
 
-    #loading data
+    # loading data
     logging.info('loading data..')
     logging.info('train..')
     train_data_dir = os.path.join(FLAGS.data_dir, 'train')
@@ -259,40 +342,57 @@ def main(_):
 
     logging.info('defining the model..')
     n_frames = len(frames_data_train.keys())
-    #model definition
+    # model definition
     input_ops = {}
-    input_ops[DT_COORDS]  = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_COORDS], name=DT_COORDS)
-    input_ops[DT_FEATURES] = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_DT_FEATURES], name=DT_FEATURES)
-    input_ops[DT_LABELS] = tf.placeholder(tf.float32, shape=[N_OBJECTS, N_CLASSES], name=DT_LABELS)
+    input_ops[DT_COORDS] = tf.placeholder(
+        tf.float32, shape=[
+            N_OBJECTS, N_DT_COORDS], name=DT_COORDS)
+    input_ops[DT_FEATURES] = tf.placeholder(
+        tf.float32,
+        shape=[
+            N_OBJECTS,
+            N_DT_FEATURES],
+        name=DT_FEATURES)
+    input_ops[DT_LABELS] = tf.placeholder(
+        tf.float32, shape=[
+            N_OBJECTS, N_CLASSES], name=DT_LABELS)
 
-    pairwise_features_tf = spatial.construct_pairwise_features_tf(input_ops[DT_COORDS])
-    iou_feature_tf = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_features_tf)
+    pairwise_features_tf = spatial.construct_pairwise_features_tf(input_ops[
+                                                                  DT_COORDS])
+    iou_feature_tf = spatial.compute_pairwise_spatial_features_iou_tf(
+        pairwise_features_tf)
 
-    pairwise_scores_tf =  spatial.construct_pairwise_features_tf(input_ops[DT_FEATURES])
+    pairwise_scores_tf = spatial.construct_pairwise_features_tf(input_ops[
+                                                                DT_FEATURES])
     spatial_features_tf = tf.concat(2, [iou_feature_tf, pairwise_scores_tf])
-    n_spatial_features = N_DT_FEATURES*2+1
+    n_spatial_features = N_DT_FEATURES * 2 + 1
 
-    dt_new_features_tf, knet_ops_tf = knet.knet_layer(input_ops[DT_FEATURES], spatial_features_tf, n_kernels=FLAGS.n_kernels, n_objects=N_OBJECTS, n_pair_features=n_spatial_features, n_object_features=N_DT_FEATURES)
+    dt_new_features_tf, knet_ops_tf = knet.knet_layer(input_ops[DT_FEATURES], spatial_features_tf, n_kernels=FLAGS.n_kernels,
+                                                      n_objects=N_OBJECTS, n_pair_features=n_spatial_features, n_object_features=N_DT_FEATURES,
+                                                      softmax_kernel=FLAGS.softmax_kernel)
 
-    W_fc1 = weight_variable([FLAGS.n_kernels*N_DT_FEATURES, N_CLASSES])
+    W_fc1 = weight_variable([FLAGS.n_kernels * N_DT_FEATURES, N_CLASSES])
     b_fc1 = bias_variable([N_CLASSES])
 
     logits_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
 
-    if (FLAGS.use_softmax_loss):
+    if (FLAGS.softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
-        loss_tf = tf.nn.softmax_cross_entropy_with_logits(tf.mul(logits_tf, FLAGS.pos_weight), input_ops[DT_LABELS])
-    else :
+        loss_tf = tf.nn.softmax_cross_entropy_with_logits(
+            tf.mul(logits_tf, FLAGS.pos_weight), input_ops[DT_LABELS])
+    else:
         inference_tf = tf.nn.sigmoid(logits_tf)
-        loss_tf = tf.nn.weighted_cross_entropy_with_logits(logits_tf, input_ops[DT_LABELS] , pos_weight=FLAGS.pos_weight)
+        loss_tf = tf.nn.weighted_cross_entropy_with_logits(
+            logits_tf, input_ops[DT_LABELS], pos_weight=FLAGS.pos_weight)
 
     loss_final_tf = tf.reduce_mean(loss_tf)
 
-    tf.summary.scalar('cross_entropy_loss',loss_final_tf)
+    tf.summary.scalar('cross_entropy_loss', loss_final_tf)
 
     merged_summaries = tf.summary.merge_all()
 
-    train_step = tf.train.AdamOptimizer(FLAGS.optimizer_step).minimize(loss_final_tf)
+    train_step = tf.train.AdamOptimizer(
+        FLAGS.optimizer_step).minimize(loss_final_tf)
 
     logging.info('training started..')
 
@@ -306,8 +406,8 @@ def main(_):
         if (not FLAGS.start_from_scratch):
             ckpt_path = tf.train.latest_checkpoint(exp_log_dir)
             if (ckpt_path is not None):
-                ckpt_name=ntpath.basename(ckpt_path)
-                step_id=int(ckpt_name.split('-')[1])
+                ckpt_name = ntpath.basename(ckpt_path)
+                step_id = int(ckpt_name.split('-')[1])
                 saver.restore(sess, ckpt_path)
 
         model_file = os.path.join(exp_log_dir, 'model')
@@ -316,38 +416,56 @@ def main(_):
         for epoch_id in range(0, FLAGS.n_epochs):
             for fid in shuffle_samples(n_frames):
                 frame_data = frames_data_train[fid]
-                feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS][0:N_OBJECTS],
-                            input_ops[DT_FEATURES]:frame_data[DT_FEATURES][0:N_OBJECTS],
-                            input_ops[DT_LABELS]:frame_data[DT_LABELS][0:N_OBJECTS]}
+                feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS][0:N_OBJECTS],
+                             input_ops[DT_FEATURES]: frame_data[DT_FEATURES][0:N_OBJECTS],
+                             input_ops[DT_LABELS]: frame_data[DT_LABELS][0:N_OBJECTS]}
                 summary, _ = sess.run([merged_summaries, train_step],
-                                                feed_dict=feed_dict)
+                                      feed_dict=feed_dict)
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
-                step_id+=1
-                if (step_id%5000==0):
-                    logging.info('current step : %d'%step_id)
-                    print_debug_info(sess, input_ops, loss_final_tf, knet_ops_tf, logits_tf, frame_data)
+                step_id += 1
+                if (step_id % 500 == 0):
+                    logging.info('current step : %d' % step_id)
+                    print_debug_info(
+                        sess,
+                        input_ops,
+                        loss_final_tf,
+                        knet_ops_tf,
+                        logits_tf,
+                        frame_data)
                     full_eval = False
-                    if (step_id%100000==0):
-                        full_eval=True
+                    if (step_id % 100000 == 0):
+                        full_eval = True
                     logging.info('evaluating on TRAIN..')
                     train_out_dir = os.path.join(exp_log_dir, 'train')
-                    train_map = eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
-                              frames_data_train, summary_writer,
-                              global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                              out_dir=train_out_dir,
-                              full_eval=full_eval)
-                    train_map_summ = tf.Summary(value=[tf.Summary.Value(tag="map_train", simple_value=train_map), ])
-                    summary_writer.add_summary(train_map_summ, global_step=step_id)
+                    train_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
+                                           frames_data_train, summary_writer,
+                                           global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                                           out_dir=train_out_dir,
+                                           full_eval=full_eval)
+                    train_map_summ = tf.Summary(
+                        value=[
+                            tf.Summary.Value(
+                                tag="map_train",
+                                simple_value=train_map),
+                        ])
+                    summary_writer.add_summary(
+                        train_map_summ, global_step=step_id)
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
-                    test_map = eval_model(sess, inference_tf, input_ops,  iou_feature_tf,
-                              frames_data_test, summary_writer,
-                              global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                              out_dir=test_out_dir,
-                              full_eval=full_eval)
-                    test_map_summ = tf.Summary(value=[tf.Summary.Value(tag="map_test", simple_value=test_map), ])
-                    summary_writer.add_summary(test_map_summ, global_step=step_id)
+                    test_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
+                                          frames_data_test, summary_writer,
+                                          global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                                          out_dir=test_out_dir,
+                                          full_eval=full_eval)
+                    test_map_summ = tf.Summary(
+                        value=[
+                            tf.Summary.Value(
+                                tag="map_test",
+                                simple_value=test_map),
+                        ])
+                    summary_writer.add_summary(
+                        test_map_summ, global_step=step_id)
                     saver.save(sess, model_file, global_step=step_id)
     return
 

@@ -1,7 +1,7 @@
 """Collection of tf ops for performing operaion on spatial features
 """
 
-import  tensorflow as tf
+import tensorflow as tf
 
 
 def construct_pairwise_features_tf(features,

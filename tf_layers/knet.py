@@ -3,21 +3,26 @@
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+
 def weight_variable(shape):
-  initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
+
 
 def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
+
 
 def batch_split(data, batch_size):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(data), batch_size):
         yield data[i:i + batch_size]
 
+
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+
 
 def prelu(data, name_or_scope=None):
     with tf.variable_scope(
@@ -30,14 +35,19 @@ def prelu(data, name_or_scope=None):
 
         return tf.nn.relu(data) + tf.mul(alphas, (data - tf.abs(data))) * 0.5
 
-def knet_layer(object_features, pairwise_features, n_objects, n_pair_features, n_object_features, n_kernels=1, hlayer_size=20):
+
+def knet_layer(object_features, pairwise_features, n_objects, n_pair_features,
+               n_object_features, n_kernels=1, hlayer_size=20,
+               softmax_kernel=True):
     """Basic knet layer
     """
     knet_ops = {}
 
     knet_ops['object_features'] = object_features
 
-    pairwise_features_reshaped = tf.reshape(pairwise_features, [1, n_objects, n_objects, n_pair_features])
+    pairwise_features_reshaped = tf.reshape(
+        pairwise_features, [
+            1, n_objects, n_objects, n_pair_features])
 
     knet_ops['pairwise_features'] = pairwise_features
     knet_ops['pairwise_features_reshaped'] = pairwise_features_reshaped
@@ -60,24 +70,35 @@ def knet_layer(object_features, pairwise_features, n_objects, n_pair_features, n
 
     W_conv3 = weight_variable([1, 1, hlayer_size, n_kernels])
     b_conv3 = bias_variable([n_kernels])
-    h_conv3 =  conv2d(h_conv2_relu, W_conv3) + b_conv3
+    h_conv3 = conv2d(h_conv2_relu, W_conv3) + b_conv3
     knet_ops['W_conv3'] = W_conv3
     knet_ops['h_conv3'] = h_conv3
 
     h_conv3_t = tf.transpose(h_conv3)
-    kernels = tf.reshape(h_conv3_t,[n_kernels, n_objects, n_objects])
+
+    if (softmax_kernel):
+        kernels = tf.nn.softmax(
+            tf.reshape(
+                h_conv3_t, [
+                    n_kernels, n_objects, n_objects]))
+    else:
+        kernels = tf.reshape(h_conv3_t, [n_kernels, n_objects, n_objects])
 
     knet_ops['kernels'] = kernels
 
-    object_features_reshaped = tf.reshape(object_features, [1,n_objects,-1])
+    object_features_reshaped = tf.reshape(object_features, [1, n_objects, -1])
     knet_ops['object_features_reshaped'] = object_features_reshaped
-    object_features_broadcasted = tf.tile(object_features_reshaped, [n_kernels,1,1])
+    object_features_broadcasted = tf.tile(
+        object_features_reshaped, [n_kernels, 1, 1])
     knet_ops['object_features_broadcasted'] = object_features_broadcasted
 
-    transformed_features = tf.batch_matmul(kernels , object_features_broadcasted)
+    transformed_features = tf.batch_matmul(
+        kernels, object_features_broadcasted)
 
-    transformed_features_t = tf.transpose(transformed_features, perm=[1,0,2])
-    transformed_features_flat = tf.reshape(transformed_features_t, [n_objects, n_kernels*n_object_features])
+    transformed_features_t = tf.transpose(transformed_features, perm=[1, 0, 2])
+    transformed_features_flat = tf.reshape(
+        transformed_features_t, [
+            n_objects, n_kernels * n_object_features])
 
     knet_ops['transformed_features'] = transformed_features
     knet_ops['transformed_features_flat'] = transformed_features_flat
