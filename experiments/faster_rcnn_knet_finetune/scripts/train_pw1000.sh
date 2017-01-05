@@ -19,4 +19,5 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
             --pos_weight=1000 \
+            --use_softmax_loss=False \
             --start_from_scratch=True
