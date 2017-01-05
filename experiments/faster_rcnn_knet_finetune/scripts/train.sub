@@ -1,5 +1,5 @@
 executable = /bin/bash
-arguments = train_pw100.sh
+arguments = train.sh
 error = train.job.err
 output = train.job.out
 log = train.job.log
