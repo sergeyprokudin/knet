@@ -134,14 +134,17 @@ def print_debug_info(sess, input_ops, loss_op, knet_ops, inference_op, frame_dat
     feed_dict = {input_ops[DT_COORDS]:frame_data[DT_COORDS],
                 input_ops[DT_FEATURES]:frame_data[DT_FEATURES],
                 input_ops[DT_LABELS]:frame_data[DT_LABELS]}
+    inference_orig = frame_data[DT_FEATURES]
     inference, loss, knet_data = sess.run([inference_op, loss_op, knet_ops], feed_dict=feed_dict)
     logging.info("loss : %f"%loss)
     # #logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES][np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
     logging.info("non-neg kernel elements : %d"%np.sum(knet_data['kernels']>0))
-    logging.info("inference for pos values : %s"%inference[np.where(frame_data[DT_LABELS]>0)])
+    logging.info("initial scores for matching bboxes : %s"%inference_orig[np.where(frame_data[DT_LABELS]>0)])
+    logging.info("new knet scores for matching bboxes : %s"%inference[np.where(frame_data[DT_LABELS]>0)])
     num_gt = int(np.sum(frame_data[DT_LABELS]))
-    num_pos_inference = int(np.sum(inference>0))
-    logging.info("frame num_gt : %d , num_pos_inf : %d"%( num_gt, num_pos_inference))
+    num_pos_inf_orig = int(np.sum(inference_orig[:,1:]>0))
+    num_pos_inf = int(np.sum(inference[:,1:]>0))
+    logging.info("frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d"%( num_gt, num_pos_inf_orig, num_pos_inf))
     return
 
 
@@ -323,7 +326,7 @@ def main(_):
                 step_id+=1
                 if (step_id%5000==0):
                     logging.info('current step : %d'%step_id)
-                    print_debug_info(sess, input_ops, loss_final_tf, knet_ops_tf, inference_tf, frame_data)
+                    print_debug_info(sess, input_ops, loss_final_tf, knet_ops_tf, logits_tf, frame_data)
                     full_eval = False
                     if (step_id%100000==0):
                         full_eval=True
