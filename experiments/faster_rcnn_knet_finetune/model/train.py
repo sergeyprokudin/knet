@@ -49,6 +49,9 @@ gflags.DEFINE_boolean(
     'Whether to write logs to stdout or to logfile')
 gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
+
+gflags.DEFINE_integer('knet_hlayer_size', 100, 'Size of knet hidden layers')
+
 gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
 gflags.DEFINE_boolean(
     'start_from_scratch',
@@ -314,6 +317,7 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data,
 def main(_):
 
     experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
+                     '_khls_' + str(FLAGS.knet_hlayer_size) + \
                      '_lr_' + str(FLAGS.optimizer_step) +\
                      '_sml_' + str(FLAGS.softmax_loss) +\
                      '_smk_' + str(FLAGS.softmax_kernel) +\
@@ -369,7 +373,8 @@ def main(_):
 
     dt_new_features_tf, knet_ops_tf = knet.knet_layer(input_ops[DT_FEATURES], spatial_features_tf, n_kernels=FLAGS.n_kernels,
                                                       n_objects=N_OBJECTS, n_pair_features=n_spatial_features, n_object_features=N_DT_FEATURES,
-                                                      softmax_kernel=FLAGS.softmax_kernel)
+                                                      softmax_kernel=FLAGS.softmax_kernel,
+                                                      hlayer_size=FLAGS.knet_hlayer_size)
 
     W_fc1 = weight_variable([FLAGS.n_kernels * N_DT_FEATURES, N_CLASSES])
     b_fc1 = bias_variable([N_CLASSES])
@@ -378,8 +383,9 @@ def main(_):
 
     if (FLAGS.softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
+        weigths_tf = tf.mul(input_ops[DT_LABELS], FLAGS.pos_weight)
         loss_tf = tf.nn.softmax_cross_entropy_with_logits(
-            tf.mul(logits_tf, FLAGS.pos_weight), input_ops[DT_LABELS])
+            tf.mul(logits_tf, weigths_tf), input_ops[DT_LABELS])
     else:
         inference_tf = tf.nn.sigmoid(logits_tf)
         loss_tf = tf.nn.weighted_cross_entropy_with_logits(
@@ -424,7 +430,7 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id += 1
-                if (step_id % 5000 == 0):
+                if (step_id % 50 == 0):
                     logging.info('current step : %d' % step_id)
                     print_debug_info(
                         sess,
