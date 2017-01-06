@@ -313,6 +313,17 @@ def eval_model(sess, inference_op, input_ops, iou_op, frames_data,
 
     return map_knet
 
+def write_scalar_summary(value, name, summary_writer, step_id):
+    test_map_summ = tf.Summary(
+        value=[
+            tf.Summary.Value(
+                tag=name,
+                simple_value=value),
+        ])
+    summary_writer.add_summary(
+        test_map_summ, global_step=step_id)
+    return
+
 
 def main(_):
 
@@ -430,7 +441,7 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id += 1
-                if (step_id % 50 == 0):
+                if (step_id % 5000 == 0):
                     logging.info('current step : %d' % step_id)
                     print_debug_info(
                         sess,
@@ -449,14 +460,10 @@ def main(_):
                                            global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                                            out_dir=train_out_dir,
                                            full_eval=full_eval)
-                    train_map_summ = tf.Summary(
-                        value=[
-                            tf.Summary.Value(
-                                tag="map_train",
-                                simple_value=train_map),
-                        ])
-                    summary_writer.add_summary(
-                        train_map_summ, global_step=step_id)
+                    if (full_eval) :
+                        write_scalar_summary(train_map, 'train_map_full', summary_writer, step_id)
+                    else :
+                        write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
                     test_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
@@ -464,14 +471,10 @@ def main(_):
                                           global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                                           out_dir=test_out_dir,
                                           full_eval=full_eval)
-                    test_map_summ = tf.Summary(
-                        value=[
-                            tf.Summary.Value(
-                                tag="map_test",
-                                simple_value=test_map),
-                        ])
-                    summary_writer.add_summary(
-                        test_map_summ, global_step=step_id)
+                    if (full_eval) :
+                        write_scalar_summary(test_map, 'test_map_full', summary_writer, step_id)
+                    else :
+                        write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
                     saver.save(sess, model_file, global_step=step_id)
     return
 
