@@ -19,6 +19,7 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
             --pos_weight=100 \
+            --optimizer_step=0.001\
             --softmax_loss=False \
             --softmax_kernel=True \
             --n_kernels=1\
