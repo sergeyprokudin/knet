@@ -47,7 +47,7 @@ gflags.DEFINE_boolean(
     'logging_to_stdout',
     False,
     'Whether to write logs to stdout or to logfile')
-gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
+gflags.DEFINE_integer('n_epochs', 100000, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
 
 gflags.DEFINE_integer('knet_hlayer_size', 100, 'Size of knet hidden layers')
@@ -65,7 +65,7 @@ gflags.DEFINE_boolean(
     'softmax_kernel',
     True,
     'Whether to use softmax inference (this will make classes mutually exclusive)')
-gflags.DEFINE_float('nms_thres', 0.3, 'NMS threshold')
+gflags.DEFINE_float('nms_thres', 0.8, 'NMS threshold')
 gflags.DEFINE_integer(
     'n_eval_frames',
     100,
@@ -176,7 +176,7 @@ def softmax(logits):
 
 
 def print_debug_info(sess, input_ops, loss_op, knet_ops,
-                     inference_op, frame_data):
+                     inference_op, frame_data, exp_log_dir):
     """ Print current values of kernel, inference, number of positive elements, etc.
     """
     feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS],
@@ -194,11 +194,23 @@ def print_debug_info(sess, input_ops, loss_op, knet_ops,
     logging.info("new knet scores for matching bboxes : %s" %
                  inference[np.where(frame_data[DT_LABELS] > 0)])
     num_gt = int(np.sum(frame_data[DT_LABELS]))
-    num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0))
-    num_pos_inf = int(np.sum(inference[:, 1:] > 0))
+    num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0.0))
+    num_pos_inf = int(np.sum(inference[:, 1:] > 0.5))
     logging.info(
         "frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d" %
         (num_gt, num_pos_inf_orig, num_pos_inf))
+
+    #import ipdb; ipdb.set_trace()
+
+    import matplotlib.pyplot as plt
+
+    plt.imshow(softmax(inference_orig))
+    plt.savefig(os.path.join(exp_log_dir, 'detections_orig.png'))
+    plt.imshow(inference)
+    plt.savefig(os.path.join(exp_log_dir, 'detections.png'))
+    plt.imshow(knet_data['kernels'][0,:,:])
+    plt.savefig(os.path.join(exp_log_dir, 'kernel.png'))
+
     return
 
 
@@ -325,6 +337,7 @@ def write_scalar_summary(value, name, summary_writer, step_id):
     return
 
 
+
 def main(_):
 
     experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
@@ -387,16 +400,19 @@ def main(_):
                                                       softmax_kernel=FLAGS.softmax_kernel,
                                                       hlayer_size=FLAGS.knet_hlayer_size)
 
-    W_fc1 = weight_variable([FLAGS.n_kernels * N_DT_FEATURES, N_CLASSES])
-    b_fc1 = bias_variable([N_CLASSES])
+    W_fc1 = weight_variable([FLAGS.n_kernels * N_DT_FEATURES, FLAGS.knet_hlayer_size])
+    b_fc1 = bias_variable([FLAGS.knet_hlayer_size])
+    h_conv1 = tf.nn.relu(tf.matmul(dt_new_features_tf, W_fc1) + b_fc1)
+    W_fc2 = weight_variable([FLAGS.knet_hlayer_size, N_CLASSES])
+    b_fc2 = bias_variable([N_CLASSES])
 
-    logits_tf = tf.matmul(dt_new_features_tf, W_fc1) + b_fc1
+    logits_tf = tf.matmul(h_conv1, W_fc2) + b_fc2
 
     if (FLAGS.softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
         weights_tf = tf.add(tf.ones([N_OBJECTS, N_CLASSES]), tf.mul(input_ops[DT_LABELS], FLAGS.pos_weight-1))
         loss_tf = tf.nn.softmax_cross_entropy_with_logits(
-            tf.mul(logits_tf, weights_tf), input_ops[DT_LABELS])
+            logits_tf, input_ops[DT_LABELS])
     else:
         inference_tf = tf.nn.sigmoid(logits_tf)
         loss_tf = tf.nn.weighted_cross_entropy_with_logits(
@@ -411,8 +427,6 @@ def main(_):
     train_step = tf.train.AdamOptimizer(
         FLAGS.optimizer_step).minimize(loss_final_tf)
 
-    logging.info('training started..')
-
     with tf.Session() as sess:
         step_id = 0
         sess.run(tf.global_variables_initializer())
@@ -423,6 +437,7 @@ def main(_):
         if (not FLAGS.start_from_scratch):
             ckpt_path = tf.train.latest_checkpoint(exp_log_dir)
             if (ckpt_path is not None):
+                logging.info('model exists, restoring..')
                 ckpt_name = ntpath.basename(ckpt_path)
                 step_id = int(ckpt_name.split('-')[1])
                 saver.restore(sess, ckpt_path)
@@ -430,13 +445,15 @@ def main(_):
         model_file = os.path.join(exp_log_dir, 'model')
         summary_writer = tf.summary.FileWriter(exp_log_dir, sess.graph)
 
+        logging.info('training started..')
+
         for epoch_id in range(0, FLAGS.n_epochs):
             for fid in shuffle_samples(n_frames):
                 frame_data = frames_data_train[fid]
                 feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS][0:N_OBJECTS],
                              input_ops[DT_FEATURES]: frame_data[DT_FEATURES][0:N_OBJECTS],
                              input_ops[DT_LABELS]: frame_data[DT_LABELS][0:N_OBJECTS]}
-                summary, weights,  _ = sess.run([merged_summaries, weights_tf, train_step],
+                summary, _ = sess.run([merged_summaries, train_step],
                                       feed_dict=feed_dict)
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
@@ -448,22 +465,23 @@ def main(_):
                         input_ops,
                         loss_final_tf,
                         knet_ops_tf,
-                        logits_tf,
-                        frame_data)
+                        inference_tf,
+                        frame_data,
+                        exp_log_dir)
                     full_eval = False
                     if (step_id % 100000 == 0):
                         full_eval = True
-                    logging.info('evaluating on TRAIN..')
-                    train_out_dir = os.path.join(exp_log_dir, 'train')
-                    train_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
-                                           frames_data_train, summary_writer,
-                                           global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                                           out_dir=train_out_dir,
-                                           full_eval=full_eval)
-                    if (full_eval) :
-                        write_scalar_summary(train_map, 'train_map_full', summary_writer, step_id)
-                    else :
-                        write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
+                    # logging.info('evaluating on TRAIN..')
+                    # train_out_dir = os.path.join(exp_log_dir, 'train')
+                    # train_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
+                    #                        frames_data_train, summary_writer,
+                    #                        global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                    #                        out_dir=train_out_dir,
+                    #                        full_eval=full_eval)
+                    # if (full_eval) :
+                    #     write_scalar_summary(train_map, 'train_map_full', summary_writer, step_id)
+                    # else :
+                    #     write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
                     test_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
