@@ -208,13 +208,14 @@ def print_debug_info(sess, input_ops, loss_op, knet_ops,
     #import ipdb; ipdb.set_trace()
 
     import matplotlib; matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
 
-    matplotlib.pyplot.imshow(softmax(inference_orig))
-    matplotlib.pyplot.savefig(os.path.join(exp_log_dir, 'detections_orig.png'))
-    matplotlib.pyplot.imshow(inference)
-    matplotlib.pyplot.savefig(os.path.join(exp_log_dir, 'detections.png'))
-    matplotlib.pyplot.imshow(knet_data['kernels'][0,:,:])
-    matplotlib.pyplot.savefig(os.path.join(exp_log_dir, 'kernel.png'))
+    plt.imshow(softmax(inference_orig))
+    plt.savefig(os.path.join(exp_log_dir, 'detections_orig.png'))
+    plt.imshow(inference)
+    plt.savefig(os.path.join(exp_log_dir, 'detections.png'))
+    plt.imshow(knet_data['kernels'][0,:,:])
+    plt.savefig(os.path.join(exp_log_dir, 'kernel.png'))
 
     return
 
