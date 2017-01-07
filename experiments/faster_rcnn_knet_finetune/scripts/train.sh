@@ -25,4 +25,5 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --softmax_kernel=True \
             --n_kernels=8 \
             --start_from_scratch=True \
+            --eval_step=5000\
             --logging_to_stdout=True
