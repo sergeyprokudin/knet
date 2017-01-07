@@ -394,9 +394,9 @@ def main(_):
 
     if (FLAGS.softmax_loss):
         inference_tf = tf.nn.softmax(logits_tf)
-        weigths_tf = tf.mul(input_ops[DT_LABELS], FLAGS.pos_weight)
+        weights_tf = tf.add(tf.ones([N_OBJECTS, N_CLASSES]), tf.mul(input_ops[DT_LABELS], FLAGS.pos_weight-1))
         loss_tf = tf.nn.softmax_cross_entropy_with_logits(
-            tf.mul(logits_tf, weigths_tf), input_ops[DT_LABELS])
+            tf.mul(logits_tf, weights_tf), input_ops[DT_LABELS])
     else:
         inference_tf = tf.nn.sigmoid(logits_tf)
         loss_tf = tf.nn.weighted_cross_entropy_with_logits(
@@ -436,7 +436,7 @@ def main(_):
                 feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS][0:N_OBJECTS],
                              input_ops[DT_FEATURES]: frame_data[DT_FEATURES][0:N_OBJECTS],
                              input_ops[DT_LABELS]: frame_data[DT_LABELS][0:N_OBJECTS]}
-                summary, _ = sess.run([merged_summaries, train_step],
+                summary, weights,  _ = sess.run([merged_summaries, weights_tf, train_step],
                                       feed_dict=feed_dict)
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
