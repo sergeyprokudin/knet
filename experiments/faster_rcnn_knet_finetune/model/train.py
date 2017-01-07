@@ -463,7 +463,7 @@ def main(_):
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
                 step_id += 1
-                if (step_id % 5000 == 0):
+                if (step_id % FLAGS.eval_step == 0):
                     logging.info('current step : %d' % step_id)
                     print_debug_info(
                         sess,
