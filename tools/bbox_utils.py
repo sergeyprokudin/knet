@@ -39,19 +39,24 @@ def compute_best_iou(iou, iou_threshold=0.5):
 
     Example :
 
-    [0.9 0.7 0.2]       [1 0 0]
-    [0.6 0.1 0.5]  ->   [0 0 1]
-    [0.0 0.8 0.3]       [0 1 0]
+    [0.9 0.7 0.2 0.1]       [1 0 0]
+    [0.6 0.1 0.5 0.2]  ->   [0 0 1]
+    [0.0 0.8 0.3 0.1]       [0 1 0]
+    [0.1 0.2 0.1 0.1]       [0 0 0]
     """
+    thres_mask = np.zeros(iou.shape)
+    thres_mask[np.where(iou>=iou_threshold)] = 1
     best_iou = np.zeros(iou.shape)
     coords_sorted = np.unravel_index(
         np.argsort(iou, axis=None)[::-1], iou.shape)
     coords_sorted = np.asarray(coords_sorted).T
     mask = np.ones(iou.shape)
     for i, j in coords_sorted:
-        best_iou[i, j] = 1 * mask[i, j]
-        mask[i, :] = 0
-        mask[:, j] = 0
-        if (np.count_nonzero(mask) == 0):
-            break
+        if (mask[i,j]!=0) :
+            best_iou[i, j] = 1
+            mask[i, :] = 0
+            mask[:, j] = 0
+            if (np.count_nonzero(mask) == 0):
+                break
+    best_iou = np.multiply(best_iou, thres_mask)
     return best_iou

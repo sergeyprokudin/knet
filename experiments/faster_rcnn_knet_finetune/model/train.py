@@ -82,21 +82,22 @@ DT_COORDS = 'dt_coords'
 GT_COORDS = 'gt_coords'
 GT_LABELS = 'gt_labels'
 DT_LABELS = 'dt_labels'
+DT_LABELS_BASIC = 'dt_labels_basic'
 DT_FEATURES = 'dt_features'
 DT_INFERENCE = 'dt_inference'
 DT_GT_IOU = 'dt_gt_iou'
 DT_DT_IOU = 'dt_dt_iou'
 N_DT_COORDS = 4
 N_DT_FEATURES = 21
-N_OBJECTS = 300
+N_OBJECTS = 20
 N_CLASSES = 21
 
 
 def get_frame_data(fid, data):
     frame_data = {}
     fid_dt_ix = data[DT_COORDS][:, 0] == fid
-    frame_data[DT_COORDS] = data[DT_COORDS][fid_dt_ix, 1:]
-    frame_data[DT_FEATURES] = data[DT_FEATURES][fid_dt_ix]
+    frame_data[DT_COORDS] = data[DT_COORDS][fid_dt_ix, 1:][0:N_OBJECTS]
+    frame_data[DT_FEATURES] = data[DT_FEATURES][fid_dt_ix][0:N_OBJECTS]
     fid_gt_ix = data[GT_COORDS][:, 0] == fid
     frame_data[GT_COORDS] = data[GT_COORDS][fid_gt_ix, 1:5]
     frame_data[GT_LABELS] = data[GT_COORDS][fid_gt_ix, 5]
@@ -104,22 +105,24 @@ def get_frame_data(fid, data):
         frame_data[DT_COORDS], frame_data[GT_COORDS])
     #frame_data[DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[DT_COORDS], frame_data[DT_COORDS])
     frame_data[DT_LABELS] = np.zeros([N_OBJECTS, N_CLASSES])
+    frame_data[DT_LABELS_BASIC] = np.zeros([N_OBJECTS, N_CLASSES])
     for class_id in range(0, N_CLASSES):
         class_gt_boxes = frame_data[GT_LABELS] == class_id
         class_dt_gt = frame_data[DT_GT_IOU][:, class_gt_boxes]
         if (class_dt_gt.shape[1] != 0):
             frame_data[DT_LABELS][:, class_id] = np.max(
                 bbox_utils.compute_best_iou(class_dt_gt), axis=1)
+            frame_data[DT_LABELS_BASIC][:,class_id][np.max(class_dt_gt,axis=1)>0.5]=1
     return frame_data
 
 
 def split_by_frames(data):
     unique_fids = np.unique(
         np.hstack([data[DT_COORDS][:, 0], data[GT_COORDS][:, 0]])).astype(int)
-    pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
+    #pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
     get_frame_data_partial = partial(get_frame_data, data=data)
     frames_data_train = dict(
-        zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
+        zip(unique_fids, map(get_frame_data_partial, unique_fids)))
     return frames_data_train
 
 
@@ -181,7 +184,7 @@ def softmax(logits):
 
 
 def print_debug_info(sess, input_ops, loss_op, knet_ops,
-                     inference_op, frame_data, exp_log_dir):
+                     inference_op, frame_data, exp_log_dir, fid):
     """ Print current values of kernel, inference, number of positive elements, etc.
     """
     feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS],
@@ -210,12 +213,20 @@ def print_debug_info(sess, input_ops, loss_op, knet_ops,
     import matplotlib; matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
+    img_dir = os.path.join(exp_log_dir,'images')
+    if (not os.path.exists(img_dir)):
+        os.makedirs(img_dir)
+    plt.imshow(frame_data[DT_LABELS])
+    plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+ '_labels.png'))
+    plt.imshow(frame_data[DT_LABELS_BASIC])
+    plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+ '_labels_basic.png'))
     plt.imshow(softmax(inference_orig))
-    plt.savefig(os.path.join(exp_log_dir, 'detections_orig.png'))
+    plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+'_detections_orig.png'))
     plt.imshow(inference)
-    plt.savefig(os.path.join(exp_log_dir, 'detections.png'))
+    plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+'_detections.png'))
     plt.imshow(knet_data['kernels'][0,:,:])
-    plt.savefig(os.path.join(exp_log_dir, 'kernel.png'))
+    plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+'_kernel0.png'))
+    plt.close()
 
     return
 
@@ -466,6 +477,11 @@ def main(_):
                 step_id += 1
                 if (step_id % FLAGS.eval_step == 0):
                     logging.info('current step : %d' % step_id)
+                    fid = shuffle_samples(100)[0]
+                    frame_data = frames_data_test[fid]
+                    feed_dict = {input_ops[DT_COORDS]: frame_data[DT_COORDS][0:N_OBJECTS],
+                                 input_ops[DT_FEATURES]: frame_data[DT_FEATURES][0:N_OBJECTS],
+                                 input_ops[DT_LABELS]: frame_data[DT_LABELS][0:N_OBJECTS]}
                     print_debug_info(
                         sess,
                         input_ops,
@@ -473,7 +489,8 @@ def main(_):
                         knet_ops_tf,
                         inference_tf,
                         frame_data,
-                        exp_log_dir)
+                        exp_log_dir,
+                        fid=fid)
                     full_eval = False
                     if (step_id % 100000 == 0):
                         full_eval = True
@@ -492,7 +509,7 @@ def main(_):
                     test_out_dir = os.path.join(exp_log_dir, 'test')
                     test_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
                                           frames_data_test, summary_writer,
-                                          global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                                          global_step=step_id, n_eval_frames=100,
                                           out_dir=test_out_dir,
                                           full_eval=full_eval)
                     if (full_eval) :
