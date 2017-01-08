@@ -24,7 +24,7 @@ import logging
 from google.apputils import app
 
 from tools import bbox_utils, nms, metrics
-from tf_layers import knet, spatial
+from tf_layers import knet, spatial, misc
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string(
@@ -68,7 +68,7 @@ gflags.DEFINE_boolean(
 gflags.DEFINE_float('nms_thres', 0.8, 'NMS threshold')
 gflags.DEFINE_integer(
     'n_eval_frames',
-    100,
+    1000,
     'Number of frames to use for intermediate evaluation')
 gflags.DEFINE_integer(
     'eval_step',
@@ -167,16 +167,6 @@ def shuffle_samples(n_frames):
     return np.random.choice(n_frames, n_frames, replace=False)
 
 
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
-
-
 def softmax(logits):
     n_classes = logits.shape[1]
     return np.exp(logits) / np.tile(np.sum(np.exp(logits),
@@ -227,7 +217,6 @@ def print_debug_info(sess, input_ops, loss_op, knet_ops,
     plt.imshow(knet_data['kernels'][0,:,:])
     plt.savefig(os.path.join(img_dir, 'fid_'+str(fid)+'_kernel0.png'))
     plt.close()
-
     return
 
 
@@ -353,8 +342,6 @@ def write_scalar_summary(value, name, summary_writer, step_id):
         test_map_summ, global_step=step_id)
     return
 
-
-
 def main(_):
 
     experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
@@ -417,25 +404,22 @@ def main(_):
                                                       softmax_kernel=FLAGS.softmax_kernel,
                                                       hlayer_size=FLAGS.knet_hlayer_size)
 
-    W_fc1 = weight_variable([FLAGS.n_kernels * N_DT_FEATURES, FLAGS.knet_hlayer_size])
-    b_fc1 = bias_variable([FLAGS.knet_hlayer_size])
+    W_fc1 = misc.weight_variable([FLAGS.n_kernels * N_DT_FEATURES, FLAGS.knet_hlayer_size])
+    b_fc1 = misc.bias_variable([FLAGS.knet_hlayer_size])
     h_conv1 = tf.nn.relu(tf.matmul(dt_new_features_tf, W_fc1) + b_fc1)
-    W_fc2 = weight_variable([FLAGS.knet_hlayer_size, N_CLASSES])
-    b_fc2 = bias_variable([N_CLASSES])
+    W_fc2 = misc.weight_variable([FLAGS.knet_hlayer_size, N_CLASSES])
+    b_fc2 = misc.bias_variable([N_CLASSES])
+    logits_tf = tf.matmul(h_conv2, W_fc2) + b_fc2
 
-    logits_tf = tf.matmul(h_conv1, W_fc2) + b_fc2
+    inference_tf = tf.nn.sigmoid(logits_tf)
+    loss_tf = tf.nn.weighted_cross_entropy_with_logits(
+        logits_tf, input_ops[DT_LABELS], pos_weight=1)
 
-    if (FLAGS.softmax_loss):
-        inference_tf = tf.nn.softmax(logits_tf)
-        weights_tf = tf.add(tf.ones([N_OBJECTS, N_CLASSES]), tf.mul(input_ops[DT_LABELS], FLAGS.pos_weight-1))
-        loss_tf = tf.nn.softmax_cross_entropy_with_logits(
-            logits_tf, input_ops[DT_LABELS])
-    else:
-        inference_tf = tf.nn.sigmoid(logits_tf)
-        loss_tf = tf.nn.weighted_cross_entropy_with_logits(
-            logits_tf, input_ops[DT_LABELS], pos_weight=FLAGS.pos_weight)
+    hard_indices_tf = misc.data_subselection_hard_negative_tf(input_ops[DT_LABELS], loss_tf)
 
-    loss_final_tf = tf.reduce_mean(loss_tf)
+    loss_hard_tf = tf.gather(loss_tf, hard_indices_tf)
+
+    loss_final_tf = tf.reduce_mean(loss_hard_tf)
 
     tf.summary.scalar('cross_entropy_loss', loss_final_tf)
 
@@ -491,6 +475,8 @@ def main(_):
                         frame_data,
                         exp_log_dir,
                         fid=fid)
+                    #loss_hard, hard_indices, loss_full = sess.run([loss_hard_tf, hard_indices_tf, loss_tf], feed_dict=feed_dict)
+                    #import ipdb; ipdb.set_trace()
                     full_eval = False
                     if (step_id % 100000 == 0):
                         full_eval = True
@@ -509,7 +495,7 @@ def main(_):
                     test_out_dir = os.path.join(exp_log_dir, 'test')
                     test_map = eval_model(sess, inference_tf, input_ops, iou_feature_tf,
                                           frames_data_test, summary_writer,
-                                          global_step=step_id, n_eval_frames=100,
+                                          global_step=step_id, n_eval_frames=1000,
                                           out_dir=test_out_dir,
                                           full_eval=full_eval)
                     if (full_eval) :
