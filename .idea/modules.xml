@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/knet.iml" filepath="$PROJECT_DIR$/.idea/knet.iml" />
+      <module fileurl="file://$USER_HOME$/neural_nms/.idea/neural_nms.iml" filepath="$USER_HOME$/neural_nms/.idea/neural_nms.iml" />
+    </modules>
+  </component>
+</project>

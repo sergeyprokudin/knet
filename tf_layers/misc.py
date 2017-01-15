@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 
+
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -32,7 +33,7 @@ def data_subselection_hard_negative_tf(targets, loss, name_or_scope=None):
 
         loss_reduced = tf.squeeze(tf.reduce_max(loss, [1]))
         targets_reduced = tf.squeeze(tf.reduce_max(targets, [1]))
-        
+
         n_hypotheses = tf.shape(loss_reduced)[0]
 
         with tf.device('cpu'):
@@ -57,7 +58,7 @@ def data_subselection_hard_negative_tf(targets, loss, name_or_scope=None):
 
             def _empty_pos():
                 # We return some index just any.
-                return (tf.gather(ordering,  tf.constant([0], dtype=tf.int64)),
+                return (tf.gather(ordering, tf.constant([0], dtype=tf.int64)),
                         tf.constant(1, dtype=tf.int32))
 
             def _pos():
@@ -78,7 +79,7 @@ def data_subselection_hard_negative_tf(targets, loss, name_or_scope=None):
                 size_max = tf.minimum(
                     tf.maximum(
                         size_positive,
-                        3),
+                        100),
                     size_negative)
                 return tf.gather(ordering,
                                  indices_negative[:size_max])
