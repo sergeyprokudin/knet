@@ -23,8 +23,8 @@ import gflags
 import logging
 from google.apputils import app
 
-from tools import bbox_utils, nms, metrics
 from tf_layers import knet, spatial, misc
+from tools import bbox_utils, nms, metrics
 import model as nnms
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')

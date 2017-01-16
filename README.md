@@ -1,2 +1,5 @@
 # knet
-Tensorflow models and experiments for upcoming knet paper
+Simplidfied tensorflow models and experiments with knet layer
+
+#Installation
+
