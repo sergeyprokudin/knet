@@ -23,9 +23,9 @@ import gflags
 import logging
 from google.apputils import app
 
-from tf_layers import knet, spatial, misc
 from tools import bbox_utils, nms, metrics
 import model as nnms
+import eval
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string(
@@ -66,7 +66,7 @@ gflags.DEFINE_boolean(
     'softmax_kernel',
     True,
     'Whether to use softmax inference (this will make classes mutually exclusive)')
-gflags.DEFINE_float('nms_thres', 0.8, 'NMS threshold')
+gflags.DEFINE_float('nms_thres', 0.5, 'NMS threshold')
 gflags.DEFINE_integer(
     'n_eval_frames',
     1000,
@@ -121,10 +121,10 @@ def get_frame_data(fid, data):
 def split_by_frames(data):
     unique_fids = np.unique(
         np.hstack([data[DT_COORDS][:, 0], data[GT_COORDS][:, 0]])).astype(int)
-    # pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
+    pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
     get_frame_data_partial = partial(get_frame_data, data=data)
     frames_data_train = dict(
-        zip(unique_fids, map(get_frame_data_partial, unique_fids)))
+        zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
     return frames_data_train
 
 
@@ -168,170 +168,6 @@ def set_logging(to_stdout=True, log_file=None):
 def shuffle_samples(n_frames):
     return np.random.choice(n_frames, n_frames, replace=False)
 
-
-def softmax(logits):
-    n_classes = logits.shape[1]
-    return np.exp(logits) / np.tile(np.sum(np.exp(logits),
-                                           axis=1).reshape(-1, 1), [1, n_classes])
-
-def eval_model(sess, nnms_model, frames_data,
-             global_step, out_dir, full_eval=False, n_eval_frames=100):
-
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    dt_gt_match_orig = []
-    dt_gt_match_new = []
-    dt_gt_match_orig_nms = []
-    dt_gt_match_new_nms = []
-
-    inference_orig_all = []
-    inference_new_all = []
-    coords = []
-    gt_labels_all = []
-
-    n_total_frames = len(frames_data.keys())
-
-    if (full_eval):
-        n_eval_frames = n_total_frames
-
-    eval_data = {}
-
-    # for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
-    for fid in range(0, n_eval_frames):
-
-        eval_data[fid] = {}
-
-        frame_data = frames_data[fid]
-
-        gt_labels_all.append(frame_data[GT_LABELS].reshape(-1, 1))
-
-        feed_dict = {nnms_model.dt_coords: frame_data[DT_COORDS],
-                     nnms_model.dt_features: frame_data[DT_FEATURES]}
-
-        dt_scores = frame_data[DT_FEATURES]
-        inference_orig = softmax(dt_scores)
-        eval_data[fid]['dt_coords'] = frame_data[DT_COORDS]
-        inference_orig_all.append(inference_orig)
-        eval_data[fid]['inference_orig'] = inference_orig
-
-        inference_new, dt_dt_iou = sess.run(
-            [nnms_model.class_prob, nnms_model.iou_feature], feed_dict=feed_dict)
-        inference_new_all.append(inference_new)
-        eval_data[fid]['inference_new'] = inference_new
-
-        dt_gt_match_orig.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[DT_GT_IOU],
-                frame_data[GT_LABELS],
-                inference_orig))
-
-        dt_gt_match_new.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[DT_GT_IOU],
-                frame_data[GT_LABELS],
-                inference_new))
-
-        is_suppressed_orig = nms.nms_all_classes(
-            dt_dt_iou, inference_orig, iou_thr=FLAGS.nms_thres)
-        is_suppressed_new = nms.nms_all_classes(
-            dt_dt_iou, inference_new, iou_thr=FLAGS.nms_thres)
-
-        dt_gt_match_orig_nms.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[DT_GT_IOU],
-                frame_data[GT_LABELS],
-                inference_orig,
-                dt_is_suppressed_info=is_suppressed_orig))
-        dt_gt_match_new_nms.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[DT_GT_IOU],
-                frame_data[GT_LABELS],
-                inference_new,
-                dt_is_suppressed_info=is_suppressed_new))
-
-    gt_labels = np.vstack(gt_labels_all)
-    inference_orig = np.vstack(inference_orig_all)
-    inference_new = np.vstack(inference_new_all)
-
-    dt_gt_match_orig = np.vstack(dt_gt_match_orig)
-    dt_gt_match_new = np.vstack(dt_gt_match_new)
-    dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
-    dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
-
-    if full_eval:
-        eval_data_file = os.path.join(
-            out_dir, 'eval_data_step' + str(global_step) + '.pkl')
-        joblib.dump(eval_data, eval_data_file)
-
-    ap_orig, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig, inference_orig, gt_labels)
-    ap_orig_nms, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig_nms, inference_orig, gt_labels)
-    ap_new, _ = metrics.average_precision_all_classes(
-        dt_gt_match_new, inference_new, gt_labels)
-    ap_new_nms, _ = metrics.average_precision_all_classes(
-        dt_gt_match_new_nms, inference_new, gt_labels)
-
-    map_orig = np.nanmean(ap_orig)
-    map_orig_nms = np.nanmean(ap_orig_nms)
-    map_knet = np.nanmean(ap_new)
-    map_knet_nms = np.nanmean(ap_new_nms)
-
-    logging.info('mAP original inference : %f' % map_orig)
-    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
-    logging.info('mAP knet inference : %f' % map_knet)
-    logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
-
-    return map_knet
-
-
-def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
-
-    feed_dict = {nnms_model.dt_coords: frame_data[DT_COORDS],
-                 nnms_model.dt_features: frame_data[DT_FEATURES],
-                 nnms_model.dt_labels : frame_data[DT_LABELS]}
-
-    inference_orig = frame_data[DT_FEATURES]
-    inference, loss  = sess.run(
-        [nnms_model.class_prob, nnms_model.loss_final], feed_dict=feed_dict)
-    print("loss : %f" % loss)
-    # print("initial scores for pos values : %s"%frame_data[DT_FEATURES]
-    # [np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
-
-    print("initial scores for matching bboxes : %s" %
-                 inference_orig[np.where(frame_data[DT_LABELS] > 0)])
-    print("new knet scores for matching bboxes : %s" %
-                 inference[np.where(frame_data[DT_LABELS] > 0)])
-    num_gt = int(np.sum(frame_data[DT_LABELS]))
-    num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0.0))
-    num_pos_inf = int(np.sum(inference[:, 1:] > 0.5))
-    print(
-        "frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d" %
-        (num_gt, num_pos_inf_orig, num_pos_inf))
-
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    img_dir = os.path.join(outdir, 'images')
-    if not os.path.exists(img_dir):
-        os.makedirs(img_dir)
-    plt.imshow(frame_data[DT_LABELS])
-    plt.savefig(os.path.join(img_dir, 'fid_' + str(fid) + '_labels.png'))
-    plt.imshow(frame_data[DT_LABELS_BASIC])
-    plt.savefig(os.path.join(img_dir, 'fid_' + str(fid) + '_labels_basic.png'))
-    plt.imshow(softmax(inference_orig))
-    plt.savefig(
-        os.path.join(
-            img_dir,
-            'fid_' +
-            str(fid) +
-            '_detections_orig.png'))
-    plt.imshow(inference)
-    plt.savefig(os.path.join(img_dir, 'fid_' + str(fid) + '_detections.png'))
-    plt.close()
-    return
 
 def write_scalar_summary(value, name, summary_writer, step_id):
     test_map_summ = tf.Summary(
@@ -421,21 +257,22 @@ def main(_):
 
                 step_id += 1
                 if step_id % FLAGS.eval_step == 0:
-                    print_debug_info(sess=sess,
-                                     nnms_model=nnms_model,
-                                     frame_data=frame_data,
-                                     outdir=exp_log_dir,
-                                     fid=fid)
+                    eval.print_debug_info(sess=sess,
+                                          nnms_model=nnms_model,
+                                          frame_data=frame_data,
+                                          outdir=exp_log_dir,
+                                          fid=fid)
                     full_eval = False
                     if step_id % 100000 == 0:
                         full_eval = True
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
-                    test_map = eval_model(sess, nnms_model,
-                                          frames_data_test,
-                                          global_step=step_id, n_eval_frames=1000,
-                                          out_dir=test_out_dir,
-                                          full_eval=full_eval)
+                    test_map = eval.eval_model(sess, nnms_model,
+                                               frames_data_test,
+                                               global_step=step_id, n_eval_frames=1000,
+                                               out_dir=test_out_dir,
+                                               full_eval=full_eval,
+                                               nms_thres=FLAGS.nms_thres)
                     if full_eval:
                         write_scalar_summary(
                             test_map, 'test_map_full', summary_writer, step_id)

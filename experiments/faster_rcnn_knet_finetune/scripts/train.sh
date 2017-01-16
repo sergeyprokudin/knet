@@ -18,12 +18,12 @@ set -x
 ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
-            --pos_weight=10 \
+            --pos_weight=20 \
             --optimizer_step=0.001 \
             --knet_hlayer_size=200 \
             --softmax_loss=False \
             --softmax_kernel=True \
             --n_kernels=8 \
-            --start_from_scratch=True \
+            --start_from_scratch=False \
             --eval_step=1000 \
             --logging_to_stdout=True

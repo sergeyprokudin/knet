@@ -76,22 +76,23 @@ class NeuralNMS:
             self.dt_new_features, self._n_classes, activation_fn=None)
 
         self.class_prob = tf.nn.sigmoid(self.logits)
+        
 
         # loss ops
         self.cross_entropy = tf.nn.weighted_cross_entropy_with_logits(self.logits,
                                                                       self.dt_labels,
                                                                       pos_weight=self._pos_weight)
 
-        hard_indices_tf = misc.data_subselection_hard_negative_tf(self.dt_labels, self.cross_entropy)
+        hard_indices_tf = misc.data_subselection_hard_negative_tf(
+            self.dt_labels, self.cross_entropy)
         self.loss_hard_tf = tf.gather(self.cross_entropy, hard_indices_tf)
 
         # loss_hard_tf_max = tf.reduce_max(loss_hard_tf, reduction_indices=[1])
 
         self.loss_final = tf.reduce_mean(self.loss_hard_tf)
 
-        self.train_step = tf.train.AdamOptimizer(self._optimizer_step).minimize(self.loss_final)
+        self.train_step = tf.train.AdamOptimizer(
+            self._optimizer_step).minimize(
+            self.loss_final)
 
         tf.summary.scalar('cross_entropy_loss', self.loss_final)
-
-
-
