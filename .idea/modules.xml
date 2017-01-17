@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" filepath="$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/knet.iml" filepath="$PROJECT_DIR$/.idea/knet.iml" />
       <module fileurl="file://$USER_HOME$/neural_nms/.idea/neural_nms.iml" filepath="$USER_HOME$/neural_nms/.idea/neural_nms.iml" />
     </modules>

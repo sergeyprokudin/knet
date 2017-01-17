@@ -17,7 +17,7 @@ def knet_layer(object_features, pairwise_features, n_objects, n_pair_features,
         pairwise_features_reshaped,
         hlayer_size,
         [1, 1],
-        activation_fn=misc.prelu)
+        activation_fn=tf.nn.relu)
 
     conv2 = slim.layers.conv2d(
         conv1,

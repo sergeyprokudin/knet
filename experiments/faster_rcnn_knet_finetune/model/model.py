@@ -15,6 +15,7 @@ GT_LABELS = 'gt_labels'
 DT_LABELS = 'dt_labels'
 DT_LABELS_BASIC = 'dt_labels_basic'
 DT_FEATURES = 'dt_features'
+DT_SCORES = 'dt_scores'
 DT_INFERENCE = 'dt_inference'
 DT_GT_IOU = 'dt_gt_iou'
 DT_DT_IOU = 'dt_dt_iou'
@@ -71,6 +72,9 @@ class NeuralNMS:
                                                n_object_features=self._n_dt_features,
                                                softmax_kernel=self._softmax_kernel,
                                                hlayer_size=self._knet_hlayer_size)
+
+        self.logits = slim.layers.fully_connected(
+            self.dt_new_features, self._fc_layer_size, activation_fn=tf.nn.relu)
 
         self.logits = slim.layers.fully_connected(
             self.dt_new_features, self._n_classes, activation_fn=None)
