@@ -34,7 +34,7 @@ gflags.DEFINE_string(
     'directory to save logs and trained models')
 gflags.DEFINE_integer(
     'data_loader_num_threads',
-    100,
+    20,
     'Number of threads used during data loading and preprocessing')
 gflags.DEFINE_integer(
     'n_kernels',
@@ -48,7 +48,7 @@ gflags.DEFINE_boolean(
     'logging_to_stdout',
     False,
     'Whether to write logs to stdout or to logfile')
-gflags.DEFINE_integer('n_epochs', 100000, 'Number of training epochs')
+gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
 
 gflags.DEFINE_integer('knet_hlayer_size', 100, 'Size of knet hidden layers')
@@ -201,12 +201,13 @@ def main(_):
     logging.info('train..')
     train_data_dir = os.path.join(FLAGS.data_dir, 'train')
     frames_data_train = load_data(train_data_dir)
-    # logging.info('test..')
-    # test_data_dir = os.path.join(FLAGS.data_dir, 'test')
-    # frames_data_test = load_data(test_data_dir)
+    logging.info('test..')
+    test_data_dir = os.path.join(FLAGS.data_dir, 'test')
+    frames_data_test = load_data(test_data_dir)
 
     logging.info('defining the model..')
-    n_frames = len(frames_data_train.keys())
+    n_frames_train = len(frames_data_train.keys())
+    n_frames_test = len(frames_data_test.keys())
 
     nnms_model = nnms.NeuralNMS(n_detections=N_OBJECTS,
                                 n_dt_features=N_DT_FEATURES,
@@ -239,40 +240,63 @@ def main(_):
         logging.info('training started..')
 
         for epoch_id in range(0, FLAGS.n_epochs):
-            for fid in shuffle_samples(n_frames):
+            for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
                 feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
                              nnms_model.dt_features: frame_data[nnms.DT_FEATURES],
-                             nnms_model.dt_labels: frame_data[nnms.DT_LABELS]}
+                             nnms_model.dt_labels: frame_data[nnms.DT_LABELS],
+                             nnms_model.dt_gt_iou: frame_data[nnms.DT_GT_IOU],
+                             nnms_model.gt_labels: frame_data[nnms.GT_LABELS]}
+
                 summary, _ = sess.run([merged_summaries, nnms_model.train_step],
                                       feed_dict=feed_dict)
+
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
 
                 step_id += 1
                 if step_id % FLAGS.eval_step == 0:
+
+                    fid = shuffle_samples(n_frames_test)[0]
+
+                    frame_data = frames_data_test[fid]
+
                     eval.print_debug_info(sess=sess,
                                           nnms_model=nnms_model,
                                           frame_data=frame_data,
                                           outdir=exp_log_dir,
                                           fid=fid)
-                    # full_eval = False
-                    # if step_id % 100000 == 0:
-                    #     full_eval = True
-                    # logging.info('evaluating on TEST..')
-                    # test_out_dir = os.path.join(exp_log_dir, 'test')
-                    # test_map = eval.eval_model(sess, nnms_model,
-                    #                            frames_data_test,
-                    #                            global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                    #                            out_dir=test_out_dir,
-                    #                            full_eval=full_eval,
-                    #                            nms_thres=FLAGS.nms_thres)
-                    # if full_eval:
-                    #     write_scalar_summary(
-                    #         test_map, 'test_map_full', summary_writer, step_id)
-                    # else:
-                    #     write_scalar_summary(
-                    #         test_map, 'test_map', summary_writer, step_id)
+                    full_eval = False
+                    if step_id % 100000 == 0:
+                        full_eval = True
+                    logging.info('evaluating on TRAIN..')
+                    train_out_dir = os.path.join(exp_log_dir, 'train')
+                    train_map = eval.eval_model(sess, nnms_model,
+                                               frames_data_train,
+                                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                                               out_dir=train_out_dir,
+                                               full_eval=full_eval,
+                                               nms_thres=FLAGS.nms_thres)
+                    if full_eval:
+                        write_scalar_summary(
+                            train_map, 'train_map_full', summary_writer, step_id)
+                    else:
+                        write_scalar_summary(
+                            train_map, 'train_map', summary_writer, step_id)
+                    logging.info('evaluating on TEST..')
+                    test_out_dir = os.path.join(exp_log_dir, 'test')
+                    test_map = eval.eval_model(sess, nnms_model,
+                                               frames_data_test,
+                                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
+                                               out_dir=test_out_dir,
+                                               full_eval=full_eval,
+                                               nms_thres=FLAGS.nms_thres)
+                    if full_eval:
+                        write_scalar_summary(
+                            test_map, 'test_map_full', summary_writer, step_id)
+                    else:
+                        write_scalar_summary(
+                            test_map, 'test_map', summary_writer, step_id)
                     saver.save(sess, model_file, global_step=step_id)
     return
 

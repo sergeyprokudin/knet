@@ -135,19 +135,21 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
 
     feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
                  nnms_model.dt_features: frame_data[nnms.DT_FEATURES],
-                 nnms_model.dt_labels: frame_data[nnms.DT_LABELS]}
+                 nnms_model.dt_labels: frame_data[nnms.DT_LABELS],
+                 nnms_model.dt_gt_iou: frame_data[nnms.DT_GT_IOU],
+                 nnms_model.gt_labels: frame_data[nnms.GT_LABELS]}
 
     inference_orig = frame_data[nnms.DT_SCORES]
-    inference, loss = sess.run(
-        [nnms_model.class_prob, nnms_model.loss_final], feed_dict=feed_dict)
+    inference, labels, loss = sess.run(
+        [nnms_model.class_prob, nnms_model.labels, nnms_model.loss_final], feed_dict=feed_dict)
     print("loss : %f" % loss)
     # print("initial scores for pos values : %s"%frame_data[DT_FEATURES]
     # [np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
 
     print("initial scores for matching bboxes : %s" %
-          inference_orig[np.where(frame_data[nnms.DT_LABELS] > 0)])
+          inference_orig[np.where(labels > 0)])
     print("new knet scores for matching bboxes : %s" %
-          inference[np.where(frame_data[nnms.DT_LABELS] > 0)])
+          inference[np.where(labels > 0)])
     num_gt = int(np.sum(frame_data[nnms.DT_LABELS]))
     num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0.0))
     num_pos_inf = int(np.sum(inference[:, 1:] > 0.5))
@@ -162,6 +164,8 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
     img_dir = os.path.join(outdir, 'images')
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
+
+    # best IoU labels
     plt.imshow(frame_data[nnms.DT_LABELS][:, 1:])
     plt.title('Class labels (best IoU)')
     plt.ylabel('detections')
@@ -172,6 +176,20 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
             'fid_' +
             str(fid) +
             '_labels_best_iou.png'))
+
+    # mAP labels
+    plt.imshow(labels[:, 1:])
+    plt.title('Class labels (mAP)')
+    plt.ylabel('detections')
+    plt.xlabel('class labels')
+    plt.savefig(
+        os.path.join(
+            img_dir,
+            'fid_' +
+            str(fid) +
+            '_labels_map.png'))
+
+    # per patch labels
     plt.imshow(frame_data[nnms.DT_LABELS_BASIC][:, 1:])
     plt.title('Class labels (per patch)')
     plt.ylabel('detections')
@@ -182,6 +200,8 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
             'fid_' +
             str(fid) +
             '_labels_per_patch.png'))
+
+    # fRCNN detections
     plt.imshow(softmax(inference_orig)[:, 1:])
     plt.title('Original fRCNN inference')
     plt.ylabel('detections')
@@ -193,9 +213,12 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
             str(fid) +
             '_detections_orig.png'))
     plt.imshow(inference[:, 1:])
+
+    # knet detections
     plt.title('knet inference')
     plt.ylabel('detections')
     plt.xlabel('class scores')
     plt.savefig(os.path.join(img_dir, 'fid_' + str(fid) + '_detections.png'))
     plt.close()
+
     return

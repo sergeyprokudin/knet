@@ -60,3 +60,19 @@ def compute_best_iou(iou, iou_threshold=0.5):
                 break
     best_iou = np.multiply(best_iou, thres_mask)
     return best_iou
+
+
+def construct_ground_truth_per_label(dt_gt_iou,
+                                     gt_labels,
+                                     label,
+                                     iou_threshold=0.5):
+    indices = np.where(gt_labels == label)[0]
+    if indices.shape[0] == 0:
+        return np.empty(shape=(dt_gt_iou.shape[0], 0))
+    dt_gt_iou_subset = dt_gt_iou[:, indices]
+    dt_gt_iou_subset[dt_gt_iou_subset < iou_threshold] = 0
+    labels = np.argmax(dt_gt_iou_subset, axis=1)
+    result = np.zeros(dt_gt_iou_subset.shape, dtype=np.float32)
+    indices = np.arange(dt_gt_iou_subset.shape[0])
+    result[indices, labels] = dt_gt_iou_subset[indices, labels]
+    return result
