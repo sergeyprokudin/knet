@@ -18,7 +18,7 @@ set -x
 ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
-            --num_cpus=50 \
+            --num_cpus=10 \
             --pos_weight=5 \
             --optimizer_step=0.001 \
             --knet_hlayer_size=200 \

@@ -89,15 +89,14 @@ class NeuralNMS:
 
         self.class_prob = tf.nn.sigmoid(self.logits)
 
-
         # loss ops
 
-        self.gt_per_labels = []
+        # self.gt_per_labels = []
         self.class_labels = []
 
         for class_id in range(0, self._n_classes):
             gt_per_label = losses.construct_ground_truth_per_label_tf(self.dt_gt_iou, self.gt_labels, class_id)
-            self.gt_per_labels.append(gt_per_label)
+            # self.gt_per_labels.append(gt_per_label)
             self.class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_prob,
                                                                                    gt_per_label,
                                                                                    class_id))
@@ -109,7 +108,7 @@ class NeuralNMS:
                                                                       pos_weight=self._pos_weight)
 
         hard_indices_tf = misc.data_subselection_hard_negative_tf(
-            self.dt_labels, self.cross_entropy)
+            self.dt_labels, self.cross_entropy, n_neg_examples=10)
         self.loss_hard_tf = tf.gather(self.cross_entropy, hard_indices_tf)
 
         # loss_hard_tf_max = tf.reduce_max(loss_hard_tf, reduction_indices=[1])
