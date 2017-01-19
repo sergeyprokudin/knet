@@ -1,9 +1,9 @@
 executable = /bin/bash
-arguments = train.sh
+arguments = train_cluster.sh
 error = train.job.err
 output = train.job.out
 log = train.job.log
-request_memory = 20000
+request_memory = 100000
 request_gpus = 1
 request_cpus = 5
 MaxTime = 64800

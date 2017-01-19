@@ -26,7 +26,7 @@ def prelu(data, name_or_scope=None):
         return tf.nn.relu(data) + tf.mul(alphas, (data - tf.abs(data))) * 0.5
 
 
-def data_subselection_hard_negative_tf(targets, loss, name_or_scope=None):
+def data_subselection_hard_negative_tf(targets, loss, n_neg_examples=100, name_or_scope=None):
     with tf.variable_scope(name_or_scope,
                            default_name='data_subselection_mask',
                            values=[targets, loss]):
@@ -79,7 +79,7 @@ def data_subselection_hard_negative_tf(targets, loss, name_or_scope=None):
                 size_max = tf.minimum(
                     tf.maximum(
                         size_positive,
-                        100),
+                        n_neg_examples),
                     size_negative)
                 return tf.gather(ordering,
                                  indices_negative[:size_max])

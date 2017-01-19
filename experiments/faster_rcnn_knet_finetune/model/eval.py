@@ -5,7 +5,7 @@ import os
 
 from tools import bbox_utils, nms, metrics
 import model as nnms
-
+import logging
 
 def softmax(logits):
     n_classes = logits.shape[1]
@@ -118,15 +118,10 @@ def eval_model(sess, nnms_model, frames_data,
     map_knet = np.nanmean(ap_new)
     map_knet_nms = np.nanmean(ap_new_nms)
 
-    # print('AP original inference : %s' % ap_orig)
-    # print('AP original inference (NMS) : %s' % ap_orig_nms)
-    # print('AP knet inference : %s' % ap_new)
-    # print('AP knet inference (NMS) : %s' % ap_new_nms)
-
-    print('mAP original inference : %f' % map_orig)
-    print('mAP original inference (NMS) : %f' % map_orig_nms)
-    print('mAP knet inference : %f' % map_knet)
-    print('mAP knet inference (NMS) : %f' % map_knet_nms)
+    logging.info('mAP original inference : %f' % map_orig)
+    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    logging.info('mAP knet inference : %f' % map_knet)
+    logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
 
     return map_knet
 
@@ -142,18 +137,18 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
     inference_orig = frame_data[nnms.DT_SCORES]
     inference, labels, loss = sess.run(
         [nnms_model.class_prob, nnms_model.labels, nnms_model.loss_final], feed_dict=feed_dict)
-    print("loss : %f" % loss)
-    # print("initial scores for pos values : %s"%frame_data[DT_FEATURES]
+    logging.info("loss : %f" % loss)
+    # logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES]
     # [np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
 
-    print("initial scores for matching bboxes : %s" %
+    logging.info("initial scores for matching bboxes : %s" %
           inference_orig[np.where(labels > 0)])
-    print("new knet scores for matching bboxes : %s" %
+    logging.info("new knet scores for matching bboxes : %s" %
           inference[np.where(labels > 0)])
     num_gt = int(np.sum(frame_data[nnms.DT_LABELS]))
     num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0.0))
     num_pos_inf = int(np.sum(inference[:, 1:] > 0.5))
-    print(
+    logging.info(
         "frame num_gt : %d , num_pos_inf_orig : %d, num_pos_inf : %d" %
         (num_gt, num_pos_inf_orig, num_pos_inf))
 

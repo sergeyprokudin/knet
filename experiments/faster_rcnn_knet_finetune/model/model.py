@@ -61,8 +61,10 @@ class NeuralNMS:
         #  inference ops
         self.pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
+
         self.iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(
             self.pairwise_spatial_features)
+
         self.pairwise_obj_features = spatial.construct_pairwise_features_tf(
             self.dt_features)
         self.spatial_features = tf.concat(
