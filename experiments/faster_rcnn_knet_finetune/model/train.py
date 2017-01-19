@@ -33,13 +33,10 @@ gflags.DEFINE_string(
     None,
     'directory to save logs and trained models')
 gflags.DEFINE_integer(
-    'data_loader_num_threads',
+    'num_cpus',
     20,
-    'Number of threads used during data loading and preprocessing')
-gflags.DEFINE_integer(
-    'n_kernels',
-    8,
-    'Number of kernels to used in knet layer')
+    'Number of cpus used during data loading and preprocessing')
+
 gflags.DEFINE_float(
     'best_iou_thres',
     0.5,
@@ -52,6 +49,11 @@ gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
 gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
 
 gflags.DEFINE_integer('knet_hlayer_size', 100, 'Size of knet hidden layers')
+gflags.DEFINE_integer('fc_layer_size', 100, 'Size of fully connected layer')
+gflags.DEFINE_integer(
+    'n_kernels',
+    8,
+    'Number of kernels to used in knet layer')
 
 gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
 gflags.DEFINE_boolean(
@@ -114,7 +116,7 @@ def get_frame_data(fid, data):
 
 def split_by_frames(data):
     unique_fids = np.unique(np.hstack([data[nnms.DT_COORDS][:, 0], data[nnms.GT_COORDS][:, 0]])).astype(int)
-    pool = multiprocessing.Pool(FLAGS.data_loader_num_threads)
+    pool = multiprocessing.Pool(FLAGS.num_cpus)
     get_frame_data_partial = partial(get_frame_data, data=data)
     frames_data_train = dict(
         zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
@@ -215,6 +217,7 @@ def main(_):
                                 n_kernels=FLAGS.n_kernels,
                                 pos_weight=FLAGS.pos_weight,
                                 knet_hlayer_size=FLAGS.knet_hlayer_size,
+                                fc_layer_size=FLAGS.fc_layer_size,
                                 optimizer_step=FLAGS.optimizer_step)
 
     merged_summaries = tf.summary.merge_all()
