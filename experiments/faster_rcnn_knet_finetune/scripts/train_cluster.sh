@@ -19,11 +19,11 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
             --num_cpus=10 \
-            --pos_weight=5 \
+            --pos_weight=1 \
             --optimizer_step=0.001 \
-            --knet_hlayer_size=200 \
-            --fc_layer_size=100 \
-            --n_kernels=8 \
+            --knet_hlayer_size=500 \
+            --fc_layer_size=500 \
+            --n_kernels=100 \
             --softmax_loss=False \
             --softmax_kernel=True \
             --start_from_scratch=True \
