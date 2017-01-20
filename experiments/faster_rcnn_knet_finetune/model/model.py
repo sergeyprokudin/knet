@@ -80,7 +80,6 @@ class NeuralNMS:
                                                softmax_kernel=self._softmax_kernel,
                                                hlayer_size=self._knet_hlayer_size)
 
-
         self.fc_layer = slim.layers.fully_connected(
             self.dt_new_features, self._fc_layer_size, activation_fn=tf.nn.relu)
 
@@ -113,7 +112,7 @@ class NeuralNMS:
 
         # loss_hard_tf_max = tf.reduce_max(loss_hard_tf, reduction_indices=[1])
 
-        self.loss_final = tf.reduce_mean(self.loss_hard_tf)
+        self.loss_final = tf.reduce_mean(self.cross_entropy)
 
         self.train_step = tf.train.AdamOptimizer(
             self._optimizer_step).minimize(

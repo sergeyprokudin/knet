@@ -111,6 +111,7 @@ def get_frame_data(fid, data):
                 bbox_utils.compute_best_iou(class_dt_gt), axis=1)
             frame_data[nnms.DT_LABELS_BASIC][:, class_id][
                 np.max(class_dt_gt, axis=1) > 0.5] = 1
+    logging.info('finished processing frame %d' % fid)
     return frame_data
 
 
@@ -129,6 +130,7 @@ def preprocess_data(data_dir):
     data[nnms.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
     data[nnms.DT_FEATURES] = joblib.load(os.path.join(data_dir, 'dt_features.pkl'))
     data[nnms.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
+    logging.info('finished loading data')
     frames_data_train = split_by_frames(data)
     return frames_data_train
 
