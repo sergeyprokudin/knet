@@ -5,7 +5,7 @@ output = train.job.out
 log = train.job.log
 request_memory = 100000
 request_gpus = 1
-request_cpus = 10
+request_cpus = 1
 MaxTime = 64800
 periodic_hold = (CurrentTime - JobCurrentStartDate) >= $(MaxTime)
 periodic_hold_reason = "Job runtime exceeded"

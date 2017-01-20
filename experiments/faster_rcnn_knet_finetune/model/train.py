@@ -82,7 +82,7 @@ gflags.DEFINE_integer(
 FLAGS = gflags.FLAGS
 
 N_DT_COORDS = 4
-N_FC_FEATURES = 100
+N_FC_FEATURES = 4096
 N_CLASS_SCORES = 21
 N_DT_FEATURES = N_CLASS_SCORES + N_FC_FEATURES
 N_OBJECTS = 20
@@ -117,10 +117,9 @@ def get_frame_data(fid, data):
 
 def split_by_frames(data):
     unique_fids = np.unique(np.hstack([data[nnms.DT_COORDS][:, 0], data[nnms.GT_COORDS][:, 0]])).astype(int)
-    pool = multiprocessing.Pool(FLAGS.num_cpus)
     get_frame_data_partial = partial(get_frame_data, data=data)
     frames_data_train = dict(
-        zip(unique_fids, pool.map(get_frame_data_partial, unique_fids)))
+        zip(unique_fids, map(get_frame_data_partial, unique_fids)))
     return frames_data_train
 
 
