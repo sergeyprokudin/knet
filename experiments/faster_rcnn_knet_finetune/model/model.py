@@ -68,8 +68,9 @@ class NeuralNMS:
         self.pairwise_obj_features = spatial.construct_pairwise_features_tf(
             self.dt_features)
         self.spatial_features = tf.concat(
-            2, [self.iou_feature, self.pairwise_spatial_features, self.pairwise_obj_features])
-        self._n_spatial_features = self._n_dt_coords*2 + self._n_dt_features * 2 + 1
+            2, [self.pairwise_spatial_features, self.pairwise_obj_features])
+
+        self._n_spatial_features = self._n_dt_coords*2 + self._n_dt_features * 2
 
         self.dt_new_features = knet.knet_layer(self.dt_features,
                                                self.spatial_features,

@@ -185,7 +185,8 @@ def main(_):
         '_lr_' + str(FLAGS.optimizer_step) +\
         '_sml_' + str(FLAGS.softmax_loss) +\
         '_smk_' + str(FLAGS.softmax_kernel) +\
-        '_nk_' + str(FLAGS.n_kernels)
+        '_nk_' + str(FLAGS.n_kernels) +\
+        '_noIoU'
 
     exp_log_dir = os.path.join(FLAGS.log_dir, experiment_name)
 
