@@ -196,6 +196,7 @@ def write_scalar_summary(value, name, summary_writer, step_id):
 def main(_):
 
     experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
+        '_nsc_' + str(FLAGS.n_neg_samples) +\
         '_khls_' + str(FLAGS.knet_hlayer_size) + \
         '_lr_' + str(FLAGS.optimizer_step) +\
         '_sml_' + str(FLAGS.softmax_loss) +\
