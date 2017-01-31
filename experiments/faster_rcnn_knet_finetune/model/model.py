@@ -25,7 +25,8 @@ class NeuralNMS:
 
     def __init__(self, n_detections, n_dt_features, n_classes,
                  n_kernels=100, knet_hlayer_size=100, fc_layer_size=100,
-                 pos_weight=100, softmax_kernel=True, optimizer_step=0.0001):
+                 pos_weight=100, softmax_kernel=True, optimizer_step=0.0001,
+                 use_iou_features=True, use_coords_features=True, use_object_features=True):
 
         # model parameters
         self._n_detections = n_detections
@@ -37,6 +38,9 @@ class NeuralNMS:
         self._fc_layer_size = fc_layer_size
         self._pos_weight = pos_weight
         self._softmax_kernel = softmax_kernel
+        self._use_iou_features = use_iou_features
+        self._use_coords_features = use_coords_features
+        self._use_object_features = use_object_features
         self._optimizer_step = optimizer_step
 
         # input ops
@@ -62,15 +66,29 @@ class NeuralNMS:
         self.pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
 
+        self.spatial_features_list = []
+        self._n_spatial_features = 0
+
         self.iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(
-            self.pairwise_spatial_features)
+                self.pairwise_spatial_features)
+        if self._use_iou_features:
+            self.spatial_features_list.append(self.iou_feature)
+            self._n_spatial_features += 1
 
         self.pairwise_obj_features = spatial.construct_pairwise_features_tf(
-            self.dt_features)
-        self.spatial_features = tf.concat(
-            2, [self.pairwise_spatial_features, self.pairwise_obj_features])
+                self.dt_features)
+        if self._use_object_features:
+            self.spatial_features_list.append(self.pairwise_obj_features)
+            self._n_spatial_features += self._n_dt_features*2
 
-        self._n_spatial_features = self._n_dt_coords*2 + self._n_dt_features * 2
+        self.pairwise_coords_features = spatial.construct_pairwise_features_tf(
+                self.dt_coords)
+        if self._use_coords_features:
+            self.spatial_features_list.append(self.pairwise_coords_features)
+            self._n_spatial_features += self._n_dt_coords*2
+
+        self.spatial_features = tf.concat(
+            2, self.spatial_features_list)
 
         self.dt_new_features = knet.knet_layer(self.dt_features,
                                                self.spatial_features,

@@ -60,6 +60,25 @@ gflags.DEFINE_boolean(
     'start_from_scratch',
     True,
     'Whether to load checkpoint (if it exists) or completely retrain the model')
+
+gflags.DEFINE_boolean(
+    'use_reduced_fc_features',
+    False,
+    'Whether to use only top 100 fc layer features (debug mode)')
+
+gflags.DEFINE_boolean(
+    'use_coords_features',
+    True,
+    'Whether to use bbox coords in knet')
+gflags.DEFINE_boolean(
+    'use_iou_features',
+    True,
+    'Whether to use handcrafted features such as IoU, aspect ratio, etc. in knet')
+gflags.DEFINE_boolean(
+    'use_object_features',
+    True,
+    'Whether to use object features such as fc-layer features, scores etc. in knet (as spatial)')
+
 gflags.DEFINE_boolean(
     'softmax_loss',
     False,
@@ -79,12 +98,16 @@ gflags.DEFINE_integer(
     'Evaluate model after each eval_step')
 
 
+
+
 FLAGS = gflags.FLAGS
 
 N_DT_COORDS = 4
-N_FC_FEATURES = 4096
+N_FC_FEATURES_FULL = 4096
+N_FC_FEATURES_SHORT = 100
 N_CLASS_SCORES = 21
-N_DT_FEATURES = N_CLASS_SCORES + N_FC_FEATURES
+N_DT_FEATURES_FULL = N_CLASS_SCORES + N_FC_FEATURES_FULL
+N_DT_FEATURES_SHORT = N_CLASS_SCORES + N_FC_FEATURES_SHORT
 N_OBJECTS = 20
 N_CLASSES = 21
 
@@ -186,7 +209,9 @@ def main(_):
         '_sml_' + str(FLAGS.softmax_loss) +\
         '_smk_' + str(FLAGS.softmax_kernel) +\
         '_nk_' + str(FLAGS.n_kernels) +\
-        '_noIoU'
+        '_iouf_' + str(FLAGS.use_iou_features) +\
+        '_coordf_' + str(FLAGS.use_coords_features) +\
+        '_objf_' + str(FLAGS.use_object_features)
 
     exp_log_dir = os.path.join(FLAGS.log_dir, experiment_name)
 
@@ -213,13 +238,21 @@ def main(_):
     n_frames_train = len(frames_data_train.keys())
     n_frames_test = len(frames_data_test.keys())
 
+    if FLAGS.use_reduced_fc_features:
+        n_dt_features = N_DT_FEATURES_SHORT
+    else:
+        n_dt_features = N_DT_FEATURES_FULL
+
     nnms_model = nnms.NeuralNMS(n_detections=N_OBJECTS,
-                                n_dt_features=N_DT_FEATURES,
+                                n_dt_features=n_dt_features,
                                 n_classes=N_CLASSES,
                                 n_kernels=FLAGS.n_kernels,
                                 pos_weight=FLAGS.pos_weight,
                                 knet_hlayer_size=FLAGS.knet_hlayer_size,
                                 fc_layer_size=FLAGS.fc_layer_size,
+                                use_coords_features=FLAGS.use_coords_features,
+                                use_iou_features=FLAGS.use_iou_features,
+                                use_object_features=FLAGS.use_object_features,
                                 optimizer_step=FLAGS.optimizer_step)
 
     merged_summaries = tf.summary.merge_all()
