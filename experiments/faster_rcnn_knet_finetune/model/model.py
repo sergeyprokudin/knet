@@ -25,7 +25,7 @@ class NeuralNMS:
 
     def __init__(self, n_detections, n_dt_features, n_classes,
                  n_kernels=100, knet_hlayer_size=100, fc_layer_size=100,
-                 pos_weight=100, softmax_kernel=True, optimizer_step=0.0001,
+                 pos_weight=100, softmax_kernel=True, optimizer_step=0.0001, n_neg_examples=10,
                  use_iou_features=True, use_coords_features=True, use_object_features=True):
 
         # model parameters
@@ -42,6 +42,7 @@ class NeuralNMS:
         self._use_coords_features = use_coords_features
         self._use_object_features = use_object_features
         self._optimizer_step = optimizer_step
+        self._n_neg_examples = n_neg_examples
 
         # input ops
         self.dt_coords = tf.placeholder(
@@ -126,7 +127,8 @@ class NeuralNMS:
                                                                       pos_weight=self._pos_weight)
 
         hard_indices_tf = misc.data_subselection_hard_negative_tf(
-            self.dt_labels, self.cross_entropy, n_neg_examples=10)
+            self.dt_labels, self.cross_entropy, n_neg_examples=self._n_neg_examples)
+
         self.loss_hard_tf = tf.gather(self.cross_entropy, hard_indices_tf)
 
         # loss_hard_tf_max = tf.reduce_max(loss_hard_tf, reduction_indices=[1])

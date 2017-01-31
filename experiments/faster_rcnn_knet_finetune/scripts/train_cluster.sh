@@ -21,6 +21,7 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --use_reduced_fc_features=False \
             --num_cpus=10 \
             --pos_weight=1 \
+            --n_neg_samples=10 \
             --optimizer_step=0.0001 \
             --knet_hlayer_size=200 \
             --fc_layer_size=200 \

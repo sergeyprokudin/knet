@@ -45,26 +45,18 @@ gflags.DEFINE_boolean(
     'logging_to_stdout',
     False,
     'Whether to write logs to stdout or to logfile')
-gflags.DEFINE_integer('n_epochs', 100, 'Number of training epochs')
-gflags.DEFINE_integer('pos_weight', 1000, 'Weight of positive sample')
+gflags.DEFINE_integer('n_epochs', 100, 'number of training epochs')
+gflags.DEFINE_integer('pos_weight', 1000, 'weight of positive sample')
+gflags.DEFINE_integer('n_neg_samples', 10, 'number of negative examples for knet')
 
-gflags.DEFINE_integer('knet_hlayer_size', 100, 'Size of knet hidden layers')
-gflags.DEFINE_integer('fc_layer_size', 100, 'Size of fully connected layer')
-gflags.DEFINE_integer(
-    'n_kernels',
-    8,
-    'Number of kernels to used in knet layer')
+gflags.DEFINE_integer('knet_hlayer_size', 100, 'size of knet hidden layers')
+gflags.DEFINE_integer('fc_layer_size', 100, 'size of fully connected layer')
+gflags.DEFINE_integer('n_kernels', 8, 'number of kernels in knet layer')
 
-gflags.DEFINE_float('optimizer_step', 0.001, 'Learning step for optimizer')
-gflags.DEFINE_boolean(
-    'start_from_scratch',
-    True,
-    'Whether to load checkpoint (if it exists) or completely retrain the model')
+gflags.DEFINE_float('optimizer_step', 0.001, 'learning step for optimizer')
+gflags.DEFINE_boolean('start_from_scratch', True, 'whether to load from checkpoint')
 
-gflags.DEFINE_boolean(
-    'use_reduced_fc_features',
-    False,
-    'Whether to use only top 100 fc layer features (debug mode)')
+gflags.DEFINE_boolean('use_reduced_fc_features', False, 'use only top 100 fc layer features (debug mode)')
 
 gflags.DEFINE_boolean(
     'use_coords_features',
@@ -248,6 +240,7 @@ def main(_):
                                 n_classes=N_CLASSES,
                                 n_kernels=FLAGS.n_kernels,
                                 pos_weight=FLAGS.pos_weight,
+                                n_neg_examples=FLAGS.n_neg_samples,
                                 knet_hlayer_size=FLAGS.knet_hlayer_size,
                                 fc_layer_size=FLAGS.fc_layer_size,
                                 use_coords_features=FLAGS.use_coords_features,
