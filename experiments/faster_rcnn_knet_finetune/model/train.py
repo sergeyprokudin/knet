@@ -46,7 +46,7 @@ gflags.DEFINE_boolean(
     False,
     'Whether to write logs to stdout or to logfile')
 gflags.DEFINE_integer('n_epochs', 100, 'number of training epochs')
-gflags.DEFINE_integer('pos_weight', 1000, 'weight of positive sample')
+gflags.DEFINE_float('pos_weight', 1000, 'weight of positive sample')
 gflags.DEFINE_integer('n_neg_samples', 10, 'number of negative examples for knet')
 
 gflags.DEFINE_integer('knet_hlayer_size', 100, 'size of knet hidden layers')
