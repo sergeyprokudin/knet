@@ -130,7 +130,7 @@ def get_frame_data(fid, data):
                 bbox_utils.compute_best_iou(class_dt_gt), axis=1)
             frame_data[nnms.DT_LABELS_BASIC][:, class_id][
                 np.max(class_dt_gt, axis=1) > 0.5] = 1
-    logging.info('finished processing frame %d' % fid)
+    # logging.info('finished processing frame %d' % fid)
     return frame_data
 
 
@@ -142,26 +142,33 @@ def split_by_frames(data):
     return frames_data_train
 
 
-def preprocess_data(data_dir):
+def preprocess_data(data_dir, use_short_features=False):
+    if use_short_features:
+        dt_features_path = os.path.join(data_dir, 'dt_features_short.pkl')
+    else :
+        dt_features_path = os.path.join(data_dir, 'dt_features_full.pkl')
     data = {}
     data[nnms.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
     data[nnms.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
-    data[nnms.DT_FEATURES] = joblib.load(os.path.join(data_dir, 'dt_features.pkl'))
+    data[nnms.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
     data[nnms.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
     logging.info('finished loading data')
     frames_data_train = split_by_frames(data)
     return frames_data_train
 
 
-def load_data(data_dir):
-    frames_data_cache_file = os.path.join(data_dir, 'frames_data.pkl')
+def load_data(data_dir, use_short_features=False):
+    if use_short_features:
+        frames_data_cache_file = os.path.join(data_dir, 'frames_data_short.pkl')
+    else :
+        frames_data_cache_file = os.path.join(data_dir, 'frames_data_full.pkl')
     if os.path.exists(frames_data_cache_file):
         logging.info('loading frame bbox data info from cash..')
         frames_data = joblib.load(frames_data_cache_file)
     else:
         logging.info(
             'computing frame bbox data (IoU, labels, etc) - this could take some time..')
-        frames_data = preprocess_data(data_dir)
+        frames_data = preprocess_data(data_dir, use_short_features=use_short_features)
         joblib.dump(frames_data, frames_data_cache_file)
     return frames_data
 
@@ -226,10 +233,10 @@ def main(_):
     logging.info('loading data..')
     logging.info('train..')
     train_data_dir = os.path.join(FLAGS.data_dir, 'train')
-    frames_data_train = load_data(train_data_dir)
+    frames_data_train = load_data(train_data_dir, use_short_features=FLAGS.use_reduced_fc_features)
     logging.info('test..')
     test_data_dir = os.path.join(FLAGS.data_dir, 'test')
-    frames_data_test = load_data(test_data_dir)
+    frames_data_test = load_data(test_data_dir, use_short_features=FLAGS.use_reduced_fc_features)
 
     logging.info('defining the model..')
     n_frames_train = len(frames_data_train.keys())
