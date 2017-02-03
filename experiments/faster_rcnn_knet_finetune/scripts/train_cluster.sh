@@ -33,5 +33,5 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --use_iou_features=True \
             --start_from_scratch=True \
             --eval_step=10000 \
-            --n_eval_frames=1000 \
+            --full_eval=True \
             --logging_to_stdout=False

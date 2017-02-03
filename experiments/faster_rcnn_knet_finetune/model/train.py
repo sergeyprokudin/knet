@@ -80,13 +80,17 @@ gflags.DEFINE_boolean(
     True,
     'Whether to use softmax inference (this will make classes mutually exclusive)')
 gflags.DEFINE_float('nms_thres', 0.5, 'NMS threshold')
+
+
 gflags.DEFINE_integer(
     'n_eval_frames',
     1000,
     'Number of frames to use for intermediate evaluation')
+gflags.DEFINE_boolean('full_eval', True, 'evaluate model on full dataset or only n_eval_frames')
+
 gflags.DEFINE_integer(
     'eval_step',
-    5000,
+    50000,
     'Evaluate model after each eval_step')
 
 
@@ -270,7 +274,6 @@ def main(_):
         summary_writer = tf.summary.FileWriter(exp_log_dir, sess.graph)
 
         logging.info('training started..')
-
         for epoch_id in range(0, FLAGS.n_epochs):
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
@@ -288,6 +291,7 @@ def main(_):
 
                 step_id += 1
                 if step_id % FLAGS.eval_step == 0:
+                    logging.info('step : %d'%step_id)
 
                     fid = shuffle_samples(n_frames_test)[0]
 
@@ -298,37 +302,28 @@ def main(_):
                                           frame_data=frame_data,
                                           outdir=exp_log_dir,
                                           fid=fid)
-                    full_eval = False
-                    if step_id % 100000 == 0:
-                        full_eval = True
+
                     logging.info('evaluating on TRAIN..')
                     train_out_dir = os.path.join(exp_log_dir, 'train')
                     train_map = eval.eval_model(sess, nnms_model,
-                                               frames_data_train,
-                                               global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
-                                               out_dir=train_out_dir,
-                                               full_eval=full_eval,
-                                               nms_thres=FLAGS.nms_thres)
-                    if full_eval:
-                        write_scalar_summary(
-                            train_map, 'train_map_full', summary_writer, step_id)
-                    else:
-                        write_scalar_summary(
-                            train_map, 'train_map', summary_writer, step_id)
+                                                frames_data_train,
+                                                global_step=step_id,
+                                                n_eval_frames=FLAGS.n_eval_frames,
+                                                out_dir=train_out_dir,
+                                                full_eval=True,
+                                                nms_thres=FLAGS.nms_thres)
+                    write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
+
                     logging.info('evaluating on TEST..')
                     test_out_dir = os.path.join(exp_log_dir, 'test')
                     test_map = eval.eval_model(sess, nnms_model,
                                                frames_data_test,
                                                global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                                                out_dir=test_out_dir,
-                                               full_eval=full_eval,
+                                               full_eval=True,
                                                nms_thres=FLAGS.nms_thres)
-                    if full_eval:
-                        write_scalar_summary(
-                            test_map, 'test_map_full', summary_writer, step_id)
-                    else:
-                        write_scalar_summary(
-                            test_map, 'test_map', summary_writer, step_id)
+                    write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
+
                     saver.save(sess, model_file, global_step=step_id)
     return
 
