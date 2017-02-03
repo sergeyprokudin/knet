@@ -18,14 +18,14 @@ set -x
 ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
-            --use_reduced_fc_features=False \
-            --num_cpus=10 \
+            --use_reduced_fc_features=True \
+            --num_cpus=1 \
             --pos_weight=1 \
             --n_neg_samples=10 \
             --optimizer_step=0.0001 \
-            --knet_hlayer_size=200 \
-            --fc_layer_size=200 \
-            --n_kernels=20 \
+            --knet_hlayer_size=100 \
+            --fc_layer_size=100 \
+            --n_kernels=10 \
             --softmax_loss=False \
             --softmax_kernel=True \
             --use_object_features=True \
