@@ -20,7 +20,7 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
             --use_reduced_fc_features=True \
             --num_cpus=10 \
-            --pos_weight=0.1 \
+            --pos_weight=1.0 \
             --n_neg_samples=10 \
             --optimizer_step=0.0001 \
             --knet_hlayer_size=100 \
