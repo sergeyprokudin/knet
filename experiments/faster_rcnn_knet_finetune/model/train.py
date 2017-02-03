@@ -310,7 +310,7 @@ def main(_):
                                                 global_step=step_id,
                                                 n_eval_frames=FLAGS.n_eval_frames,
                                                 out_dir=train_out_dir,
-                                                full_eval=True,
+                                                full_eval=FLAGS.full_eval,
                                                 nms_thres=FLAGS.nms_thres)
                     write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
 
@@ -320,7 +320,7 @@ def main(_):
                                                frames_data_test,
                                                global_step=step_id, n_eval_frames=FLAGS.n_eval_frames,
                                                out_dir=test_out_dir,
-                                               full_eval=True,
+                                               full_eval=FLAGS.full_eval,
                                                nms_thres=FLAGS.nms_thres)
                     write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
 
