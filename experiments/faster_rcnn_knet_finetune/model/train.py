@@ -215,6 +215,7 @@ def main(_):
         '_sml_' + str(FLAGS.softmax_loss) +\
         '_smk_' + str(FLAGS.softmax_kernel) +\
         '_nk_' + str(FLAGS.n_kernels) +\
+        '_kiters_' + str(FLAGS.n_kernel_iterations) +\
         '_iouf_' + str(FLAGS.use_iou_features) +\
         '_coordf_' + str(FLAGS.use_coords_features) +\
         '_objf_' + str(FLAGS.use_object_features)
