@@ -25,6 +25,7 @@ class NeuralNMS:
 
     def __init__(self, n_detections, n_dt_features, n_classes,
                  n_kernels=100, knet_hlayer_size=100, fc_layer_size=100,
+                 n_kernel_iterations=2,
                  pos_weight=100, softmax_kernel=True, optimizer_step=0.0001, n_neg_examples=10,
                  use_iou_features=True, use_coords_features=True, use_object_features=True):
 
@@ -34,6 +35,7 @@ class NeuralNMS:
         self._n_dt_coords = 4
         self._n_classes = n_classes
         self._n_kernels = n_kernels
+        self._n_kernel_iterations = n_kernel_iterations
         self._knet_hlayer_size = knet_hlayer_size
         self._fc_layer_size = fc_layer_size
         self._pos_weight = pos_weight
@@ -91,20 +93,39 @@ class NeuralNMS:
         self.spatial_features = tf.concat(
             2, self.spatial_features_list)
 
-        self.dt_new_features = knet.knet_layer(self.dt_features,
-                                               self.spatial_features,
-                                               n_kernels=self._n_kernels,
-                                               n_objects=self._n_detections,
-                                               n_pair_features=self._n_spatial_features,
-                                               n_object_features=self._n_dt_features,
-                                               softmax_kernel=self._softmax_kernel,
-                                               hlayer_size=self._knet_hlayer_size)
 
-        self.fc_layer = slim.layers.fully_connected(
-            self.dt_new_features, self._fc_layer_size, activation_fn=tf.nn.relu)
+        self.dt_features_rescaled = []
+
+        self.kernel = knet.knet_layer(pairwise_features=self.spatial_features,
+                                      n_kernels=self._n_kernels,
+                                      n_objects=self._n_detections,
+                                      n_pair_features=self._n_spatial_features,
+                                      n_object_features=self._n_dt_features,
+                                      softmax_kernel=self._softmax_kernel,
+                                      hlayer_size=self._knet_hlayer_size)
+
+        features_list = []
+
+        features_list.append(self.dt_features)
+
+        for i in range(0, self._n_kernel_iterations):
+
+            features_filtered = knet.apply_kernel(kernels=self.kernel,
+                                                  object_features=features_list[-1],
+                                                  n_kernels=self._n_kernels,
+                                                  n_object_features=self._n_dt_features,
+                                                  n_objects=self._n_detections)
+
+            fc_layer1 = slim.layers.fully_connected(
+                features_filtered, self._fc_layer_size, activation_fn=tf.nn.relu)
+
+            fc_layer2 = slim.layers.fully_connected(
+                fc_layer1, self._n_dt_features, activation_fn=tf.nn.relu)
+
+            features_list.append(fc_layer2)
 
         self.logits = slim.layers.fully_connected(
-           self.fc_layer, self._n_classes, activation_fn=None)
+                fc_layer2, self._n_classes, activation_fn=None)
 
         self.class_prob = tf.nn.sigmoid(self.logits)
 

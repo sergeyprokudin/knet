@@ -5,7 +5,7 @@ import tensorflow.contrib.slim as slim
 from tf_layers import misc
 
 
-def knet_layer(object_features, pairwise_features, n_objects, n_pair_features,
+def knet_layer(pairwise_features, n_objects, n_pair_features,
                n_object_features, n_kernels=1, hlayer_size=20,
                softmax_kernel=True):
 
@@ -35,6 +35,24 @@ def knet_layer(object_features, pairwise_features, n_objects, n_pair_features,
     else:
         kernels = tf.reshape(conv2, [n_kernels, n_objects, n_objects])
 
+    return kernels
+
+
+def apply_kernel(kernels, object_features, n_kernels, n_object_features, n_objects):
+    """
+
+    Parameters
+    ----------
+    kernels : Tensor containing kernel matrix to apply
+    object_features : Tensor containing object features
+    n_kernels : number of kernels
+    n_object_features : number of object features
+    n_objects : number of objects
+
+    Returns
+    -------
+    transformed_features_flat : Tensor containing features after kernel application
+    """
     object_features_reshaped = tf.reshape(object_features, [1, n_objects, -1])
 
     object_features_broadcasted = tf.tile(

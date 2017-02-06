@@ -52,6 +52,7 @@ gflags.DEFINE_integer('n_neg_samples', 10, 'number of negative examples for knet
 gflags.DEFINE_integer('knet_hlayer_size', 100, 'size of knet hidden layers')
 gflags.DEFINE_integer('fc_layer_size', 100, 'size of fully connected layer')
 gflags.DEFINE_integer('n_kernels', 8, 'number of kernels in knet layer')
+gflags.DEFINE_integer('n_kernels_iterations', 2, 'number of kernels in knet layer')
 
 gflags.DEFINE_float('optimizer_step', 0.001, 'learning step for optimizer')
 gflags.DEFINE_boolean('start_from_scratch', True, 'whether to load from checkpoint')
@@ -252,6 +253,7 @@ def main(_):
                                 n_dt_features=n_dt_features,
                                 n_classes=N_CLASSES,
                                 n_kernels=FLAGS.n_kernels,
+                                n_kernel_iterations=FLAGS.n_kernel_iterations,
                                 pos_weight=FLAGS.pos_weight,
                                 n_neg_examples=FLAGS.n_neg_samples,
                                 knet_hlayer_size=FLAGS.knet_hlayer_size,
