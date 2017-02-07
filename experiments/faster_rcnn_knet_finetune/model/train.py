@@ -58,6 +58,7 @@ gflags.DEFINE_float('optimizer_step', 0.001, 'learning step for optimizer')
 gflags.DEFINE_boolean('start_from_scratch', True, 'whether to load from checkpoint')
 
 gflags.DEFINE_boolean('use_reduced_fc_features', False, 'use only top 100 fc layer features (debug mode)')
+gflags.DEFINE_integer('n_bboxes', 300, 'number of bboxes to use during training\testing')
 
 gflags.DEFINE_boolean(
     'use_coords_features',
@@ -109,20 +110,20 @@ N_OBJECTS = 20
 N_CLASSES = 21
 
 
-def get_frame_data(fid, data):
+def get_frame_data(fid, data, n_bboxes):
     frame_data = {}
     fid_dt_ix = data[nnms.DT_COORDS][:, 0] == fid
-    frame_data[nnms.DT_COORDS] = data[nnms.DT_COORDS][fid_dt_ix, 1:][0:N_OBJECTS]
-    frame_data[nnms.DT_FEATURES] = data[nnms.DT_FEATURES][fid_dt_ix][0:N_OBJECTS]
-    frame_data[nnms.DT_SCORES] = data[nnms.DT_SCORES][fid_dt_ix][0:N_OBJECTS]
+    frame_data[nnms.DT_COORDS] = data[nnms.DT_COORDS][fid_dt_ix, 1:][0:n_bboxes]
+    frame_data[nnms.DT_FEATURES] = data[nnms.DT_FEATURES][fid_dt_ix][0:n_bboxes]
+    frame_data[nnms.DT_SCORES] = data[nnms.DT_SCORES][fid_dt_ix][0:n_bboxes]
     fid_gt_ix = data[nnms.GT_COORDS][:, 0] == fid
     frame_data[nnms.GT_COORDS] = data[nnms.GT_COORDS][fid_gt_ix, 1:5]
     frame_data[nnms.GT_LABELS] = data[nnms.GT_COORDS][fid_gt_ix, 5]
     frame_data[nnms.DT_GT_IOU] = bbox_utils.compute_sets_iou(
         frame_data[nnms.DT_COORDS], frame_data[nnms.GT_COORDS])
     # frame_data[nnms.DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[nnms.DT_COORDS], frame_data[nnms.DT_COORDS])
-    frame_data[nnms.DT_LABELS] = np.zeros([N_OBJECTS, N_CLASSES])
-    frame_data[nnms.DT_LABELS_BASIC] = np.zeros([N_OBJECTS, N_CLASSES])
+    frame_data[nnms.DT_LABELS] = np.zeros([n_bboxes, N_CLASSES])
+    frame_data[nnms.DT_LABELS_BASIC] = np.zeros([n_bboxes, N_CLASSES])
     for class_id in range(0, N_CLASSES):
         class_gt_boxes = frame_data[nnms.GT_LABELS] == class_id
         class_dt_gt = frame_data[nnms.DT_GT_IOU][:, class_gt_boxes]
@@ -135,15 +136,15 @@ def get_frame_data(fid, data):
     return frame_data
 
 
-def split_by_frames(data):
+def split_by_frames(data, n_bboxes):
     unique_fids = np.unique(np.hstack([data[nnms.DT_COORDS][:, 0], data[nnms.GT_COORDS][:, 0]])).astype(int)
-    get_frame_data_partial = partial(get_frame_data, data=data)
+    get_frame_data_partial = partial(get_frame_data, data=data, n_bboxes=n_bboxes)
     frames_data_train = dict(
         zip(unique_fids, map(get_frame_data_partial, unique_fids)))
     return frames_data_train
 
 
-def preprocess_data(data_dir, use_short_features=False):
+def preprocess_data(data_dir, n_bboxes, use_short_features=False):
     if use_short_features:
         dt_features_path = os.path.join(data_dir, 'dt_features_short.pkl')
     else :
@@ -154,22 +155,22 @@ def preprocess_data(data_dir, use_short_features=False):
     data[nnms.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
     data[nnms.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
     logging.info('finished loading data')
-    frames_data_train = split_by_frames(data)
+    frames_data_train = split_by_frames(data, n_bboxes)
     return frames_data_train
 
 
-def load_data(data_dir, use_short_features=False):
+def load_data(data_dir, n_bboxes, use_short_features=False):
     if use_short_features:
-        frames_data_cache_file = os.path.join(data_dir, 'frames_data_short.pkl')
-    else :
-        frames_data_cache_file = os.path.join(data_dir, 'frames_data_full.pkl')
+        frames_data_cache_file = os.path.join(data_dir, 'frames_data_short_' + str(n_bboxes) + '.pkl')
+    else:
+        frames_data_cache_file = os.path.join(data_dir, 'frames_data_full_' + str(n_bboxes) + '.pkl')
     if os.path.exists(frames_data_cache_file):
         logging.info('loading frame bbox data info from cash..')
         frames_data = joblib.load(frames_data_cache_file)
     else:
         logging.info(
             'computing frame bbox data (IoU, labels, etc) - this could take some time..')
-        frames_data = preprocess_data(data_dir, use_short_features=use_short_features)
+        frames_data = preprocess_data(data_dir, n_bboxes, use_short_features=use_short_features)
         joblib.dump(frames_data, frames_data_cache_file)
     return frames_data
 
@@ -236,10 +237,14 @@ def main(_):
     logging.info('loading data..')
     logging.info('train..')
     train_data_dir = os.path.join(FLAGS.data_dir, 'train')
-    frames_data_train = load_data(train_data_dir, use_short_features=FLAGS.use_reduced_fc_features)
+    frames_data_train = load_data(train_data_dir,
+                                  n_bboxes=FLAGS.n_bboxes,
+                                  use_short_features=FLAGS.use_reduced_fc_features)
     logging.info('test..')
     test_data_dir = os.path.join(FLAGS.data_dir, 'test')
-    frames_data_test = load_data(test_data_dir, use_short_features=FLAGS.use_reduced_fc_features)
+    frames_data_test = load_data(test_data_dir,
+                                 n_bboxes=FLAGS.n_bboxes,
+                                 use_short_features=FLAGS.use_reduced_fc_features)
 
     logging.info('defining the model..')
     n_frames_train = len(frames_data_train.keys())
@@ -250,7 +255,7 @@ def main(_):
     else:
         n_dt_features = N_DT_FEATURES_FULL
 
-    nnms_model = nnms.NeuralNMS(n_detections=N_OBJECTS,
+    nnms_model = nnms.NeuralNMS(n_detections=FLAGS.n_bboxes,
                                 n_dt_features=n_dt_features,
                                 n_classes=N_CLASSES,
                                 n_kernels=FLAGS.n_kernels,

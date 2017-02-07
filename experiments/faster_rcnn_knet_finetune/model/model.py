@@ -104,9 +104,7 @@ class NeuralNMS:
                                       softmax_kernel=self._softmax_kernel,
                                       hlayer_size=self._knet_hlayer_size)
 
-        features_list = []
-
-        features_list.append(self.dt_features)
+        features_list = [self.dt_features]
 
         for i in range(0, self._n_kernel_iterations):
 
