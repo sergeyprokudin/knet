@@ -25,13 +25,14 @@ class NeuralNMS:
 
     def __init__(self, n_detections, n_dt_features, n_classes,
                  n_kernels=100, knet_hlayer_size=100, fc_layer_size=100,
-                 n_kernel_iterations=2,
-                 pos_weight=100, softmax_kernel=True, optimizer_step=0.0001, n_neg_examples=10,
+                 n_kernel_iterations=2, pos_weight=100, softmax_kernel=True,
+                 optimizer_step=0.0001, n_neg_examples=10,
                  use_iou_features=True, use_coords_features=True, use_object_features=True):
 
         # model parameters
         self._n_detections = n_detections
         self._n_dt_features = n_dt_features
+        self._n_dt_features_reduced = fc_layer_size
         self._n_dt_coords = 4
         self._n_classes = n_classes
         self._n_kernels = n_kernels
@@ -56,6 +57,11 @@ class NeuralNMS:
                 self._n_detections,
                 self._n_dt_features],
             name=DT_FEATURES)
+
+        self.dt_features_reduced = slim.layers.fully_connected(self.dt_features,
+                                                               self._n_dt_features_reduced,
+                                                               activation_fn=None)
+
         self.dt_labels = tf.placeholder(
             tf.float32, shape=[
                 self._n_detections, self._n_classes], name=DT_LABELS)
@@ -79,10 +85,10 @@ class NeuralNMS:
             self._n_spatial_features += 1
 
         self.pairwise_obj_features = spatial.construct_pairwise_features_tf(
-                self.dt_features)
+                self.dt_features_reduced)
         if self._use_object_features:
             self.spatial_features_list.append(self.pairwise_obj_features)
-            self._n_spatial_features += self._n_dt_features*2
+            self._n_spatial_features += self._n_dt_features_reduced*2
 
         self.pairwise_coords_features = spatial.construct_pairwise_features_tf(
                 self.dt_coords)
@@ -93,14 +99,10 @@ class NeuralNMS:
         self.spatial_features = tf.concat(
             2, self.spatial_features_list)
 
-
-        self.dt_features_rescaled = []
-
         self.kernel = knet.knet_layer(pairwise_features=self.spatial_features,
                                       n_kernels=self._n_kernels,
                                       n_objects=self._n_detections,
                                       n_pair_features=self._n_spatial_features,
-                                      n_object_features=self._n_dt_features,
                                       softmax_kernel=self._softmax_kernel,
                                       hlayer_size=self._knet_hlayer_size)
 

@@ -6,8 +6,7 @@ from tf_layers import misc
 
 
 def knet_layer(pairwise_features, n_objects, n_pair_features,
-               n_object_features, n_kernels=1, hlayer_size=20,
-               softmax_kernel=True):
+               n_kernels=1, hlayer_size=20, softmax_kernel=True):
 
     pairwise_features_reshaped = tf.reshape(
         pairwise_features, [
