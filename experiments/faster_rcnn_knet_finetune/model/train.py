@@ -210,6 +210,7 @@ def main(_):
 
     experiment_name = 'pw_' + str(FLAGS.pos_weight) + \
         '_shortfcf_' + str(FLAGS.use_reduced_fc_features) +\
+        '_nbb_' + str(FLAGS.n_bboxes) +\
         '_nnegs_' + str(FLAGS.n_neg_samples) +\
         '_khls_' + str(FLAGS.knet_hlayer_size) + \
         '_lr_' + str(FLAGS.optimizer_step) +\
