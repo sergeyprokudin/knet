@@ -99,28 +99,28 @@ class NeuralNMS:
         self.spatial_features = tf.concat(
             2, self.spatial_features_list)
 
-        self.kernel = knet.knet_layer(pairwise_features=self.spatial_features,
-                                      n_kernels=self._n_kernels,
-                                      n_objects=self._n_detections,
-                                      n_pair_features=self._n_spatial_features,
-                                      softmax_kernel=self._softmax_kernel,
-                                      hlayer_size=self._knet_hlayer_size)
-
-        features_list = [self.dt_features]
+        features_list = [self.dt_features_reduced]
 
         for i in range(0, self._n_kernel_iterations):
 
-            features_filtered = knet.apply_kernel(kernels=self.kernel,
+            kernel = knet.knet_layer(pairwise_features=self.spatial_features,
+                                     n_kernels=self._n_kernels,
+                                     n_objects=self._n_detections,
+                                     n_pair_features=self._n_spatial_features,
+                                     softmax_kernel=self._softmax_kernel,
+                                     hlayer_size=self._knet_hlayer_size)
+
+            features_filtered = knet.apply_kernel(kernels=kernel,
                                                   object_features=features_list[-1],
                                                   n_kernels=self._n_kernels,
-                                                  n_object_features=self._n_dt_features,
+                                                  n_object_features=self._n_dt_features_reduced,
                                                   n_objects=self._n_detections)
 
             fc_layer1 = slim.layers.fully_connected(
                 features_filtered, self._fc_layer_size, activation_fn=tf.nn.relu)
 
             fc_layer2 = slim.layers.fully_connected(
-                fc_layer1, self._n_dt_features, activation_fn=tf.nn.relu)
+                fc_layer1, self._n_dt_features_reduced, activation_fn=tf.nn.relu)
 
             features_list.append(fc_layer2)
 

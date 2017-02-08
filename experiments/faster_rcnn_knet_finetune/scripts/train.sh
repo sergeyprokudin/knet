@@ -24,10 +24,10 @@ ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --pos_weight=1.0 \
             --n_neg_samples=10 \
             --optimizer_step=0.0001 \
-            --knet_hlayer_size=100 \
-            --fc_layer_size=100 \
-            --n_kernels=10 \
-            --n_kernel_iterations=2\
+            --knet_hlayer_size=128 \
+            --fc_layer_size=128 \
+            --n_kernels=16 \
+            --n_kernel_iterations=2 \
             --softmax_loss=False \
             --softmax_kernel=True \
             --use_object_features=True \
