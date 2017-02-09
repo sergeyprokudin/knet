@@ -208,7 +208,7 @@ def write_scalar_summary(value, name, summary_writer, step_id):
 
 def main(_):
 
-    experiment_name = 'sk_False' + \
+    experiment_name = 'sk_True' + \
         'pw_' + str(FLAGS.pos_weight) + \
         '_shortfcf_' + str(FLAGS.use_reduced_fc_features) +\
         '_nbb_' + str(FLAGS.n_bboxes) +\

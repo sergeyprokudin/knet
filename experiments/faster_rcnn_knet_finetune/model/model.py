@@ -24,7 +24,8 @@ DT_DT_IOU = 'dt_dt_iou'
 class NeuralNMS:
 
     def __init__(self, n_detections, n_dt_features, n_classes,
-                 n_kernels=100, knet_hlayer_size=100, fc_layer_size=100,
+                 n_kernels=64, knet_hlayer_size=100, fc_layer_size=100,
+                 reuse_kernel=False,
                  n_kernel_iterations=2, pos_weight=100, softmax_kernel=True,
                  optimizer_step=0.0001, n_neg_examples=10,
                  use_iou_features=True, use_coords_features=True, use_object_features=True):
@@ -101,14 +102,14 @@ class NeuralNMS:
 
         features_list = [self.dt_features_reduced]
 
-        for i in range(0, self._n_kernel_iterations):
+        kernel = knet.knet_layer(pairwise_features=self.spatial_features,
+                                 n_kernels=self._n_kernels,
+                                 n_objects=self._n_detections,
+                                 n_pair_features=self._n_spatial_features,
+                                 softmax_kernel=self._softmax_kernel,
+                                 hlayer_size=self._knet_hlayer_size)
 
-            kernel = knet.knet_layer(pairwise_features=self.spatial_features,
-                                     n_kernels=self._n_kernels,
-                                     n_objects=self._n_detections,
-                                     n_pair_features=self._n_spatial_features,
-                                     softmax_kernel=self._softmax_kernel,
-                                     hlayer_size=self._knet_hlayer_size)
+        for i in range(0, self._n_kernel_iterations):
 
             features_filtered = knet.apply_kernel(kernels=kernel,
                                                   object_features=features_list[-1],
