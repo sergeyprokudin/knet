@@ -23,142 +23,174 @@ DT_DT_IOU = 'dt_dt_iou'
 
 class NeuralNMS:
 
-    def __init__(self, n_detections, n_dt_features, n_classes,
-                 n_kernels=64, knet_hlayer_size=100, fc_layer_size=100,
-                 reuse_kernel=False,
-                 n_kernel_iterations=2, pos_weight=100, softmax_kernel=True,
-                 optimizer_step=0.0001, n_neg_examples=10,
-                 use_iou_features=True, use_coords_features=True, use_object_features=True):
-
-        # model parameters
-        self._n_detections = n_detections
-        self._n_dt_features = n_dt_features
-        self._n_dt_features_reduced = fc_layer_size
-        self._n_dt_coords = 4
-        self._n_classes = n_classes
-        self._n_kernels = n_kernels
-        self._n_kernel_iterations = n_kernel_iterations
-        self._knet_hlayer_size = knet_hlayer_size
-        self._fc_layer_size = fc_layer_size
-        self._pos_weight = pos_weight
-        self._softmax_kernel = softmax_kernel
-        self._use_iou_features = use_iou_features
-        self._use_coords_features = use_coords_features
-        self._use_object_features = use_object_features
-        self._optimizer_step = optimizer_step
-        self._n_neg_examples = n_neg_examples
-
-        # input ops
-        self.dt_coords = tf.placeholder(
+    def _input_ops(self):
+        dt_coords = tf.placeholder(
             tf.float32, shape=[
-                self._n_detections, self._n_dt_coords], name=DT_COORDS)
-        self.dt_features = tf.placeholder(
-            tf.float32,
-            shape=[
-                self._n_detections,
-                self._n_dt_features],
-            name=DT_FEATURES)
+                self.n_detections, self.n_dt_coords], name=DT_COORDS)
+        dt_features = tf.placeholder(tf.float32,
+                                     shape=[
+                                         self.n_detections,
+                                         self.n_dt_features],
+                                     name=DT_FEATURES)
 
-        self.dt_features_reduced = slim.layers.fully_connected(self.dt_features,
-                                                               self._n_dt_features_reduced,
-                                                               activation_fn=None)
+        dt_labels = tf.placeholder(
+                tf.float32, shape=[
+                    self.n_detections, self.n_classes],
+                name=DT_LABELS)
 
-        self.dt_labels = tf.placeholder(
-            tf.float32, shape=[
-                self._n_detections, self._n_classes], name=DT_LABELS)
+        gt_labels = tf.placeholder(tf.float32, shape=None)
 
-        self.gt_labels = tf.placeholder(tf.float32, shape=None)
+        dt_gt_iou = tf.placeholder(
+                tf.float32, shape=[self.n_detections, None], name=DT_GT_IOU)
 
-        self.dt_gt_iou = tf.placeholder(
-            tf.float32, shape=[self._n_detections, None], name=DT_GT_IOU)
+        return dt_coords, dt_features, dt_labels, gt_labels, dt_gt_iou
 
-        #  inference ops
-        self.pairwise_spatial_features = spatial.construct_pairwise_features_tf(
+    def _inference_ops(self):
+
+        dt_features_reduced = self._fc_layer_chain(input_tensor=self.dt_features,
+                                                   layer_size=self.fc_pre_layer_size,
+                                                   n_layers=self.fc_pre_layers_cnt,
+                                                   activation=tf.nn.relu)
+
+        pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
 
-        self.spatial_features_list = []
-        self._n_spatial_features = 0
+        spatial_features_list = []
+        n_spatial_features = 0
 
-        self.iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(
-                self.pairwise_spatial_features)
-        if self._use_iou_features:
-            self.spatial_features_list.append(self.iou_feature)
-            self._n_spatial_features += 1
+        iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_spatial_features)
+        if self.use_iou_features:
+            spatial_features_list.append(iou_feature)
+            n_spatial_features += 1
 
-        self.pairwise_obj_features = spatial.construct_pairwise_features_tf(
-                self.dt_features_reduced)
-        if self._use_object_features:
-            self.spatial_features_list.append(self.pairwise_obj_features)
-            self._n_spatial_features += self._n_dt_features_reduced*2
+        pairwise_obj_features = spatial.construct_pairwise_features_tf(dt_features_reduced)
+        if self.use_object_features:
+            spatial_features_list.append(pairwise_obj_features)
+            n_spatial_features += self.fc_pre_layer_size * 2
 
         self.pairwise_coords_features = spatial.construct_pairwise_features_tf(
                 self.dt_coords)
-        if self._use_coords_features:
-            self.spatial_features_list.append(self.pairwise_coords_features)
-            self._n_spatial_features += self._n_dt_coords*2
+        if self.use_coords_features:
+            spatial_features_list.append(self.pairwise_coords_features)
+            n_spatial_features += self.n_dt_coords * 2
 
-        self.spatial_features = tf.concat(
-            2, self.spatial_features_list)
+        spatial_features = tf.concat(2, spatial_features_list)
 
-        features_list = [self.dt_features_reduced]
+        features_list = [dt_features_reduced]
 
-        kernel = knet.knet_layer(pairwise_features=self.spatial_features,
-                                 n_kernels=self._n_kernels,
-                                 n_objects=self._n_detections,
-                                 n_pair_features=self._n_spatial_features,
-                                 softmax_kernel=self._softmax_kernel,
-                                 hlayer_size=self._knet_hlayer_size)
+        kernel = knet.knet_layer(pairwise_features=spatial_features,
+                                 n_kernels=self.n_kernels,
+                                 n_objects=self.n_detections,
+                                 n_pair_features=n_spatial_features,
+                                 softmax_kernel=self.softmax_kernel,
+                                 hlayer_size=self.knet_hlayer_size)
 
-        for i in range(0, self._n_kernel_iterations):
+        for i in range(0, self.n_kernel_iterations):
 
             features_filtered = knet.apply_kernel(kernels=kernel,
                                                   object_features=features_list[-1],
-                                                  n_kernels=self._n_kernels,
-                                                  n_object_features=self._n_dt_features_reduced,
-                                                  n_objects=self._n_detections)
+                                                  n_kernels=self.n_kernels,
+                                                  n_object_features=self.fc_pre_layer_size,
+                                                  n_objects=self.n_detections)
 
-            fc_layer1 = slim.layers.fully_connected(
-                features_filtered, self._fc_layer_size, activation_fn=tf.nn.relu)
+            updated_features = self._fc_layer_chain(input_tensor=features_filtered,
+                                                    layer_size=self.fc_apres_layer_size,
+                                                    n_layers=self.fc_apres_layers_cnt,
+                                                    activation=tf.nn.relu)
 
-            fc_layer2 = slim.layers.fully_connected(
-                fc_layer1, self._n_dt_features_reduced, activation_fn=tf.nn.relu)
+            features_list.append(updated_features)
 
-            features_list.append(fc_layer2)
+        logits = slim.layers.fully_connected(
+                updated_features, self.n_classes, activation_fn=None)
 
-        self.logits = slim.layers.fully_connected(
-                fc_layer2, self._n_classes, activation_fn=None)
+        sigmoid = tf.nn.sigmoid(logits)
 
-        self.class_prob = tf.nn.sigmoid(self.logits)
+        return iou_feature, logits, sigmoid
 
-        # loss ops
+    def _loss_ops(self):
 
-        # self.gt_per_labels = []
-        self.class_labels = []
+        class_labels = []
 
-        for class_id in range(0, self._n_classes):
+        for class_id in range(0, self.n_classes):
             gt_per_label = losses.construct_ground_truth_per_label_tf(self.dt_gt_iou, self.gt_labels, class_id)
             # self.gt_per_labels.append(gt_per_label)
-            self.class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_prob,
-                                                                                   gt_per_label,
-                                                                                   class_id))
+            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_probs,
+                                                                         gt_per_label,
+                                                                         class_id))
 
-        self.labels = tf.pack(self.class_labels, axis=1)
+        labels = tf.pack(class_labels, axis=1)
 
-        self.cross_entropy = tf.nn.weighted_cross_entropy_with_logits(self.logits,
-                                                                      self.labels,
-                                                                      pos_weight=self._pos_weight)
+        cross_entropy = tf.nn.weighted_cross_entropy_with_logits(self.logits,
+                                                                 labels,
+                                                                 pos_weight=self.pos_weight)
 
         hard_indices_tf = misc.data_subselection_hard_negative_tf(
-            self.dt_labels, self.cross_entropy, n_neg_examples=self._n_neg_examples)
+            self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
 
-        self.loss_hard_tf = tf.gather(self.cross_entropy, hard_indices_tf)
+        loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
 
-        # loss_hard_tf_max = tf.reduce_max(loss_hard_tf, reduction_indices=[1])
+        loss_final = tf.reduce_mean(loss_hard_tf)
 
-        self.loss_final = tf.reduce_mean(self.cross_entropy)
+        return labels,  loss_final
 
-        self.train_step = tf.train.AdamOptimizer(
-            self._optimizer_step).minimize(
-            self.loss_final)
+    def _fc_layer_chain(self, input_tensor, layer_size, n_layers, activation=None):
+        fc_chain = slim.layers.fully_connected(input_tensor,
+                                               layer_size,
+                                               activation_fn=activation)
+        for i in range(0, n_layers-1):
+            fc_chain = slim.layers.fully_connected(fc_chain,
+                                                   layer_size,
+                                                   activation_fn=activation)
+        return fc_chain
 
-        tf.summary.scalar('cross_entropy_loss', self.loss_final)
+    def _train_ops(self):
+        train_step = tf.train.AdamOptimizer(self.optimizer_step).minimize(self.loss)
+        return train_step
+
+    def _summary_ops(self):
+        tf.summary.scalar('cross_entropy_loss', self.loss)
+        merged_summaries = tf.summary.merge_all()
+        return merged_summaries
+
+    def __init__(self, n_detections, n_dt_features, n_classes,
+                 **kwargs):
+
+        # model main parameters
+        self.n_detections = n_detections
+        self.n_dt_features = n_dt_features
+        self.n_dt_coords = 4
+        self.n_classes = n_classes
+
+        # architecture params
+        arch_args = kwargs.get('architecture', {})
+        self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 128)
+        self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
+        self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
+        self.n_kernels = arch_args.get('n_kernels', 16)
+        self.n_kernel_iterations = arch_args.get('fc_pre_layers_cnt', 1)
+        self.reuse_kernels = arch_args.get('reuse_kernels', True)
+        self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 128)
+        self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
+        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', True)
+
+        # training procedure params
+        train_args = kwargs.get('training', {})
+        self.pos_weight = train_args.get('pos_weight', 1)
+        self.softmax_kernel = train_args.get('softmax_kernel', True)
+        self.use_iou_features = train_args.get('use_iou_features', True)
+        self.use_coords_features = train_args.get('use_coords_features', True)
+        self.use_object_features = train_args.get('use_object_features', True)
+        self.optimizer_step = train_args.get('optimizer_step', 0.0001)
+        self.n_neg_examples = train_args.get('n_neg_examples',  10)
+
+        self.dt_coords, self.dt_features, self.dt_labels,\
+            self.gt_labels, self.dt_gt_iou = self._input_ops()
+
+        self.iou_feature, self.logits, self.class_probs = self._inference_ops()
+
+        self.labels, self.loss = self._loss_ops()
+
+        self.train_step = self._train_ops()
+
+        self.merged_summaries = self._summary_ops()
+
