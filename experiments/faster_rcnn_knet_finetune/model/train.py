@@ -11,12 +11,14 @@ import numpy as np
 import tensorflow as tf
 
 import joblib
+import pandas as pd
 from functools import partial
 import os
 import sys
 import shutil
 import ntpath
 import binascii
+import subprocess
 
 import gflags
 import yaml
@@ -30,6 +32,7 @@ import eval
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string('log_dir', None, 'directory to save logs and trained models')
 gflags.DEFINE_string('config_path', None, 'config with main model params')
+gflags.DEFINE_string('res_csv_path', None, 'path to csv with all results')
 
 FLAGS = gflags.FLAGS
 
@@ -150,7 +153,66 @@ class ExperimentConfig:
     def _backup_config(self):
         shutil.copy(self.config_path, self.log_dir)
 
+    def _get_git_revision_hash(self):
+        return subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+
+    def update_results(self,
+                       step_id,
+                       train_map,
+                       train_map_nms,
+                       test_map,
+                       test_map_nms):
+
+            self.results['curr_step_id'] = step_id
+            self.results['curr_train_map'] = train_map
+            self.results['curr_train_nms_map'] = train_map_nms
+            self.results['curr_test_map'] = test_map
+            self.results['curr_test_nms_map'] = test_map_nms
+
+            if train_map > self.results['max_train_map']:
+                self.results['max_train_map'] = train_map
+                self.results['max_train_map_step_id'] = step_id
+
+            if train_map_nms > self.results['max_train_nms_map']:
+                self.results['max_train_nms_map'] = train_map_nms
+
+            if test_map > self.results['max_test_map']:
+                self.results['max_test_map'] = test_map
+                self.results['max_test_map_step_id'] = step_id
+
+            if test_map_nms > self.results['max_test_nms_map']:
+                self.results['max_test_nms_map'] = test_map_nms
+
+    def save_results(self, csv_path):
+
+        curr_res = pd.DataFrame(index=[self.id])
+
+        curr_res['git_hash'] = self.git_hash
+
+        for key, val in self.results.iteritems():
+            curr_res[key] = val
+
+        for key, val in self.dp_config.iteritems():
+            curr_res[key] = val
+
+        for key, val in self.nms_network_config['architecture'].iteritems():
+            curr_res[key] = val
+
+        for key, val in self.nms_network_config['training'].iteritems():
+            curr_res[key] = val
+
+        if os.path.exists(csv_path):
+            res_df = pd.read_csv(csv_path, index_col=0)
+            res_df.ix[self.id] = curr_res.ix[self.id]
+            res_df.to_csv(csv_path)
+        else:
+            curr_res.to_csv(csv_path)
+        return
+
     def __init__(self, data_dir, root_log_dir, config_path):
+
+        self.id = binascii.hexlify(os.urandom(10))
+        self.git_hash = self._get_git_revision_hash()
 
         self.config_path = config_path
         with open(config_path, 'r') as f:
@@ -159,7 +221,7 @@ class ExperimentConfig:
         self.general_params = self.config.get('general', {})
         self.start_from_scratch = self.general_params.get('start_from_scratch', True)
         self.logging_to_stdout = self.general_params.get('logging_to_stdout', True)
-        self.id = binascii.hexlify(os.urandom(10))
+
         self.log_dir = os.path.join(root_log_dir, self.id)
         self.log_file = os.path.join(self.log_dir, 'training.log')
 
@@ -174,6 +236,7 @@ class ExperimentConfig:
         self.dp_config = self.config.get('data_provider', {})
         self.n_bboxes = self.dp_config.get('n_bboxes', 20)
         self.use_reduced_fc_features = self.dp_config.get('use_reduced_fc_features', True)
+
         if self.use_reduced_fc_features:
             self.n_dt_features = N_DT_FEATURES_SHORT
         else:
@@ -188,32 +251,49 @@ class ExperimentConfig:
         self.n_eval_frames = self.eval_config.get('n_eval_frames', 1000)
         self.nms_thres = self.eval_config.get('nms_thres', 0.5)
 
+        # results details
+        self.results = {}
+
+        self.results['max_test_map'] = 0.0
+        self.results['max_train_map'] = 0.0
+        self.results['max_train_nms_map'] = 0.0
+        self.results['max_train_map_step_id'] = 0.0
+        self.results['max_test_nms_map'] = 0.0
+        self.results['max_test_map_step_id'] = 0.0
+        self.results['curr_step_id'] = 0.0
+        self.results['curr_train_map'] = 0.0
+        self.results['curr_train_nms_map'] = 0.0
+        self.results['curr_test_map'] = 0.0
+        self.results['curr_test_nms_map'] = 0.0
+
 
 def main(_):
 
-    exp_config = ExperimentConfig(data_dir=FLAGS.data_dir,
-                                  root_log_dir=FLAGS.log_dir,
-                                  config_path=FLAGS.config_path)
+    config = ExperimentConfig(data_dir=FLAGS.data_dir,
+                              root_log_dir=FLAGS.log_dir,
+                              config_path=FLAGS.config_path)
+
+    config.save_results(FLAGS.res_csv_path)
 
     logging.info('loading data..')
     logging.info('train..')
-    frames_data_train = load_data(exp_config.train_data_dir,
-                                  n_bboxes=exp_config.n_bboxes,
-                                  use_short_features=exp_config.use_reduced_fc_features)
+    frames_data_train = load_data(config.train_data_dir,
+                                  n_bboxes=config.n_bboxes,
+                                  use_short_features=config.use_reduced_fc_features)
     logging.info('test..')
-    frames_data_test = load_data(exp_config.test_data_dir,
-                                 n_bboxes=exp_config.n_bboxes,
-                                 use_short_features=exp_config.use_reduced_fc_features)
+    frames_data_test = load_data(config.test_data_dir,
+                                 n_bboxes=config.n_bboxes,
+                                 use_short_features=config.use_reduced_fc_features)
 
     n_frames_train = len(frames_data_train.keys())
     n_frames_test = len(frames_data_test.keys())
 
-    logging.info('defining the model..')
+    logging.info('building model graph..')
 
-    nnms_model = nnms.NeuralNMS(n_detections=exp_config.n_bboxes,
-                                n_dt_features=exp_config.n_dt_features,
+    nnms_model = nnms.NeuralNMS(n_detections=config.n_bboxes,
+                                n_dt_features=config.n_dt_features,
                                 n_classes=N_CLASSES,
-                                **exp_config.nms_network_config)
+                                **config.nms_network_config)
 
     with tf.Session() as sess:
         step_id = 0
@@ -222,19 +302,19 @@ def main(_):
             max_to_keep=5,
             keep_checkpoint_every_n_hours=1.0)
 
-        if not exp_config.start_from_scratch:
-            ckpt_path = tf.train.latest_checkpoint(exp_config.log_dir)
+        if not config.start_from_scratch:
+            ckpt_path = tf.train.latest_checkpoint(config.log_dir)
             if ckpt_path is not None:
                 logging.info('model exists, restoring..')
                 ckpt_name = ntpath.basename(ckpt_path)
                 step_id = int(ckpt_name.split('-')[1])
                 saver.restore(sess, ckpt_path)
 
-        model_file = os.path.join(exp_config.log_dir, 'model')
-        summary_writer = tf.summary.FileWriter(exp_config.log_dir, sess.graph)
+        model_file = os.path.join(config.log_dir, 'model')
+        summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
         logging.info('training started..')
-        for epoch_id in range(0, exp_config.n_epochs):
+        for epoch_id in range(0, config.n_epochs):
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
                 feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
@@ -250,7 +330,7 @@ def main(_):
                 summary_writer.flush()
 
                 step_id += 1
-                if step_id % exp_config.eval_step == 0:
+                if step_id % config.eval_step == 0:
                     logging.info('step : %d' % step_id)
 
                     fid = shuffle_samples(n_frames_test)[0]
@@ -260,30 +340,33 @@ def main(_):
                     eval.print_debug_info(sess=sess,
                                           nnms_model=nnms_model,
                                           frame_data=frame_data,
-                                          outdir=exp_config.log_dir,
+                                          outdir=config.log_dir,
                                           fid=fid)
 
                     logging.info('evaluating on TRAIN..')
-                    train_out_dir = os.path.join(exp_config.log_dir, 'train')
-                    train_map = eval.eval_model(sess, nnms_model,
+                    train_out_dir = os.path.join(config.log_dir, 'train')
+                    train_map, train_map_nms = eval.eval_model(sess, nnms_model,
                                                 frames_data_train,
                                                 global_step=step_id,
-                                                n_eval_frames=exp_config.n_eval_frames,
+                                                n_eval_frames=config.n_eval_frames,
                                                 out_dir=train_out_dir,
-                                                full_eval=exp_config.full_eval,
-                                                nms_thres=exp_config.nms_thres)
+                                                full_eval=config.full_eval,
+                                                nms_thres=config.nms_thres)
                     write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
 
                     logging.info('evaluating on TEST..')
-                    test_out_dir = os.path.join(exp_config.log_dir, 'test')
-                    test_map = eval.eval_model(sess, nnms_model,
+                    test_out_dir = os.path.join(config.log_dir, 'test')
+                    test_map, test_map_nms = eval.eval_model(sess, nnms_model,
                                                frames_data_test,
                                                global_step=step_id,
-                                               n_eval_frames=exp_config.n_eval_frames,
+                                               n_eval_frames=config.n_eval_frames,
                                                out_dir=test_out_dir,
-                                               full_eval=exp_config.full_eval,
-                                               nms_thres=exp_config.nms_thres)
+                                               full_eval=config.full_eval,
+                                               nms_thres=config.nms_thres)
                     write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
+
+                    config.update_results(step_id, train_map, train_map_nms, test_map, test_map_nms)
+                    config.save_results(FLAGS.res_csv_path)
 
                     saver.save(sess, model_file, global_step=step_id)
     return
@@ -292,4 +375,5 @@ if __name__ == '__main__':
     gflags.mark_flag_as_required('data_dir')
     gflags.mark_flag_as_required('log_dir')
     gflags.mark_flag_as_required('config_path')
+    gflags.mark_flag_as_required('res_csv_path')
     app.run()

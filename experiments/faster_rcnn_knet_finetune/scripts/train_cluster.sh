@@ -18,4 +18,5 @@ set -x
 ${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
             --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
             --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
-            --config_path="${SCRIPT_DIR}/config_cluster.yml"
+            --config_path="${SCRIPT_DIR}/config_cluster.yml" \
+            --res_csv_path="${EXPERIMENT_DIR}/logs/pascal_voc_2007/results.csv"

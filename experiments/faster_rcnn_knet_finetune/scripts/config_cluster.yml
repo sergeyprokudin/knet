@@ -1,6 +1,6 @@
 general:
     start_from_scratch: True
-    logging_to_stdout: True
+    logging_to_stdout: False
 data_provider:
     use_reduced_fc_features: True
     n_bboxes: 20
@@ -16,7 +16,7 @@ nms_network:
         n_kernel_iterations: 5
         reuse_kernels: True
         fc_apres_layer_size: 128
-        fc_apres_layers_cnt: 1
+        fc_apres_layers_cnt: 2
         reuse_apres_fc_layers: False
         softmax_loss: False
         softmax_kernel: True
@@ -24,8 +24,8 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         optimizer_step: 0.0001
-        n_epochs: 20
-    evaluation :
+        n_epochs: 100
+    evaluation:
         eval_step: 10000
         full_eval: True
         n_eval_frames: 1000

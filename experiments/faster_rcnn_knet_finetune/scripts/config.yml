@@ -10,7 +10,7 @@ nms_network:
         use_coords_features: True
         use_iou_features: True
         fc_pre_layer_size: 128
-        fc_pre_layers_cnt: 1
+        fc_pre_layers_cnt: 2
         knet_hlayer_size: 128
         n_kernels: 16
         n_kernel_iterations: 5
@@ -24,9 +24,9 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         optimizer_step: 0.0001
-        n_epochs: 20
+        n_epochs: 100
     evaluation :
-        eval_step: 10000
+        eval_step: 10
         full_eval: False
-        n_eval_frames: 1000
+        n_eval_frames: 10
         nms_thres: 0.5
