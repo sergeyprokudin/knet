@@ -243,7 +243,7 @@ class ExperimentConfig:
             self.n_dt_features = N_DT_FEATURES_FULL
 
         self.nms_network_config = self.config.get('nms_network', {})
-        self.n_epochs = self.nms_network_config.get('n_epochs', 10)
+        self.n_epochs = self.nms_network_config.get('n_epochs', 50)
 
         self.eval_config = self.nms_network_config.get('evaluation', {})
         self.eval_step = self.eval_config.get('eval_step', 1000)
