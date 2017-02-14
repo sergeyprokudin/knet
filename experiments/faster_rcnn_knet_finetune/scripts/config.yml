@@ -10,13 +10,13 @@ nms_network:
         use_coords_features: True
         use_iou_features: True
         fc_pre_layer_size: 128
-        fc_pre_layers_cnt: 2
+        fc_pre_layers_cnt: 1
         knet_hlayer_size: 128
         n_kernels: 16
-        n_kernel_iterations: 5
+        n_kernel_iterations: 2
         reuse_kernels: True
         fc_apres_layer_size: 128
-        fc_apres_layers_cnt: 1
+        fc_apres_layers_cnt: 2
         reuse_apres_fc_layers: False
         softmax_loss: False
         softmax_kernel: True
@@ -26,7 +26,7 @@ nms_network:
         optimizer_step: 0.0001
         n_epochs: 100
     evaluation :
-        eval_step: 10
+        eval_step: 1000
         full_eval: False
-        n_eval_frames: 10
+        n_eval_frames: 100
         nms_thres: 0.5

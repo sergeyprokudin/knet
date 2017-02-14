@@ -3,19 +3,19 @@ general:
     logging_to_stdout: False
 data_provider:
     use_reduced_fc_features: True
-    n_bboxes: 20
+    n_bboxes: 300
 nms_network:
     architecture:
         use_object_features: True
         use_coords_features: True
         use_iou_features: True
-        fc_pre_layer_size: 128
-        fc_pre_layers_cnt: 2
+        fc_pre_layer_size: 64
+        fc_pre_layers_cnt: 1
         knet_hlayer_size: 128
         n_kernels: 16
-        n_kernel_iterations: 5
+        n_kernel_iterations: 2
         reuse_kernels: True
-        fc_apres_layer_size: 128
+        fc_apres_layer_size: 64
         fc_apres_layers_cnt: 2
         reuse_apres_fc_layers: False
         softmax_loss: False
@@ -24,7 +24,7 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         optimizer_step: 0.0001
-        n_epochs: 100
+        n_epochs: 40
     evaluation:
         eval_step: 10000
         full_eval: True

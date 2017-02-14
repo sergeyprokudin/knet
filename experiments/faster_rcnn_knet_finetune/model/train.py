@@ -24,6 +24,7 @@ import gflags
 import yaml
 import logging
 from google.apputils import app
+from timeit import default_timer as timer
 
 from tools import bbox_utils, nms, metrics
 import model as nnms
@@ -32,7 +33,6 @@ import eval
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string('log_dir', None, 'directory to save logs and trained models')
 gflags.DEFINE_string('config_path', None, 'config with main model params')
-gflags.DEFINE_string('res_csv_path', None, 'path to csv with all results')
 
 FLAGS = gflags.FLAGS
 
@@ -161,20 +161,8 @@ class ExperimentConfig:
                        train_map,
                        train_map_nms,
                        test_map,
-                       test_map_nms):
-
-            self.results['curr_step_id'] = step_id
-            self.results['curr_train_map'] = train_map
-            self.results['curr_train_nms_map'] = train_map_nms
-            self.results['curr_test_map'] = test_map
-            self.results['curr_test_nms_map'] = test_map_nms
-
-            if train_map > self.results['max_train_map']:
-                self.results['max_train_map'] = train_map
-                self.results['max_train_map_step_id'] = step_id
-
-            if train_map_nms > self.results['max_train_nms_map']:
-                self.results['max_train_nms_map'] = train_map_nms
+                       test_map_nms,
+                       mean_step_time):
 
             if test_map > self.results['max_test_map']:
                 self.results['max_test_map'] = test_map
@@ -183,7 +171,24 @@ class ExperimentConfig:
             if test_map_nms > self.results['max_test_nms_map']:
                 self.results['max_test_nms_map'] = test_map_nms
 
-    def save_results(self, csv_path):
+            if train_map > self.results['max_train_map']:
+                self.results['max_train_map'] = train_map
+                self.results['max_train_map_step_id'] = step_id
+
+            if train_map_nms > self.results['max_train_nms_map']:
+                self.results['max_train_nms_map'] = train_map_nms
+
+            self.results['curr_train_map'] = train_map
+            self.results['curr_train_nms_map'] = train_map_nms
+            self.results['curr_test_map'] = test_map
+            self.results['curr_test_nms_map'] = test_map_nms
+
+            self.results['curr_step_id'] = step_id
+
+            self.mean_train_step_time = mean_step_time
+
+
+    def save_results(self):
 
         curr_res = pd.DataFrame(index=[self.id])
 
@@ -201,12 +206,14 @@ class ExperimentConfig:
         for key, val in self.nms_network_config['training'].iteritems():
             curr_res[key] = val
 
-        if os.path.exists(csv_path):
-            res_df = pd.read_csv(csv_path, index_col=0)
+        curr_res['mean_step_time'] = self.mean_train_step_time
+
+        if os.path.exists(self.res_csv_path):
+            res_df = pd.read_csv(self.res_csv_path, index_col=0)
             res_df.ix[self.id] = curr_res.ix[self.id]
-            res_df.to_csv(csv_path)
+            res_df.to_csv(self.res_csv_path)
         else:
-            curr_res.to_csv(csv_path)
+            curr_res.to_csv(self.res_csv_path)
         return
 
     def __init__(self, data_dir, root_log_dir, config_path):
@@ -224,7 +231,7 @@ class ExperimentConfig:
 
         self.log_dir = os.path.join(root_log_dir, self.id)
         self.log_file = os.path.join(self.log_dir, 'training.log')
-
+        self.res_csv_path = os.path.join(root_log_dir, 'results_'+self.git_hash+'.csv')
         self._create_log_dir()
         self._set_logging()
         self._backup_config()
@@ -243,7 +250,10 @@ class ExperimentConfig:
             self.n_dt_features = N_DT_FEATURES_FULL
 
         self.nms_network_config = self.config.get('nms_network', {})
-        self.n_epochs = self.nms_network_config.get('n_epochs', 10)
+
+        train_config = self.nms_network_config.get('training', {})
+
+        self.n_epochs = train_config.get('n_epochs', 50)
 
         self.eval_config = self.nms_network_config.get('evaluation', {})
         self.eval_step = self.eval_config.get('eval_step', 1000)
@@ -252,6 +262,8 @@ class ExperimentConfig:
         self.nms_thres = self.eval_config.get('nms_thres', 0.5)
 
         # results details
+        self.mean_train_step_time = 0.0
+
         self.results = {}
 
         self.results['max_test_map'] = 0.0
@@ -266,14 +278,13 @@ class ExperimentConfig:
         self.results['curr_test_map'] = 0.0
         self.results['curr_test_nms_map'] = 0.0
 
-
 def main(_):
 
     config = ExperimentConfig(data_dir=FLAGS.data_dir,
                               root_log_dir=FLAGS.log_dir,
                               config_path=FLAGS.config_path)
 
-    config.save_results(FLAGS.res_csv_path)
+    config.save_results()
 
     logging.info('loading data..')
     logging.info('train..')
@@ -315,6 +326,9 @@ def main(_):
 
         logging.info('training started..')
         for epoch_id in range(0, config.n_epochs):
+
+            step_times = []
+
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
                 feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
@@ -323,14 +337,20 @@ def main(_):
                              nnms_model.dt_gt_iou: frame_data[nnms.DT_GT_IOU],
                              nnms_model.gt_labels: frame_data[nnms.GT_LABELS]}
 
+                start_step = timer()
+
                 summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
                                       feed_dict=feed_dict)
+                end_step = timer()
+
+                step_times.append(end_step-start_step)
 
                 summary_writer.add_summary(summary, global_step=step_id)
                 summary_writer.flush()
 
                 step_id += 1
                 if step_id % config.eval_step == 0:
+
                     logging.info('step : %d' % step_id)
 
                     fid = shuffle_samples(n_frames_test)[0]
@@ -365,8 +385,14 @@ def main(_):
                                                nms_thres=config.nms_thres)
                     write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
 
-                    config.update_results(step_id, train_map, train_map_nms, test_map, test_map_nms)
-                    config.save_results(FLAGS.res_csv_path)
+                    config.update_results(step_id,
+                                          train_map,
+                                          train_map_nms,
+                                          test_map,
+                                          test_map_nms,
+                                          np.mean(step_times))
+
+                    config.save_results()
 
                     saver.save(sess, model_file, global_step=step_id)
     return
@@ -375,5 +401,4 @@ if __name__ == '__main__':
     gflags.mark_flag_as_required('data_dir')
     gflags.mark_flag_as_required('log_dir')
     gflags.mark_flag_as_required('config_path')
-    gflags.mark_flag_as_required('res_csv_path')
     app.run()

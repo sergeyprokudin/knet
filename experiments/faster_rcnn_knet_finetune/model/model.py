@@ -24,9 +24,11 @@ DT_DT_IOU = 'dt_dt_iou'
 class NeuralNMS:
 
     def _input_ops(self):
+
         dt_coords = tf.placeholder(
             tf.float32, shape=[
                 self.n_detections, self.n_dt_coords], name=DT_COORDS)
+
         dt_features = tf.placeholder(tf.float32,
                                      shape=[
                                          self.n_detections,
@@ -50,7 +52,7 @@ class NeuralNMS:
         dt_features_reduced = self._fc_layer_chain(input_tensor=self.dt_features,
                                                    layer_size=self.fc_pre_layer_size,
                                                    n_layers=self.fc_pre_layers_cnt,
-                                                   activation=tf.nn.relu)
+                                                   activation=None)
 
         pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
@@ -124,12 +126,12 @@ class NeuralNMS:
                                                                  labels,
                                                                  pos_weight=self.pos_weight)
 
-        hard_indices_tf = misc.data_subselection_hard_negative_tf(
-            self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
+        # hard_indices_tf = misc.data_subselection_hard_negative_tf(
+        #     self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
 
-        loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
+        # loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
 
-        loss_final = tf.reduce_mean(loss_hard_tf)
+        loss_final = tf.reduce_mean(cross_entropy)
 
         return labels,  loss_final
 

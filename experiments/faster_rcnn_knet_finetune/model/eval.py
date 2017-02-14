@@ -32,7 +32,7 @@ def eval_model(sess, nnms_model, frames_data,
 
     n_total_frames = len(frames_data.keys())
 
-    if (full_eval):
+    if full_eval:
         n_eval_frames = n_total_frames
 
     eval_data = {}
