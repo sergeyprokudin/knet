@@ -13,12 +13,11 @@ nms_network:
         fc_pre_layers_cnt: 1
         knet_hlayer_size: 128
         n_kernels: 16
-        n_kernel_iterations: 2
+        n_kernel_iterations: 10
         reuse_kernels: True
         fc_apres_layer_size: 64
         fc_apres_layers_cnt: 2
         reuse_apres_fc_layers: False
-        softmax_loss: False
         softmax_kernel: True
     training:
         pos_weight: 1.0

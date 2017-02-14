@@ -52,7 +52,7 @@ class NeuralNMS:
         dt_features_reduced = self._fc_layer_chain(input_tensor=self.dt_features,
                                                    layer_size=self.fc_pre_layer_size,
                                                    n_layers=self.fc_pre_layers_cnt,
-                                                   activation=None)
+                                                   scope='fc_pre_layer')
 
         pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
@@ -87,18 +87,50 @@ class NeuralNMS:
                                  softmax_kernel=self.softmax_kernel,
                                  hlayer_size=self.knet_hlayer_size)
 
-        for i in range(0, self.n_kernel_iterations):
+        features_filtered = knet.apply_kernel(kernels=kernel,
+                                              object_features=features_list[-1],
+                                              n_kernels=self.n_kernels,
+                                              n_object_features=self.fc_pre_layer_size,
+                                              n_objects=self.n_detections)
 
-            features_filtered = knet.apply_kernel(kernels=kernel,
-                                                  object_features=features_list[-1],
-                                                  n_kernels=self.n_kernels,
-                                                  n_object_features=self.fc_pre_layer_size,
-                                                  n_objects=self.n_detections)
+        updated_features = self._fc_layer_chain(input_tensor=features_filtered,
+                                                layer_size=self.fc_apres_layer_size,
+                                                n_layers=self.fc_apres_layers_cnt,
+                                                scope='apres_fc_layers')
 
-            updated_features = self._fc_layer_chain(input_tensor=features_filtered,
-                                                    layer_size=self.fc_apres_layer_size,
-                                                    n_layers=self.fc_apres_layers_cnt,
-                                                    activation=tf.nn.relu)
+        for i in range(1, self.n_kernel_iterations):
+
+            if self.reuse_kernels:
+                features_filtered = knet.apply_kernel(kernels=kernel,
+                                                      object_features=features_list[-1],
+                                                      n_kernels=self.n_kernels,
+                                                      n_object_features=self.fc_pre_layer_size,
+                                                      n_objects=self.n_detections)
+            else:
+                kernel = knet.knet_layer(pairwise_features=spatial_features,
+                                         n_kernels=self.n_kernels,
+                                         n_objects=self.n_detections,
+                                         n_pair_features=n_spatial_features,
+                                         softmax_kernel=self.softmax_kernel,
+                                         hlayer_size=self.knet_hlayer_size)
+                features_filtered = knet.apply_kernel(kernels=kernel,
+                                                      object_features=features_list[-1],
+                                                      n_kernels=self.n_kernels,
+                                                      n_object_features=self.fc_pre_layer_size,
+                                                      n_objects=self.n_detections)
+
+            if self.reuse_apres_fc_layers:
+                updated_features = self._fc_layer_chain(input_tensor=features_filtered,
+                                                        layer_size=self.fc_apres_layer_size,
+                                                        n_layers=self.fc_apres_layers_cnt,
+                                                        scope='apres_fc_layers',
+                                                        reuse=True)
+
+            else:
+                updated_features = self._fc_layer_chain(input_tensor=features_filtered,
+                                                        layer_size=self.fc_apres_layer_size,
+                                                        n_layers=self.fc_apres_layers_cnt,
+                                                        scope='apres_fc_layers'+str(i))
 
             features_list.append(updated_features)
 
@@ -135,14 +167,39 @@ class NeuralNMS:
 
         return labels,  loss_final
 
-    def _fc_layer_chain(self, input_tensor, layer_size, n_layers, activation=None):
-        fc_chain = slim.layers.fully_connected(input_tensor,
-                                               layer_size,
-                                               activation_fn=activation)
-        for i in range(0, n_layers-1):
+    def _fc_layer_chain(self,
+                        input_tensor,
+                        layer_size,
+                        n_layers,
+                        reuse=False,
+                        scope=None):
+
+        if n_layers == 1:
+            fc_chain = slim.layers.fully_connected(input_tensor,
+                                                   layer_size,
+                                                   activation_fn=None,
+                                                   reuse=reuse,
+                                                   scope=scope+'/fc1')
+            return fc_chain
+        elif n_layers >= 2:
+            fc_chain = slim.layers.fully_connected(input_tensor,
+                                                   layer_size,
+                                                   activation_fn=tf.nn.relu,
+                                                   reuse=reuse,
+                                                   scope=scope+'/fc1')
+
+            for i in range(2, n_layers):
+                fc_chain = slim.layers.fully_connected(fc_chain,
+                                                       layer_size,
+                                                       activation_fn=tf.nn.relu,
+                                                       reuse=reuse,
+                                                       scope=scope+'/fc'+str(i))
+
             fc_chain = slim.layers.fully_connected(fc_chain,
                                                    layer_size,
-                                                   activation_fn=activation)
+                                                   activation_fn=None,
+                                                   reuse=reuse,
+                                                   scope=scope+'/fc'+str(n_layers))
         return fc_chain
 
     def _train_ops(self):
@@ -150,7 +207,7 @@ class NeuralNMS:
         return train_step
 
     def _summary_ops(self):
-        tf.summary.scalar('cross_entropy_loss', self.loss)
+        tf.summary.scalar('loss', self.loss)
         merged_summaries = tf.summary.merge_all()
         return merged_summaries
 
