@@ -250,6 +250,7 @@ class ExperimentConfig:
             self.n_dt_features = N_DT_FEATURES_FULL
 
         self.nms_network_config = self.config.get('nms_network', {})
+        self.model_file = os.path.join(self.log_dir, 'model')
 
         train_config = self.nms_network_config.get('training', {})
 
@@ -321,7 +322,6 @@ def main(_):
                 step_id = int(ckpt_name.split('-')[1])
                 saver.restore(sess, ckpt_path)
 
-        model_file = os.path.join(config.log_dir, 'model')
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
         logging.info('training started..')
@@ -349,52 +349,51 @@ def main(_):
                 summary_writer.flush()
 
                 step_id += 1
-                if step_id % config.eval_step == 0:
 
-                    logging.info('step : %d' % step_id)
+            logging.info('step : %d' % step_id)
 
-                    fid = shuffle_samples(n_frames_test)[0]
+            fid = shuffle_samples(n_frames_test)[0]
 
-                    frame_data = frames_data_test[fid]
+            frame_data = frames_data_test[fid]
 
-                    eval.print_debug_info(sess=sess,
-                                          nnms_model=nnms_model,
-                                          frame_data=frame_data,
-                                          outdir=config.log_dir,
-                                          fid=fid)
+            eval.print_debug_info(sess=sess,
+                                  nnms_model=nnms_model,
+                                  frame_data=frame_data,
+                                  outdir=config.log_dir,
+                                  fid=fid)
 
-                    logging.info('evaluating on TRAIN..')
-                    train_out_dir = os.path.join(config.log_dir, 'train')
-                    train_map, train_map_nms = eval.eval_model(sess, nnms_model,
-                                                frames_data_train,
-                                                global_step=step_id,
-                                                n_eval_frames=config.n_eval_frames,
-                                                out_dir=train_out_dir,
-                                                full_eval=config.full_eval,
-                                                nms_thres=config.nms_thres)
-                    write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
+            logging.info('evaluating on TRAIN..')
+            train_out_dir = os.path.join(config.log_dir, 'train')
+            train_map, train_map_nms = eval.eval_model(sess, nnms_model,
+                                        frames_data_train,
+                                        global_step=step_id,
+                                        n_eval_frames=config.n_eval_frames,
+                                        out_dir=train_out_dir,
+                                        full_eval=config.full_eval,
+                                        nms_thres=config.nms_thres)
+            write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
 
-                    logging.info('evaluating on TEST..')
-                    test_out_dir = os.path.join(config.log_dir, 'test')
-                    test_map, test_map_nms = eval.eval_model(sess, nnms_model,
-                                               frames_data_test,
-                                               global_step=step_id,
-                                               n_eval_frames=config.n_eval_frames,
-                                               out_dir=test_out_dir,
-                                               full_eval=config.full_eval,
-                                               nms_thres=config.nms_thres)
-                    write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
+            logging.info('evaluating on TEST..')
+            test_out_dir = os.path.join(config.log_dir, 'test')
+            test_map, test_map_nms = eval.eval_model(sess, nnms_model,
+                                       frames_data_test,
+                                       global_step=step_id,
+                                       n_eval_frames=config.n_eval_frames,
+                                       out_dir=test_out_dir,
+                                       full_eval=config.full_eval,
+                                       nms_thres=config.nms_thres)
+            write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
 
-                    config.update_results(step_id,
-                                          train_map,
-                                          train_map_nms,
-                                          test_map,
-                                          test_map_nms,
-                                          np.mean(step_times))
+            config.update_results(step_id,
+                                  train_map,
+                                  train_map_nms,
+                                  test_map,
+                                  test_map_nms,
+                                  np.mean(step_times))
 
-                    config.save_results()
+            config.save_results()
 
-                    saver.save(sess, model_file, global_step=step_id)
+            saver.save(sess, config.model_file, global_step=step_id)
     return
 
 if __name__ == '__main__':

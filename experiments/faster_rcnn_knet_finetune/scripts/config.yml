@@ -27,6 +27,5 @@ nms_network:
         n_epochs: 100
     evaluation :
         eval_step: 1000
-        full_eval: False
-        n_eval_frames: 100
+        full_eval: True
         nms_thres: 0.5

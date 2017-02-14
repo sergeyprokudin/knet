@@ -127,7 +127,7 @@ class NeuralNMS:
                                                                  pos_weight=self.pos_weight)
 
         # hard_indices_tf = misc.data_subselection_hard_negative_tf(
-        #     self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
+        #    self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
 
         # loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
 
