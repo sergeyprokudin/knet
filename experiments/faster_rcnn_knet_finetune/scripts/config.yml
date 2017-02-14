@@ -26,6 +26,6 @@ nms_network:
         optimizer_step: 0.0001
         n_epochs: 100
     evaluation :
-        eval_step: 1000
+        eval_step: 10
         full_eval: True
         nms_thres: 0.5

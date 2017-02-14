@@ -231,7 +231,7 @@ class ExperimentConfig:
 
         self.log_dir = os.path.join(root_log_dir, self.id)
         self.log_file = os.path.join(self.log_dir, 'training.log')
-        self.res_csv_path = os.path.join(root_log_dir, 'results_'+str(self.git_hash)+'.csv')
+        self.res_csv_path = os.path.join(root_log_dir, 'results.csv')
         self._create_log_dir()
         self._set_logging()
         self._backup_config()
@@ -278,10 +278,6 @@ class ExperimentConfig:
         self.results['curr_train_nms_map'] = 0.0
         self.results['curr_test_map'] = 0.0
         self.results['curr_test_nms_map'] = 0.0
-
-
-def eval_and_save(sess, model, config):
-    return
 
 
 def main(_):
