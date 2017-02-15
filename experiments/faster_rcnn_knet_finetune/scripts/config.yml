@@ -9,22 +9,24 @@ nms_network:
         use_object_features: True
         use_coords_features: True
         use_iou_features: True
-        fc_pre_layer_size: 128
-        fc_pre_layers_cnt: 2
-        knet_hlayer_size: 128
+        fc_ini_layer_size: 64
+        fc_ini_layers_cnt: 1
+        fc_pre_layer_size: 64
+        fc_pre_layers_cnt: 1
+        knet_hlayer_size: 64
         n_kernels: 16
-        n_kernel_iterations: 10
+        n_kernel_iterations: 2
         reuse_kernels: True
-        fc_apres_layer_size: 128
+        fc_apres_layer_size: 64
         fc_apres_layers_cnt: 2
-        reuse_apres_fc_layers: True
+        reuse_apres_fc_layers: False
         softmax_kernel: True
     training:
         pos_weight: 1.0
         n_neg_samples: 10
         optimizer_step: 0.0001
         n_epochs: 100
-    evaluation :
+    evaluation:
         eval_step: 1
         full_eval: True
         nms_thres: 0.5

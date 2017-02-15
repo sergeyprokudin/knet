@@ -9,6 +9,8 @@ nms_network:
         use_object_features: True
         use_coords_features: True
         use_iou_features: True
+        fc_ini_layer_size: 64
+        fc_ini_layers_cnt: 1
         fc_pre_layer_size: 64
         fc_pre_layers_cnt: 1
         knet_hlayer_size: 128
@@ -17,7 +19,7 @@ nms_network:
         reuse_kernels: True
         fc_apres_layer_size: 64
         fc_apres_layers_cnt: 2
-        reuse_apres_fc_layers: False
+        reuse_apres_fc_layers: True
         softmax_kernel: True
     training:
         pos_weight: 1.0

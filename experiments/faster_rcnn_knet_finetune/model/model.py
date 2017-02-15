@@ -49,10 +49,17 @@ class NeuralNMS:
 
     def _inference_ops(self):
 
-        dt_features_reduced = self._fc_layer_chain(input_tensor=self.dt_features,
-                                                   layer_size=self.fc_pre_layer_size,
-                                                   n_layers=self.fc_pre_layers_cnt,
-                                                   scope='fc_pre_layer')
+        # we'll do one iteration of fc layers to prepare input for knet
+        dt_features_ini = self._fc_layer_chain(input_tensor=self.dt_features,
+                                               layer_size=self.fc_ini_layer_size,
+                                               n_layers=self.fc_ini_layers_cnt,
+                                               scope='fc_ini_layer')
+
+        # we also reduce dimensionality of our features before passing it through knet
+        dt_features_pre_knet = self._fc_layer_chain(input_tensor=self.dt_features,
+                                                    layer_size=self.fc_pre_layer_size,
+                                                    n_layers=self.fc_pre_layers_cnt,
+                                                    scope='fc_pre_layer_knet')
 
         pairwise_spatial_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
@@ -65,7 +72,7 @@ class NeuralNMS:
             spatial_features_list.append(iou_feature)
             n_spatial_features += 1
 
-        pairwise_obj_features = spatial.construct_pairwise_features_tf(dt_features_reduced)
+        pairwise_obj_features = spatial.construct_pairwise_features_tf(dt_features_pre_knet)
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features)
             n_spatial_features += self.fc_pre_layer_size * 2
@@ -78,7 +85,7 @@ class NeuralNMS:
 
         spatial_features = tf.concat(2, spatial_features_list)
 
-        features_list = [dt_features_reduced]
+        features_list = [dt_features_ini]
 
         kernel = knet.knet_layer(pairwise_features=spatial_features,
                                  n_kernels=self.n_kernels,
@@ -90,7 +97,7 @@ class NeuralNMS:
         features_filtered = knet.apply_kernel(kernels=kernel,
                                               object_features=features_list[-1],
                                               n_kernels=self.n_kernels,
-                                              n_object_features=self.fc_pre_layer_size,
+                                              n_object_features=self.fc_apres_layer_size,
                                               n_objects=self.n_detections)
 
         updated_features = self._fc_layer_chain(input_tensor=features_filtered,
@@ -174,7 +181,9 @@ class NeuralNMS:
                         reuse=False,
                         scope=None):
 
-        if n_layers == 1:
+        if n_layers == 0:
+            return input_tensor
+        elif n_layers == 1:
             fc_chain = slim.layers.fully_connected(input_tensor,
                                                    layer_size,
                                                    activation_fn=None,
@@ -222,6 +231,8 @@ class NeuralNMS:
 
         # architecture params
         arch_args = kwargs.get('architecture', {})
+        self.fc_ini_layer_size = arch_args.get('fc_ini_layer_size', 128)
+        self.fc_ini_layers_cnt = arch_args.get('fc_ini_layers_cnt', 1)
         self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 128)
         self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
         self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
