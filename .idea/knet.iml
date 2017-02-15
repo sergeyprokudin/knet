@@ -6,6 +6,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="neural_nms" />
     <orderEntry type="module" module-name="Faster-RCNN_TF" />
+    <orderEntry type="module" module-name="tf-faster-rcnn" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="myDocStringFormat" value="NumPy" />

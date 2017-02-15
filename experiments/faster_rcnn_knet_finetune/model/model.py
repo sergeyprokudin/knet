@@ -85,8 +85,7 @@ class NeuralNMS:
 
         spatial_features = tf.concat(2, spatial_features_list)
 
-        features_list = [dt_features_ini]
-
+        # initial kernel iteration
         kernel = knet.knet_layer(pairwise_features=spatial_features,
                                  n_kernels=self.n_kernels,
                                  n_objects=self.n_detections,
@@ -95,9 +94,9 @@ class NeuralNMS:
                                  hlayer_size=self.knet_hlayer_size)
 
         features_filtered = knet.apply_kernel(kernels=kernel,
-                                              object_features=features_list[-1],
+                                              object_features=dt_features_ini,
                                               n_kernels=self.n_kernels,
-                                              n_object_features=self.fc_apres_layer_size,
+                                              n_object_features=self.fc_ini_layer_size,
                                               n_objects=self.n_detections)
 
         updated_features = self._fc_layer_chain(input_tensor=features_filtered,
@@ -105,26 +104,23 @@ class NeuralNMS:
                                                 n_layers=self.fc_apres_layers_cnt,
                                                 scope='apres_fc_layers')
 
+        features_iters_list = [updated_features]
+
         for i in range(1, self.n_kernel_iterations):
 
-            if self.reuse_kernels:
-                features_filtered = knet.apply_kernel(kernels=kernel,
-                                                      object_features=features_list[-1],
-                                                      n_kernels=self.n_kernels,
-                                                      n_object_features=self.fc_pre_layer_size,
-                                                      n_objects=self.n_detections)
-            else:
+            if not self.reuse_kernels:
                 kernel = knet.knet_layer(pairwise_features=spatial_features,
                                          n_kernels=self.n_kernels,
                                          n_objects=self.n_detections,
                                          n_pair_features=n_spatial_features,
                                          softmax_kernel=self.softmax_kernel,
                                          hlayer_size=self.knet_hlayer_size)
-                features_filtered = knet.apply_kernel(kernels=kernel,
-                                                      object_features=features_list[-1],
-                                                      n_kernels=self.n_kernels,
-                                                      n_object_features=self.fc_pre_layer_size,
-                                                      n_objects=self.n_detections)
+
+            features_filtered = knet.apply_kernel(kernels=kernel,
+                                                  object_features=features_iters_list[-1],
+                                                  n_kernels=self.n_kernels,
+                                                  n_object_features=self.fc_apres_layer_size,
+                                                  n_objects=self.n_detections)
 
             if self.reuse_apres_fc_layers:
                 updated_features = self._fc_layer_chain(input_tensor=features_filtered,
@@ -139,7 +135,7 @@ class NeuralNMS:
                                                         n_layers=self.fc_apres_layers_cnt,
                                                         scope='apres_fc_layers'+str(i))
 
-            features_list.append(updated_features)
+            features_iters_list.append(updated_features)
 
         logits = slim.layers.fully_connected(
                 updated_features, self.n_classes, activation_fn=None)
