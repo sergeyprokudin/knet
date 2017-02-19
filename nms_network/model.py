@@ -1,13 +1,11 @@
-"""Knet on top of FasterRCNN inference
+"""Basic definition for KernelNetwork
 """
 
-import numpy as np
-import os
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-
-
-from tf_layers import spatial, knet, misc, losses
+import losses
+import knet
+import spatial
 
 DT_COORDS = 'dt_coords'
 GT_COORDS = 'gt_coords'
@@ -21,7 +19,51 @@ DT_GT_IOU = 'dt_gt_iou'
 DT_DT_IOU = 'dt_dt_iou'
 
 
-class NeuralNMS:
+class NMSNetwork:
+
+    def __init__(self, n_detections, n_dt_features, n_classes,
+                 **kwargs):
+
+        # model main parameters
+        self.n_detections = n_detections
+        self.n_dt_features = n_dt_features
+        self.n_dt_coords = 4
+        self.n_classes = n_classes
+
+        # architecture params
+        arch_args = kwargs.get('architecture', {})
+        self.fc_ini_layer_size = arch_args.get('fc_ini_layer_size', 128)
+        self.fc_ini_layers_cnt = arch_args.get('fc_ini_layers_cnt', 1)
+        self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 128)
+        self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
+        self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
+        self.n_kernels = arch_args.get('n_kernels', 16)
+        self.n_kernel_iterations = arch_args.get('fc_pre_layers_cnt', 1)
+        self.reuse_kernels = arch_args.get('reuse_kernels', True)
+        self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 128)
+        self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
+        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', True)
+
+        # training procedure params
+        train_args = kwargs.get('training', {})
+        self.pos_weight = train_args.get('pos_weight', 1)
+        self.softmax_kernel = train_args.get('softmax_kernel', True)
+        self.use_iou_features = train_args.get('use_iou_features', True)
+        self.use_coords_features = train_args.get('use_coords_features', True)
+        self.use_object_features = train_args.get('use_object_features', True)
+        self.optimizer_step = train_args.get('optimizer_step', 0.0001)
+        self.n_neg_examples = train_args.get('n_neg_examples',  10)
+
+        self.dt_coords, self.dt_features, self.dt_labels,\
+            self.gt_labels, self.gt_coords = self._input_ops()
+
+        self.iou_feature, self.logits, self.class_probs = self._inference_ops()
+
+        self.labels, self.loss, self.dt_gt_iou_tf, self.pair_dt_gt = self._loss_ops()
+
+        self.train_step = self._train_ops()
+
+        self.merged_summaries = self._summary_ops()
 
     def _input_ops(self):
 
@@ -40,12 +82,14 @@ class NeuralNMS:
                     self.n_detections, self.n_classes],
                 name=DT_LABELS)
 
+        gt_coords = tf.placeholder(tf.float32, shape=[None, 4])
+
         gt_labels = tf.placeholder(tf.float32, shape=None)
 
-        dt_gt_iou = tf.placeholder(
-                tf.float32, shape=[self.n_detections, None], name=DT_GT_IOU)
+        # dt_gt_iou = tf.placeholder(
+        #         tf.float32, shape=[self.n_detections, None], name=DT_GT_IOU)
 
-        return dt_coords, dt_features, dt_labels, gt_labels, dt_gt_iou
+        return dt_coords, dt_features, dt_labels, gt_labels, gt_coords
 
     def _inference_ops(self):
 
@@ -148,8 +192,13 @@ class NeuralNMS:
 
         class_labels = []
 
+        pairwise_dt_gt_coords = spatial.construct_pairwise_features_tf(
+            self.dt_coords, self.gt_coords)
+
+        dt_gt_iou = tf.squeeze(spatial.compute_pairwise_spatial_features_iou_tf(pairwise_dt_gt_coords), 2)
+
         for class_id in range(0, self.n_classes):
-            gt_per_label = losses.construct_ground_truth_per_label_tf(self.dt_gt_iou, self.gt_labels, class_id)
+            gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id)
             # self.gt_per_labels.append(gt_per_label)
             class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_probs,
                                                                          gt_per_label,
@@ -168,7 +217,7 @@ class NeuralNMS:
 
         loss_final = tf.reduce_mean(cross_entropy)
 
-        return labels,  loss_final
+        return labels,  loss_final, dt_gt_iou, pairwise_dt_gt_coords
 
     def _fc_layer_chain(self,
                         input_tensor,
@@ -216,47 +265,5 @@ class NeuralNMS:
         merged_summaries = tf.summary.merge_all()
         return merged_summaries
 
-    def __init__(self, n_detections, n_dt_features, n_classes,
-                 **kwargs):
 
-        # model main parameters
-        self.n_detections = n_detections
-        self.n_dt_features = n_dt_features
-        self.n_dt_coords = 4
-        self.n_classes = n_classes
-
-        # architecture params
-        arch_args = kwargs.get('architecture', {})
-        self.fc_ini_layer_size = arch_args.get('fc_ini_layer_size', 128)
-        self.fc_ini_layers_cnt = arch_args.get('fc_ini_layers_cnt', 1)
-        self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 128)
-        self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
-        self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
-        self.n_kernels = arch_args.get('n_kernels', 16)
-        self.n_kernel_iterations = arch_args.get('fc_pre_layers_cnt', 1)
-        self.reuse_kernels = arch_args.get('reuse_kernels', True)
-        self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 128)
-        self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
-        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', True)
-
-        # training procedure params
-        train_args = kwargs.get('training', {})
-        self.pos_weight = train_args.get('pos_weight', 1)
-        self.softmax_kernel = train_args.get('softmax_kernel', True)
-        self.use_iou_features = train_args.get('use_iou_features', True)
-        self.use_coords_features = train_args.get('use_coords_features', True)
-        self.use_object_features = train_args.get('use_object_features', True)
-        self.optimizer_step = train_args.get('optimizer_step', 0.0001)
-        self.n_neg_examples = train_args.get('n_neg_examples',  10)
-
-        self.dt_coords, self.dt_features, self.dt_labels,\
-            self.gt_labels, self.dt_gt_iou = self._input_ops()
-
-        self.iou_feature, self.logits, self.class_probs = self._inference_ops()
-
-        self.labels, self.loss = self._loss_ops()
-
-        self.train_step = self._train_ops()
-
-        self.merged_summaries = self._summary_ops()
 

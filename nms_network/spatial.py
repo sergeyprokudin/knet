@@ -4,36 +4,42 @@
 import tensorflow as tf
 
 
-def construct_pairwise_features_tf(features,
+def construct_pairwise_features_tf(features_1,
+                                   features_2=None,
                                    name_or_scope=None):
     """Construct pairwise features matrix
 
     Parameters
     -------
-    features - Tensor of shape [n_objects, n_features]
-
+    features_1 - Tensor of shape [n1_objects, n_features]
+    features_2 - second Tensor of shape [n2_objects, n_features].
+                If None, construct pairwise terms from first matrix only
     Returns
     --------
-    Tensor of shape [1, n_objects, n_objects, n_features*2] (ready for knet convolution)
+    Tensor of shape [1, n1_objects, n2_objects, n_features*2] (ready for knet convolution)
     """
     with tf.variable_scope(name_or_scope,
                            default_name='pairwise_features',
-                           values=[features]):
+                           values=[features_1]):
+        if features_2 is None:
+            features_2 = features_1
         # We only support flat features.
-        features.get_shape().assert_has_rank(2)
-        feature_shape = tf.shape(features)
-        n_hypotheses = feature_shape[0]
-        n_features = features.get_shape().as_list()[1]
+        features_1.get_shape().assert_has_rank(2)
+        t1_shape = tf.shape(features_1)
+        t2_shape = tf.shape(features_2)
+        n1_hypotheses = t1_shape[0]
+        n2_hypotheses = t2_shape[0]
+        n_features = features_1.get_shape().as_list()[1]
 
-        pair_1 = tf.tile(features, [1, n_hypotheses])
+        pair_1 = tf.tile(features_1, [1, n2_hypotheses])
         pair_1 = tf.reshape(pair_1, [-1, n_features])
 
-        pair_2 = tf.tile(features, [n_hypotheses, 1])
+        pair_2 = tf.tile(features_2, [n1_hypotheses, 1])
         pairwise_features = tf.concat(1, [pair_1, pair_2])
 
         return tf.reshape(
             pairwise_features,
-            [n_hypotheses, n_hypotheses, n_features * 2])
+            [n1_hypotheses, n2_hypotheses, n_features * 2])
 
 
 def compute_overlap(zeros, pos_1, dim_1, pos_2, dim_2, name_or_scope=None):
@@ -78,6 +84,20 @@ def compute_union(width_1, height_1, width_2, height_2,
 
 def compute_pairwise_spatial_features_iou_tf(
         pairwise_spatial_features, name_or_scope=None):
+    """
+
+    Parameters
+    ----------
+    pairwise_spatial_features - Tensor of format [n1_hypotheses, n2_hypotheses, 8]
+                                where last dimension contains information about coordinates of a pair of
+                                boxes in format [x11, y11, x12, y12, x21, y21, x22, y22]
+    name_or_scope
+
+    Returns
+    -------
+    Tensor of format [n1_hypotheses, n2_hypotheses, 1] containing information on intersection
+    over union for each bbox pair
+    """
     with tf.variable_scope(
             name_or_scope,
             default_name='construct_pairwise_spatial_features_iou',
@@ -97,12 +117,12 @@ def compute_pairwise_spatial_features_iou_tf(
         # with tf.control_dependencies(assert_ops):
         x1 = pairwise_spatial_features[:, :, 0]
         y1 = pairwise_spatial_features[:, :, 1]
-        w1 = pairwise_spatial_features[:, :, 2]
-        h1 = pairwise_spatial_features[:, :, 3]
+        w1 = pairwise_spatial_features[:, :, 2] - pairwise_spatial_features[:, :, 0]
+        h1 = pairwise_spatial_features[:, :, 3] - pairwise_spatial_features[:, :, 1]
         x2 = pairwise_spatial_features[:, :, 4]
         y2 = pairwise_spatial_features[:, :, 5]
-        w2 = pairwise_spatial_features[:, :, 6]
-        h2 = pairwise_spatial_features[:, :, 7]
+        w2 = pairwise_spatial_features[:, :, 6] - pairwise_spatial_features[:, :, 4]
+        h2 = pairwise_spatial_features[:, :, 7] - pairwise_spatial_features[:, :, 5]
 
         zeros = tf.zeros(tf.shape(pairwise_spatial_features)[0:2])
 

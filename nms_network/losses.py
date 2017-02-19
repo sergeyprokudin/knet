@@ -63,6 +63,7 @@ def construct_ground_truth_per_label_tf(dt_gt_iou,
 
         return tf.cond(tf.equal(n_gt_hypotheses, 0), _empty, _not_empty)
 
+
 def compute_match_gt_perfect_per_label_tf(labels, matching_gt_mask,
                                           name_or_scope=None):
     """Return 1.0 for the best hypothesis and ground truth match, else 0.0.

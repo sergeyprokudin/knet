@@ -7,28 +7,26 @@
 
 """
 
-import numpy as np
-import tensorflow as tf
-
-import joblib
-import pandas as pd
-from functools import partial
-import os
-import sys
-import shutil
-import ntpath
 import binascii
-import subprocess
-
-import gflags
-import yaml
 import logging
-from google.apputils import app
+import shutil
+import subprocess
+import sys
+from functools import partial
 from timeit import default_timer as timer
 
-from tools import bbox_utils, nms, metrics
-import model as nnms
 import eval
+import gflags
+import joblib
+import ntpath
+import numpy as np
+import os
+import pandas as pd
+import tensorflow as tf
+import yaml
+from google.apputils import app
+from nms_network import model as nms_net
+from tools import bbox_utils
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string('log_dir', None, 'directory to save logs and trained models')
@@ -48,32 +46,32 @@ N_CLASSES = 21
 
 def get_frame_data(fid, data, n_bboxes):
     frame_data = {}
-    fid_dt_ix = data[nnms.DT_COORDS][:, 0] == fid
-    frame_data[nnms.DT_COORDS] = data[nnms.DT_COORDS][fid_dt_ix, 1:][0:n_bboxes]
-    frame_data[nnms.DT_FEATURES] = data[nnms.DT_FEATURES][fid_dt_ix][0:n_bboxes]
-    frame_data[nnms.DT_SCORES] = data[nnms.DT_SCORES][fid_dt_ix][0:n_bboxes]
-    fid_gt_ix = data[nnms.GT_COORDS][:, 0] == fid
-    frame_data[nnms.GT_COORDS] = data[nnms.GT_COORDS][fid_gt_ix, 1:5]
-    frame_data[nnms.GT_LABELS] = data[nnms.GT_COORDS][fid_gt_ix, 5]
-    frame_data[nnms.DT_GT_IOU] = bbox_utils.compute_sets_iou(
-        frame_data[nnms.DT_COORDS], frame_data[nnms.GT_COORDS])
+    fid_dt_ix = data[nms_net.DT_COORDS][:, 0] == fid
+    frame_data[nms_net.DT_COORDS] = data[nms_net.DT_COORDS][fid_dt_ix, 1:][0:n_bboxes]
+    frame_data[nms_net.DT_FEATURES] = data[nms_net.DT_FEATURES][fid_dt_ix][0:n_bboxes]
+    frame_data[nms_net.DT_SCORES] = data[nms_net.DT_SCORES][fid_dt_ix][0:n_bboxes]
+    fid_gt_ix = data[nms_net.GT_COORDS][:, 0] == fid
+    frame_data[nms_net.GT_COORDS] = data[nms_net.GT_COORDS][fid_gt_ix, 1:5]
+    frame_data[nms_net.GT_LABELS] = data[nms_net.GT_COORDS][fid_gt_ix, 5]
+    frame_data[nms_net.DT_GT_IOU] = bbox_utils.compute_sets_iou(
+        frame_data[nms_net.DT_COORDS], frame_data[nms_net.GT_COORDS])
     # frame_data[nnms.DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[nnms.DT_COORDS], frame_data[nnms.DT_COORDS])
-    frame_data[nnms.DT_LABELS] = np.zeros([n_bboxes, N_CLASSES])
-    frame_data[nnms.DT_LABELS_BASIC] = np.zeros([n_bboxes, N_CLASSES])
+    frame_data[nms_net.DT_LABELS] = np.zeros([n_bboxes, N_CLASSES])
+    frame_data[nms_net.DT_LABELS_BASIC] = np.zeros([n_bboxes, N_CLASSES])
     for class_id in range(0, N_CLASSES):
-        class_gt_boxes = frame_data[nnms.GT_LABELS] == class_id
-        class_dt_gt = frame_data[nnms.DT_GT_IOU][:, class_gt_boxes]
+        class_gt_boxes = frame_data[nms_net.GT_LABELS] == class_id
+        class_dt_gt = frame_data[nms_net.DT_GT_IOU][:, class_gt_boxes]
         if class_dt_gt.shape[1] != 0:
-            frame_data[nnms.DT_LABELS][:, class_id] = np.max(
+            frame_data[nms_net.DT_LABELS][:, class_id] = np.max(
                 bbox_utils.compute_best_iou(class_dt_gt), axis=1)
-            frame_data[nnms.DT_LABELS_BASIC][:, class_id][
+            frame_data[nms_net.DT_LABELS_BASIC][:, class_id][
                 np.max(class_dt_gt, axis=1) > 0.5] = 1
     # logging.info('finished processing frame %d' % fid)
     return frame_data
 
 
 def split_by_frames(data, n_bboxes):
-    unique_fids = np.unique(np.hstack([data[nnms.DT_COORDS][:, 0], data[nnms.GT_COORDS][:, 0]])).astype(int)
+    unique_fids = np.unique(np.hstack([data[nms_net.DT_COORDS][:, 0], data[nms_net.GT_COORDS][:, 0]])).astype(int)
     get_frame_data_partial = partial(get_frame_data, data=data, n_bboxes=n_bboxes)
     frames_data_train = dict(
         zip(unique_fids, map(get_frame_data_partial, unique_fids)))
@@ -86,10 +84,10 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
     else :
         dt_features_path = os.path.join(data_dir, 'dt_features_full.pkl')
     data = {}
-    data[nnms.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
-    data[nnms.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
-    data[nnms.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
-    data[nnms.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
+    data[nms_net.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
+    data[nms_net.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
+    data[nms_net.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
+    data[nms_net.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
     logging.info('finished loading data')
     frames_data_train = split_by_frames(data, n_bboxes)
     return frames_data_train
@@ -303,10 +301,10 @@ def main(_):
 
     logging.info('building model graph..')
 
-    nnms_model = nnms.NeuralNMS(n_detections=config.n_bboxes,
-                                n_dt_features=config.n_dt_features,
-                                n_classes=N_CLASSES,
-                                **config.nms_network_config)
+    nnms_model = nms_net.NMSNetwork(n_detections=config.n_bboxes,
+                                       n_dt_features=config.n_dt_features,
+                                       n_classes=N_CLASSES,
+                                       **config.nms_network_config)
 
     with tf.Session() as sess:
         step_id = 0
@@ -332,11 +330,12 @@ def main(_):
 
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
-                feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
-                             nnms_model.dt_features: frame_data[nnms.DT_FEATURES],
-                             nnms_model.dt_labels: frame_data[nnms.DT_LABELS],
-                             nnms_model.dt_gt_iou: frame_data[nnms.DT_GT_IOU],
-                             nnms_model.gt_labels: frame_data[nnms.GT_LABELS]}
+                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                             nnms_model.dt_labels: frame_data[nms_net.DT_LABELS],
+                             # nnms_model.dt_gt_iou: frame_data[nms_net.DT_GT_IOU],
+                             nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
 
                 start_step = timer()
 

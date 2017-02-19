@@ -2,7 +2,6 @@
 """
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-from tf_layers import misc
 
 
 def knet_layer(pairwise_features, n_objects, n_pair_features,

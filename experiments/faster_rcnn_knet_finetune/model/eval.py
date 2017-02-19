@@ -1,11 +1,11 @@
-import numpy as np
-import joblib
-import os
-
-
-from tools import bbox_utils, nms, metrics
-import model as nnms
 import logging
+
+import joblib
+import numpy as np
+import os
+from nms_network import model as nms_net
+from tools import nms, metrics
+
 
 def softmax(logits):
     n_classes = logits.shape[1]
@@ -44,14 +44,14 @@ def eval_model(sess, nnms_model, frames_data,
 
         frame_data = frames_data[fid]
 
-        gt_labels_all.append(frame_data[nnms.GT_LABELS].reshape(-1, 1))
+        gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
 
-        feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
-                     nnms_model.dt_features: frame_data[nnms.DT_FEATURES]}
+        feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                     nnms_model.dt_features: frame_data[nms_net.DT_FEATURES]}
 
-        dt_scores = frame_data[nnms.DT_SCORES]
+        dt_scores = frame_data[nms_net.DT_SCORES]
         inference_orig = softmax(dt_scores)
-        eval_data[fid]['dt_coords'] = frame_data[nnms.DT_COORDS]
+        eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
@@ -62,14 +62,14 @@ def eval_model(sess, nnms_model, frames_data,
 
         dt_gt_match_orig.append(
             metrics.match_dt_gt_all_classes(
-                frame_data[nnms.DT_GT_IOU],
-                frame_data[nnms.GT_LABELS],
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
                 inference_orig))
 
         dt_gt_match_new.append(
             metrics.match_dt_gt_all_classes(
-                frame_data[nnms.DT_GT_IOU],
-                frame_data[nnms.GT_LABELS],
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
                 inference_new))
 
         is_suppressed_orig = nms.nms_all_classes(
@@ -79,14 +79,14 @@ def eval_model(sess, nnms_model, frames_data,
 
         dt_gt_match_orig_nms.append(
             metrics.match_dt_gt_all_classes(
-                frame_data[nnms.DT_GT_IOU],
-                frame_data[nnms.GT_LABELS],
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
                 inference_orig,
                 dt_is_suppressed_info=is_suppressed_orig))
         dt_gt_match_new_nms.append(
             metrics.match_dt_gt_all_classes(
-                frame_data[nnms.DT_GT_IOU],
-                frame_data[nnms.GT_LABELS],
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
                 inference_new,
                 dt_is_suppressed_info=is_suppressed_new))
 
@@ -128,13 +128,14 @@ def eval_model(sess, nnms_model, frames_data,
 
 def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
 
-    feed_dict = {nnms_model.dt_coords: frame_data[nnms.DT_COORDS],
-                 nnms_model.dt_features: frame_data[nnms.DT_FEATURES],
-                 nnms_model.dt_labels: frame_data[nnms.DT_LABELS],
-                 nnms_model.dt_gt_iou: frame_data[nnms.DT_GT_IOU],
-                 nnms_model.gt_labels: frame_data[nnms.GT_LABELS]}
+    feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                 nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                 nnms_model.dt_labels: frame_data[nms_net.DT_LABELS],
+                 # nnms_model.dt_gt_iou: frame_data[nms_net.DT_GT_IOU],
+                 nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                 nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
 
-    inference_orig = frame_data[nnms.DT_SCORES]
+    inference_orig = frame_data[nms_net.DT_SCORES]
     inference, labels, loss = sess.run(
         [nnms_model.class_probs, nnms_model.labels, nnms_model.loss], feed_dict=feed_dict)
     logging.info("loss : %f" % loss)
@@ -145,7 +146,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
           inference_orig[np.where(labels > 0)])
     logging.info("new knet scores for matching bboxes : %s" %
           inference[np.where(labels > 0)])
-    num_gt = int(np.sum(frame_data[nnms.DT_LABELS]))
+    num_gt = int(np.sum(frame_data[nms_net.DT_LABELS]))
     num_pos_inf_orig = int(np.sum(inference_orig[:, 1:] > 0.0))
     num_pos_inf = int(np.sum(inference[:, 1:] > 0.5))
     logging.info(
@@ -161,7 +162,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
         os.makedirs(img_dir)
 
     # best IoU labels
-    plt.imshow(frame_data[nnms.DT_LABELS][:, 1:])
+    plt.imshow(frame_data[nms_net.DT_LABELS][:, 1:])
     plt.title('Class labels (best IoU)')
     plt.ylabel('detections')
     plt.xlabel('class labels')
@@ -185,7 +186,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
             '_labels_map.png'))
 
     # per patch labels
-    plt.imshow(frame_data[nnms.DT_LABELS_BASIC][:, 1:])
+    plt.imshow(frame_data[nms_net.DT_LABELS_BASIC][:, 1:])
     plt.title('Class labels (per patch)')
     plt.ylabel('detections')
     plt.xlabel('class labels')
