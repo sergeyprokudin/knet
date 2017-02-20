@@ -278,6 +278,27 @@ class ExperimentConfig:
         self.results['curr_test_nms_map'] = 0.0
 
 
+def input_ops(n_detections,
+              n_dt_features):
+
+    input_dict = {}
+    n_dt_coords = 4
+    input_dict['dt_coords'] = tf.placeholder(
+        tf.float32, shape=[
+                None, n_dt_coords])
+
+    input_dict['dt_features'] = tf.placeholder(tf.float32,
+                                 shape=[
+                                     None,
+                                     n_dt_features])
+
+    input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4])
+
+    input_dict['gt_labels'] = tf.placeholder(tf.float32, shape=None)
+
+    return input_dict
+
+
 def main(_):
 
     config = ExperimentConfig(data_dir=FLAGS.data_dir,
@@ -301,10 +322,12 @@ def main(_):
 
     logging.info('building model graph..')
 
-    nnms_model = nms_net.NMSNetwork(n_detections=config.n_bboxes,
-                                       n_dt_features=config.n_dt_features,
-                                       n_classes=N_CLASSES,
-                                       **config.nms_network_config)
+    in_ops = input_ops(config.n_bboxes, config.n_dt_features)
+
+    nnms_model = nms_net.NMSNetwork(n_dt_features=config.n_dt_features,
+                                    n_classes=N_CLASSES,
+                                    input_ops=in_ops,
+                                    **config.nms_network_config)
 
     with tf.Session() as sess:
         step_id = 0
@@ -330,10 +353,8 @@ def main(_):
 
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
-                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_labels: frame_data[nms_net.DT_LABELS],
-                             # nnms_model.dt_gt_iou: frame_data[nms_net.DT_GT_IOU],
+                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS][0:10],
+                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES][0:10],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
 

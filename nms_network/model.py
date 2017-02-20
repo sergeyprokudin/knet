@@ -21,11 +21,13 @@ DT_DT_IOU = 'dt_dt_iou'
 
 class NMSNetwork:
 
-    def __init__(self, n_detections, n_dt_features, n_classes,
+    def __init__(self,
+                 n_dt_features,
+                 n_classes,
+                 input_ops=None,
                  **kwargs):
 
         # model main parameters
-        self.n_detections = n_detections
         self.n_dt_features = n_dt_features
         self.n_dt_coords = 4
         self.n_classes = n_classes
@@ -54,42 +56,43 @@ class NMSNetwork:
         self.optimizer_step = train_args.get('optimizer_step', 0.0001)
         self.n_neg_examples = train_args.get('n_neg_examples',  10)
 
-        self.dt_coords, self.dt_features, self.dt_labels,\
-            self.gt_labels, self.gt_coords = self._input_ops()
+        if input_ops is None:
+            self.dt_coords, self.dt_features,\
+                self.gt_labels, self.gt_coords = self._input_ops()
+        else:
+            self.dt_coords = input_ops['dt_coords']
+            self.dt_features = input_ops['dt_features']
+            self.gt_labels = input_ops['gt_labels']
+            self.gt_coords = input_ops['gt_coords']
 
-        self.iou_feature, self.logits, self.class_probs = self._inference_ops()
 
-        self.labels, self.loss, self.dt_gt_iou_tf, self.pair_dt_gt = self._loss_ops()
+        with tf.variable_scope("nms_network"):
 
-        self.train_step = self._train_ops()
+            self.iou_feature, self.logits, self.class_probs = self._inference_ops()
 
-        self.merged_summaries = self._summary_ops()
+            self.labels, self.loss = self._loss_ops()
+
+            self.train_step = self._train_ops()
+
+            self.merged_summaries = self._summary_ops()
 
     def _input_ops(self):
 
         dt_coords = tf.placeholder(
             tf.float32, shape=[
-                self.n_detections, self.n_dt_coords], name=DT_COORDS)
+                None, self.n_dt_coords], name=DT_COORDS)
 
         dt_features = tf.placeholder(tf.float32,
                                      shape=[
-                                         self.n_detections,
+                                         None,
                                          self.n_dt_features],
                                      name=DT_FEATURES)
-
-        dt_labels = tf.placeholder(
-                tf.float32, shape=[
-                    self.n_detections, self.n_classes],
-                name=DT_LABELS)
 
         gt_coords = tf.placeholder(tf.float32, shape=[None, 4])
 
         gt_labels = tf.placeholder(tf.float32, shape=None)
 
-        # dt_gt_iou = tf.placeholder(
-        #         tf.float32, shape=[self.n_detections, None], name=DT_GT_IOU)
-
-        return dt_coords, dt_features, dt_labels, gt_labels, gt_coords
+        return dt_coords, dt_features, gt_labels, gt_coords
 
     def _inference_ops(self):
 
@@ -132,7 +135,6 @@ class NMSNetwork:
         # initial kernel iteration
         kernel = knet.knet_layer(pairwise_features=spatial_features,
                                  n_kernels=self.n_kernels,
-                                 n_objects=self.n_detections,
                                  n_pair_features=n_spatial_features,
                                  softmax_kernel=self.softmax_kernel,
                                  hlayer_size=self.knet_hlayer_size)
@@ -140,8 +142,7 @@ class NMSNetwork:
         features_filtered = knet.apply_kernel(kernels=kernel,
                                               object_features=dt_features_ini,
                                               n_kernels=self.n_kernels,
-                                              n_object_features=self.fc_ini_layer_size,
-                                              n_objects=self.n_detections)
+                                              n_object_features=self.fc_ini_layer_size)
 
         updated_features = self._fc_layer_chain(input_tensor=features_filtered,
                                                 layer_size=self.fc_apres_layer_size,
@@ -155,7 +156,6 @@ class NMSNetwork:
             if not self.reuse_kernels:
                 kernel = knet.knet_layer(pairwise_features=spatial_features,
                                          n_kernels=self.n_kernels,
-                                         n_objects=self.n_detections,
                                          n_pair_features=n_spatial_features,
                                          softmax_kernel=self.softmax_kernel,
                                          hlayer_size=self.knet_hlayer_size)
@@ -163,8 +163,7 @@ class NMSNetwork:
             features_filtered = knet.apply_kernel(kernels=kernel,
                                                   object_features=features_iters_list[-1],
                                                   n_kernels=self.n_kernels,
-                                                  n_object_features=self.fc_apres_layer_size,
-                                                  n_objects=self.n_detections)
+                                                  n_object_features=self.fc_apres_layer_size)
 
             if self.reuse_apres_fc_layers:
                 updated_features = self._fc_layer_chain(input_tensor=features_filtered,
@@ -217,7 +216,7 @@ class NMSNetwork:
 
         loss_final = tf.reduce_mean(cross_entropy)
 
-        return labels,  loss_final, dt_gt_iou, pairwise_dt_gt_coords
+        return labels,  loss_final
 
     def _fc_layer_chain(self,
                         input_tensor,

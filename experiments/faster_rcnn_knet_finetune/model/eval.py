@@ -130,8 +130,6 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
 
     feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                  nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                 nnms_model.dt_labels: frame_data[nms_net.DT_LABELS],
-                 # nnms_model.dt_gt_iou: frame_data[nms_net.DT_GT_IOU],
                  nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                  nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
 
