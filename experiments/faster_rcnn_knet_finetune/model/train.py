@@ -331,7 +331,9 @@ def main(_):
 
     with tf.Session() as sess:
         step_id = 0
-        sess.run(tf.global_variables_initializer())
+
+        sess.run(nnms_model.init_op)
+
         saver = tf.train.Saver(
             max_to_keep=5,
             keep_checkpoint_every_n_hours=1.0)
@@ -346,6 +348,8 @@ def main(_):
 
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
+        import numpy.random as rand
+
         logging.info('training started..')
         for epoch_id in range(0, config.n_epochs):
 
@@ -353,8 +357,8 @@ def main(_):
 
             for fid in shuffle_samples(n_frames_train):
                 frame_data = frames_data_train[fid]
-                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS][0:10],
-                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES][0:10],
+                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
 

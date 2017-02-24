@@ -56,7 +56,7 @@ def eval_model(sess, nnms_model, frames_data,
         eval_data[fid]['inference_orig'] = inference_orig
 
         inference_new, dt_dt_iou = sess.run(
-            [nnms_model.class_probs, nnms_model.iou_feature], feed_dict=feed_dict)
+            [nnms_model.class_scores, nnms_model.iou_feature], feed_dict=feed_dict)
         inference_new_all.append(inference_new)
         eval_data[fid]['inference_new'] = inference_new
 
@@ -135,7 +135,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
 
     inference_orig = frame_data[nms_net.DT_SCORES]
     inference, labels, loss = sess.run(
-        [nnms_model.class_probs, nnms_model.labels, nnms_model.loss], feed_dict=feed_dict)
+        [nnms_model.class_scores, nnms_model.labels, nnms_model.loss], feed_dict=feed_dict)
     logging.info("loss : %f" % loss)
     # logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES]
     # [np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])

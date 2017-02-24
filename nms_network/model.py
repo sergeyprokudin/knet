@@ -21,14 +21,15 @@ DT_DT_IOU = 'dt_dt_iou'
 
 class NMSNetwork:
 
+    VAR_SCOPE = 'nms_network'
+
     def __init__(self,
-                 n_dt_features,
                  n_classes,
                  input_ops=None,
                  **kwargs):
 
         # model main parameters
-        self.n_dt_features = n_dt_features
+
         self.n_dt_coords = 4
         self.n_classes = n_classes
 
@@ -40,7 +41,7 @@ class NMSNetwork:
         self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
         self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
         self.n_kernels = arch_args.get('n_kernels', 16)
-        self.n_kernel_iterations = arch_args.get('fc_pre_layers_cnt', 1)
+        self.n_kernel_iterations = arch_args.get('n_kernel_iterations', 1)
         self.reuse_kernels = arch_args.get('reuse_kernels', True)
         self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 128)
         self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
@@ -55,6 +56,7 @@ class NMSNetwork:
         self.use_object_features = train_args.get('use_object_features', True)
         self.optimizer_step = train_args.get('optimizer_step', 0.0001)
         self.n_neg_examples = train_args.get('n_neg_examples',  10)
+        self.use_hinge_loss = train_args.get('use_hinge_loss',  False)
 
         if input_ops is None:
             self.dt_coords, self.dt_features,\
@@ -65,16 +67,19 @@ class NMSNetwork:
             self.gt_labels = input_ops['gt_labels']
             self.gt_coords = input_ops['gt_coords']
 
+        self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
-        with tf.variable_scope("nms_network"):
+        with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.class_probs = self._inference_ops()
+            self.iou_feature, self.logits, self.class_scores = self._inference_ops()
 
             self.labels, self.loss = self._loss_ops()
 
             self.train_step = self._train_ops()
 
             self.merged_summaries = self._summary_ops()
+
+        self.init_op = self._init_ops()
 
     def _input_ops(self):
 
@@ -183,9 +188,12 @@ class NMSNetwork:
         logits = slim.layers.fully_connected(
                 updated_features, self.n_classes, activation_fn=None)
 
-        sigmoid = tf.nn.sigmoid(logits)
+        if self.use_hinge_loss:
+            class_scores = logits
+        else:
+            class_scores = tf.nn.sigmoid(logits)
 
-        return iou_feature, logits, sigmoid
+        return iou_feature, logits, class_scores
 
     def _loss_ops(self):
 
@@ -199,22 +207,25 @@ class NMSNetwork:
         for class_id in range(0, self.n_classes):
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id)
             # self.gt_per_labels.append(gt_per_label)
-            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_probs,
+            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_scores,
                                                                          gt_per_label,
                                                                          class_id))
 
         labels = tf.pack(class_labels, axis=1)
 
-        cross_entropy = tf.nn.weighted_cross_entropy_with_logits(self.logits,
-                                                                 labels,
-                                                                 pos_weight=self.pos_weight)
+        if self.use_hinge_loss:
+            loss = slim.losses.hinge_loss(self.logits, labels)
+        else:
+            loss = tf.nn.weighted_cross_entropy_with_logits(self.logits,
+                                                            labels,
+                                                            pos_weight=self.pos_weight)
 
         # hard_indices_tf = misc.data_subselection_hard_negative_tf(
         #    self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
-
+        #
         # loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
 
-        loss_final = tf.reduce_mean(cross_entropy)
+        loss_final = tf.reduce_mean(loss)
 
         return labels,  loss_final
 
@@ -265,4 +276,11 @@ class NMSNetwork:
         return merged_summaries
 
 
+    def _init_ops(self):
+
+        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.VAR_SCOPE)
+
+        init_op = tf.initialize_variables(variables)
+
+        return init_op
 
