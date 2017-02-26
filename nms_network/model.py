@@ -60,12 +60,13 @@ class NMSNetwork:
 
         if input_ops is None:
             self.dt_coords, self.dt_features,\
-                self.gt_labels, self.gt_coords = self._input_ops()
+                self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
             self.gt_labels = input_ops['gt_labels']
             self.gt_coords = input_ops['gt_coords']
+            self.keep_prob = input_ops['keep_prob']
 
         self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
@@ -97,7 +98,9 @@ class NMSNetwork:
 
         gt_labels = tf.placeholder(tf.float32, shape=None)
 
-        return dt_coords, dt_features, gt_labels, gt_coords
+        keep_prob = tf.placeholder(tf.float32)
+
+        return dt_coords, dt_features, gt_labels, gt_coords, keep_prob
 
     def _inference_ops(self):
 
@@ -185,6 +188,8 @@ class NMSNetwork:
 
             features_iters_list.append(updated_features)
 
+        updated_features = tf.nn.dropout(updated_features, self.keep_prob)
+
         logits = slim.layers.fully_connected(
                 updated_features, self.n_classes, activation_fn=None)
 
@@ -264,6 +269,7 @@ class NMSNetwork:
                                                    activation_fn=None,
                                                    reuse=reuse,
                                                    scope=scope+'/fc'+str(n_layers))
+
         return fc_chain
 
     def _train_ops(self):
@@ -274,7 +280,6 @@ class NMSNetwork:
         tf.summary.scalar('loss', self.loss)
         merged_summaries = tf.summary.merge_all()
         return merged_summaries
-
 
     def _init_ops(self):
 

@@ -3,6 +3,7 @@ general:
     logging_to_stdout: False
 data_provider:
     use_reduced_fc_features: True
+    shuffle_train_test: True
     n_bboxes: 300
 nms_network:
     architecture:
@@ -11,11 +12,11 @@ nms_network:
         use_iou_features: True
         fc_ini_layer_size: 512
         fc_ini_layers_cnt: 2
-        fc_pre_layer_size: 64
+        fc_pre_layer_size: 512
         fc_pre_layers_cnt: 2
-        knet_hlayer_size: 64
+        knet_hlayer_size: 512
         n_kernels: 16
-        n_kernel_iterations: 10
+        n_kernel_iterations: 2
         reuse_kernels: True
         fc_apres_layer_size: 512
         fc_apres_layers_cnt: 2

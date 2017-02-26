@@ -241,6 +241,7 @@ class ExperimentConfig:
         self.dp_config = self.config.get('data_provider', {})
         self.n_bboxes = self.dp_config.get('n_bboxes', 20)
         self.use_reduced_fc_features = self.dp_config.get('use_reduced_fc_features', True)
+        self.shuffle_train_test = self.dp_config.get('shuffle_train_test', False)
 
         if self.use_reduced_fc_features:
             self.n_dt_features = N_DT_FEATURES_SHORT
@@ -296,7 +297,28 @@ def input_ops(n_detections,
 
     input_dict['gt_labels'] = tf.placeholder(tf.float32, shape=None)
 
+    input_dict['keep_prob'] = tf.placeholder(tf.float32)
+
     return input_dict
+
+
+def shuffle_train_test(frames_data_train, frames_data_test):
+    all_frames = frames_data_train.copy()
+    n_frames_train = len(frames_data_train)
+    for fid, data in frames_data_test.iteritems():
+        all_frames[n_frames_train+fid] = data
+    n_frames_all = len(all_frames)
+    shuffled_fids = shuffle_samples(n_frames_all)
+    half = n_frames_all / 2
+    train_fids = shuffled_fids[0:half]
+    test_fids = shuffled_fids[half:]
+    train = {}
+    test = {}
+    for i, fid in enumerate(train_fids):
+        train[i] = all_frames[fid]
+    for i, fid in enumerate(test_fids):
+        test[i] = all_frames[fid]
+    return train, test
 
 
 def main(_):
@@ -316,6 +338,9 @@ def main(_):
     frames_data_test = load_data(config.test_data_dir,
                                  n_bboxes=config.n_bboxes,
                                  use_short_features=config.use_reduced_fc_features)
+
+    if config.shuffle_train_test:
+        frames_data_train, frames_data_test = shuffle_train_test(frames_data_train, frames_data_test)
 
     n_frames_train = len(frames_data_train.keys())
     n_frames_test = len(frames_data_test.keys())
@@ -348,8 +373,6 @@ def main(_):
 
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
-        import numpy.random as rand
-
         logging.info('training started..')
         for epoch_id in range(0, config.n_epochs):
 
@@ -360,7 +383,8 @@ def main(_):
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
+                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+                             nnms_model.keep_prob: 0.5}
 
                 start_step = timer()
 

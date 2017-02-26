@@ -47,7 +47,8 @@ def eval_model(sess, nnms_model, frames_data,
         gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
 
         feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                     nnms_model.dt_features: frame_data[nms_net.DT_FEATURES]}
+                     nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                     nnms_model.keep_prob: 1.0}
 
         dt_scores = frame_data[nms_net.DT_SCORES]
         inference_orig = softmax(dt_scores)
@@ -131,7 +132,8 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
     feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                  nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                  nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                 nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
+                 nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+                 nnms_model.keep_prob: 1.0}
 
     inference_orig = frame_data[nms_net.DT_SCORES]
     inference, labels, loss = sess.run(
