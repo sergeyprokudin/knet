@@ -15,7 +15,7 @@ cd ${PROJECT_DIR}
 
 set -x
 
-${PYENV_BIN} experiments/faster_rcnn_knet_finetune/model/train.py  \
-            --data_dir="${EXPERIMENT_DIR}/data/pascal_voc_2007/" \
-            --log_dir="${EXPERIMENT_DIR}/logs/pascal_voc_2007/" \
+${PYENV_BIN} experiments/kitti_ms_cnn/model/train.py  \
+            --data_dir="/Users/sergey/KITTI/training/" \
+            --root_log_dir="${EXPERIMENT_DIR}/logs/" \
             --config_path="${SCRIPT_DIR}/config.yml"

@@ -7,6 +7,10 @@
     <orderEntry type="module" module-name="neural_nms" />
     <orderEntry type="module" module-name="Faster-RCNN_TF" />
     <orderEntry type="module" module-name="tf-faster-rcnn" />
+    <orderEntry type="module" module-name="TensorBox" />
+    <orderEntry type="module" module-name="tensorflow-yolo" />
+    <orderEntry type="module" module-name="darknet" />
+    <orderEntry type="module" module-name="YOLO_tensorflow" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="myDocStringFormat" value="NumPy" />

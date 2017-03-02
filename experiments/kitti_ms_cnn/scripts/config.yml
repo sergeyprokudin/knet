@@ -2,36 +2,33 @@ general:
     start_from_scratch: True
     logging_to_stdout: True
 data_provider:
-    use_reduced_fc_features: True
-    shuffle_train_test: False
-    n_features : 121
-    n_bboxes: 20
+    n_features: 1000
+    n_bboxes: 50
 nms_network:
     architecture:
         use_object_features: True
-        use_coords_features: True
+        use_object_features: True
         use_iou_features: True
-        fc_ini_layer_size: 128
+        fc_ini_layer_size: 256
         fc_ini_layers_cnt: 2
-        fc_pre_layer_size: 128
+        fc_pre_layer_size: 256
         fc_pre_layers_cnt: 2
-        knet_hlayer_size: 128
+        knet_hlayer_size: 256
         n_kernels: 16
         n_kernel_iterations: 1
-        reuse_kernels: True
-        fc_apres_layer_size: 128
-        fc_apres_layers_cnt: 2
-        reuse_apres_fc_layers: True
+        reuse_kernels: False
+        fc_apres_layer_size: 256
+        fc_apres_layers_cnt: 1
+        reuse_apres_fc_layers: False
         softmax_kernel: True
     training:
         pos_weight: 1.0
         n_neg_samples: 10
         use_hinge_loss: False
-        optimizer_step: 0.0001
-        keep_prob: 1.0
+        optimizer_step: 0.001
+        keep_prob: 0.5
         n_epochs: 100
     evaluation:
         eval_step: 1
-        full_eval: False
-        n_eval_frames: 100
+        full_eval: True
         nms_thres: 0.5

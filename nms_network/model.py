@@ -29,32 +29,31 @@ class NMSNetwork:
                  **kwargs):
 
         # model main parameters
-
         self.n_dt_coords = 4
         self.n_classes = n_classes
 
         # architecture params
         arch_args = kwargs.get('architecture', {})
-        self.fc_ini_layer_size = arch_args.get('fc_ini_layer_size', 128)
+        self.fc_ini_layer_size = arch_args.get('fc_ini_layer_size', 1024)
         self.fc_ini_layers_cnt = arch_args.get('fc_ini_layers_cnt', 1)
-        self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 128)
+        self.fc_pre_layer_size = arch_args.get('fc_pre_layer_size', 256)
         self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
-        self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 128)
+        self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 256)
         self.n_kernels = arch_args.get('n_kernels', 16)
         self.n_kernel_iterations = arch_args.get('n_kernel_iterations', 1)
-        self.reuse_kernels = arch_args.get('reuse_kernels', True)
-        self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 128)
+        self.reuse_kernels = arch_args.get('reuse_kernels', False)
+        self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 1024)
         self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
-        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', True)
+        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', False)
+        self.use_iou_features = arch_args.get('use_iou_features', True)
+        self.use_coords_features = arch_args.get('use_coords_features', True)
+        self.use_object_features = arch_args.get('use_object_features', True)
 
         # training procedure params
         train_args = kwargs.get('training', {})
         self.pos_weight = train_args.get('pos_weight', 1)
         self.softmax_kernel = train_args.get('softmax_kernel', True)
-        self.use_iou_features = train_args.get('use_iou_features', True)
-        self.use_coords_features = train_args.get('use_coords_features', True)
-        self.use_object_features = train_args.get('use_object_features', True)
-        self.optimizer_step = train_args.get('optimizer_step', 0.0001)
+        self.optimizer_step = train_args.get('optimizer_step', 0.001)
         self.n_neg_examples = train_args.get('n_neg_examples',  10)
         self.use_hinge_loss = train_args.get('use_hinge_loss',  False)
 

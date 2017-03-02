@@ -3,6 +3,10 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$USER_HOME$/Faster-RCNN_TF" vcs="Git" />
+    <mapping directory="$USER_HOME$/TensorBox" vcs="Git" />
+    <mapping directory="$USER_HOME$/YOLO_tensorflow" vcs="Git" />
+    <mapping directory="$USER_HOME$/darknet" vcs="Git" />
+    <mapping directory="$USER_HOME$/tensorflow-yolo" vcs="Git" />
     <mapping directory="$USER_HOME$/tf-faster-rcnn" vcs="Git" />
   </component>
 </project>
