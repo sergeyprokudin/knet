@@ -33,7 +33,7 @@ def knet_layer(pairwise_features, n_pair_features,
                 conv2_t, [
                     n_kernels, n_objects, n_objects]))
     else:
-        kernels = tf.reshape(conv2, [n_kernels, n_objects, n_objects])
+        kernels = tf.reshape(conv2_t, [n_kernels, n_objects, n_objects])
 
     return kernels
 

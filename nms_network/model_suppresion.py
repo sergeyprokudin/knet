@@ -6,7 +6,6 @@ import tensorflow.contrib.slim as slim
 import losses
 import knet
 import spatial
-from tf_layers import misc
 
 DT_COORDS = 'dt_coords'
 GT_COORDS = 'gt_coords'
@@ -32,8 +31,8 @@ class NMSNetwork:
 
         # model main parameters
         self.n_dt_coords = 4
-        self.n_classes = n_classes
         self.n_bboxes = n_bboxes
+        self.n_classes = n_classes
 
         # architecture params
         arch_args = kwargs.get('architecture', {})
@@ -61,22 +60,26 @@ class NMSNetwork:
         self.use_hinge_loss = train_args.get('use_hinge_loss',  False)
 
         if input_ops is None:
-            self.dt_coords, self.dt_features,\
+            self.dt_coords, self.dt_features, self.nms_labels, \
                 self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
             self.gt_labels = input_ops['gt_labels']
             self.gt_coords = input_ops['gt_coords']
+            self.nms_labels = input_ops['nms_labels']
             self.keep_prob = input_ops['keep_prob']
 
         self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.spatial_features, self.iou_feature, self.logits, self.class_scores = self._alternative_inference_ops()
+            self.spatial_features, self.iou_feature, self.logits, self.class_scores = self._inference_ops()
 
-            self.labels, self.loss = self._loss_ops()
+            self.nms_loss = self._nms_loss_ops()
+            self.labels, self.class_loss = self._loss_ops()
+
+            self.loss = self.class_loss
 
             self.train_step = self._train_ops()
 
@@ -100,9 +103,11 @@ class NMSNetwork:
 
         gt_labels = tf.placeholder(tf.float32, shape=None)
 
-        keep_prob = tf.placeholder(tf.float32)
+        nms_labels = tf.placeholder(tf.float32, shape=None)
 
-        return dt_coords, dt_features, gt_labels, gt_coords, keep_prob
+        keep_prob = tf.placeholder(tf.float32, shape=None)
+
+        return dt_coords, dt_features, nms_labels, gt_labels, gt_coords, keep_prob
 
     def _inference_ops(self):
 
@@ -118,92 +123,6 @@ class NMSNetwork:
                                                     n_layers=self.fc_pre_layers_cnt,
                                                     scope='fc_pre_layer_knet')
 
-        pairwise_spatial_features = spatial.construct_pairwise_features_tf(
-            self.dt_coords)
-
-        spatial_features_list = []
-        n_spatial_features = 0
-
-        iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_spatial_features)
-        if self.use_iou_features:
-            spatial_features_list.append(iou_feature)
-            n_spatial_features += 1
-
-        pairwise_obj_features = spatial.construct_pairwise_features_tf(dt_features_pre_knet)
-        if self.use_object_features:
-            spatial_features_list.append(pairwise_obj_features)
-            n_spatial_features += self.fc_pre_layer_size * 2
-
-        self.pairwise_coords_features = spatial.construct_pairwise_features_tf(
-                self.dt_coords)
-        if self.use_coords_features:
-            spatial_features_list.append(self.pairwise_coords_features)
-            n_spatial_features += self.n_dt_coords * 2
-
-        spatial_features = tf.concat(2, spatial_features_list)
-
-        # initial kernel iteration
-        kernel = knet.knet_layer(pairwise_features=spatial_features,
-                                 n_kernels=self.n_kernels,
-                                 n_pair_features=n_spatial_features,
-                                 softmax_kernel=self.softmax_kernel,
-                                 hlayer_size=self.knet_hlayer_size)
-
-        features_filtered = knet.apply_kernel(kernels=kernel,
-                                              object_features=dt_features_ini,
-                                              n_kernels=self.n_kernels,
-                                              n_object_features=self.fc_ini_layer_size)
-
-        updated_features = self._fc_layer_chain(input_tensor=features_filtered,
-                                                layer_size=self.fc_apres_layer_size,
-                                                n_layers=self.fc_apres_layers_cnt,
-                                                scope='apres_fc_layers')
-
-        features_iters_list = [updated_features]
-
-        for i in range(1, self.n_kernel_iterations):
-
-            if not self.reuse_kernels:
-                kernel = knet.knet_layer(pairwise_features=spatial_features,
-                                         n_kernels=self.n_kernels,
-                                         n_pair_features=n_spatial_features,
-                                         softmax_kernel=self.softmax_kernel,
-                                         hlayer_size=self.knet_hlayer_size)
-
-            features_filtered = knet.apply_kernel(kernels=kernel,
-                                                  object_features=features_iters_list[-1],
-                                                  n_kernels=self.n_kernels,
-                                                  n_object_features=self.fc_apres_layer_size)
-
-            if self.reuse_apres_fc_layers:
-                updated_features = self._fc_layer_chain(input_tensor=features_filtered,
-                                                        layer_size=self.fc_apres_layer_size,
-                                                        n_layers=self.fc_apres_layers_cnt,
-                                                        scope='apres_fc_layers',
-                                                        reuse=True)
-
-            else:
-                updated_features = self._fc_layer_chain(input_tensor=features_filtered,
-                                                        layer_size=self.fc_apres_layer_size,
-                                                        n_layers=self.fc_apres_layers_cnt,
-                                                        scope='apres_fc_layers'+str(i))
-
-            features_iters_list.append(updated_features)
-
-        updated_features = tf.nn.dropout(updated_features, self.keep_prob)
-
-        logits = slim.layers.fully_connected(
-                updated_features, self.n_classes, activation_fn=None)
-
-        if self.use_hinge_loss:
-            class_scores = logits
-        else:
-            class_scores = tf.nn.sigmoid(logits)
-
-        return iou_feature, logits, class_scores
-
-    def _alternative_inference_ops(self):
-
         pairwise_coords_features = spatial.construct_pairwise_features_tf(
             self.dt_coords)
 
@@ -211,14 +130,19 @@ class NMSNetwork:
         n_spatial_features = 0
 
         iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features)
+
         if self.use_iou_features:
             spatial_features_list.append(iou_feature)
             n_spatial_features += 1
 
-        pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
+        pairwise_obj_features = spatial.construct_pairwise_features_tf(dt_features_pre_knet)
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features)
-            n_spatial_features += self.dt_features.get_shape().as_list()[1] * 2
+            n_spatial_features += dt_features_pre_knet.get_shape().as_list()[1] * 2
+
+        if self.use_coords_features:
+            spatial_features_list.append(pairwise_coords_features)
+            n_spatial_features += self.n_dt_coords * 2
 
         spatial_features = tf.concat(2, spatial_features_list)
 
@@ -234,72 +158,9 @@ class NMSNetwork:
 
         spatial_features = tf.reshape(spatial_features, [self.n_bboxes, n_spatial_features*self.n_bboxes])
 
-        net_input_features = tf.concat(1, [self.dt_features, spatial_features])
+        input_features = tf.concat(1, [self.dt_features, spatial_features])
 
-        fc_chain = self._fc_layer_chain(input_tensor=net_input_features,
-                                        layer_size=1024,
-                                        n_layers=3,
-                                        scope='fc_spatial')
-
-        fc_chain = tf.nn.dropout(fc_chain, self.keep_prob)
-
-        logits = slim.layers.fully_connected(fc_chain, self.n_classes, activation_fn=None)
-
-        class_scores = tf.nn.sigmoid(logits)
-
-        return net_input_features, iou_feature, logits, class_scores
-
-    def _alternative_inference_ops2(self):
-
-        pairwise_coords_features = spatial.construct_pairwise_features_tf(
-            self.dt_coords)
-
-        spatial_features_list = []
-        n_spatial_features = 0
-
-        iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features)
-        if self.use_iou_features:
-            spatial_features_list.append(iou_feature)
-            n_spatial_features += 1
-
-        pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
-        if self.use_object_features:
-            spatial_features_list.append(pairwise_obj_features)
-            n_spatial_features += self.dt_features.get_shape().as_list()[1] * 2
-
-        spatial_features = tf.concat(2, spatial_features_list)
-
-        diagonals = []
-
-        for i in range(0, n_spatial_features):
-            d = tf.expand_dims(tf.diag(tf.diag_part(spatial_features[:, :, i])), axis=2)
-            diagonals.append(d)
-
-        diag = tf.concat(2, diagonals)
-
-        spatial_features = spatial_features - diag
-
-        self.spatial_features_squre = spatial_features
-
-        self.kernel_matrix = self._kernel(pairwise_features=spatial_features,
-                                          n_kernels=self.n_kernels,
-                                          n_pair_features=n_spatial_features,
-                                          hlayer_size=self.knet_hlayer_size)
-
-        # import ipdb; ipdb.set_trace()
-
-        # sum pooling of a features
-        spatial_features = tf.reduce_sum(self.kernel_matrix, axis=1)
-
-        # spatial_features = tf.reshape(self.kernel_matrix, [self.n_bboxes, self.n_kernels * self.n_bboxes])
-
-        spatial_features = tf.reshape(spatial_features, [self.n_bboxes, self.n_kernels])
-
-        # spatial_features = tf.reshape(spatial_features, [self.n_bboxes, n_spatial_features*self.n_bboxes])
-
-        net_input_features = tf.concat(1, [self.dt_features, spatial_features])
-
-        fc_chain = self._fc_layer_chain(input_tensor=net_input_features,
+        fc_chain = self._fc_layer_chain(input_tensor=input_features,
                                         layer_size=512,
                                         n_layers=3,
                                         scope='fc_spatial')
@@ -310,32 +171,7 @@ class NMSNetwork:
 
         class_scores = tf.nn.sigmoid(logits)
 
-        return net_input_features, iou_feature, logits, class_scores
-
-    def _kernel(self,
-                pairwise_features,
-                n_pair_features,
-                hlayer_size,
-                n_kernels):
-        n_objects = tf.shape(pairwise_features)[0]
-
-        pairwise_features_reshaped = tf.reshape(
-            pairwise_features, [
-                1, n_objects, n_objects, n_pair_features])
-
-        conv1 = slim.layers.conv2d(
-            pairwise_features_reshaped,
-            hlayer_size,
-            [1, 1],
-            activation_fn=tf.nn.relu)
-
-        conv2 = slim.layers.conv2d(
-            conv1,
-            n_kernels,
-            [1, 1],
-            activation_fn=None)
-
-        return tf.squeeze(conv2, axis=0)
+        return input_features, iou_feature, logits, class_scores
 
     def _loss_ops(self):
 
@@ -362,14 +198,27 @@ class NMSNetwork:
                                                             labels,
                                                             pos_weight=self.pos_weight)
 
-        hard_indices_tf = misc.data_subselection_hard_negative_tf(
-           labels, loss, n_neg_examples=self.n_neg_examples)
+        # hard_indices_tf = misc.data_subselection_hard_negative_tf(
+        #    self.dt_labels, cross_entropy, n_neg_examples=self.n_neg_examples)
+        #
+        # loss_hard_tf = tf.gather(cross_entropy, hard_indices_tf)
 
-        loss_hard_tf = tf.gather(loss, hard_indices_tf)
-
-        loss_final = tf.reduce_mean(loss_hard_tf)
+        loss_final = tf.reduce_mean(loss)
 
         return labels,  loss_final
+
+    def _nms_loss_ops(self):
+
+        if self.use_hinge_loss:
+            loss = slim.losses.hinge_loss(self.logits, self.nms_labels)
+        else:
+            loss = tf.nn.weighted_cross_entropy_with_logits(self.logits,
+                                                            self.nms_labels,
+                                                            pos_weight=self.pos_weight)
+
+        loss_final = tf.reduce_mean(loss)
+
+        return loss_final
 
     def _fc_layer_chain(self,
                         input_tensor,
