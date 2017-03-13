@@ -128,13 +128,12 @@ def get_frame_data_fixed(frame_id,
     #frame_data['detection_result'] = dt_info['detection_result']
 
     frame_data['dt_gt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['gt_coords'])
-
+    #
     # frame_data['dt_dt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['dt_coords'])
 
     # frame_data['nms_labels'] = np.invert(nms.nms_all_classes(frame_data['dt_dt_iou'],
     #                                                      frame_data['dt_probs'],
     #                                                       iou_thr=0.5)).astype('int')
 
-    # a = b
 
     return frame_data

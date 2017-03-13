@@ -24,15 +24,19 @@ def eval_model(sess,
 
     dt_gt_match_orig = []
     dt_gt_match_new = []
+    dt_gt_match_oracle = []
+    dt_gt_match_perfect_nms = []
     dt_gt_match_orig_nms = []
     dt_gt_match_new_nms = []
 
     inference_orig_all = []
     inference_new_all = []
+    inference_oracle_all = []
     gt_labels_all = []
 
     eval_data = {}
-
+    total_number_of_nms_fails = 0
+    total_number_of_nms_supps = 0
     for fid in eval_frames:
 
         eval_data[fid] = {}
@@ -47,6 +51,9 @@ def eval_model(sess,
 
         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                      nnms_model.dt_features: frame_data['dt_features'],
+                     nnms_model.dt_probs: frame_data['dt_probs'],
+                     nnms_model.gt_coords: frame_data['gt_coords'],
+                     nnms_model.gt_labels: frame_data['gt_labels'],
                      nnms_model.keep_prob: 1.0}
 
         inference_orig = frame_data['dt_probs']
@@ -55,10 +62,13 @@ def eval_model(sess,
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, dt_dt_iou = sess.run(
-            [nnms_model.class_scores, nnms_model.iou_feature], feed_dict=feed_dict)
+        inference_new, inference_oracle,  dt_dt_iou = sess.run(
+            [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature], feed_dict=feed_dict)
+
         inference_new_all.append(inference_new)
+        inference_oracle_all.append(inference_oracle)
         eval_data[fid]['inference_new'] = inference_new
+        eval_data[fid]['inference_oracle'] = inference_oracle
 
         dt_gt_match_orig.append(
             metrics.match_dt_gt_all_classes(
@@ -72,10 +82,43 @@ def eval_model(sess,
                 frame_data[nms_net.GT_LABELS],
                 inference_new))
 
+        dt_gt_match_oracle.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_oracle))
+
         is_suppressed_orig = nms.nms_all_classes(
             dt_dt_iou, inference_orig, iou_thr=nms_thres)
+
         is_suppressed_new = nms.nms_all_classes(
             dt_dt_iou, inference_new, iou_thr=nms_thres)
+
+        is_suppressed_oracle = nms.nms_all_classes(
+            dt_dt_iou, inference_oracle, iou_thr=nms_thres)
+
+        wrongly_suppressed_hypotheses = np.zeros(n_bboxes)
+
+        wrongly_suppressed_hypotheses[np.squeeze(np.logical_and(is_suppressed_oracle, inference_oracle))] = True
+
+        is_suppressed_ideal_case = nms.nms_per_class_with_oracle(dt_dt_iou.reshape([n_bboxes, n_bboxes]),
+                                                                np.squeeze(inference_orig),
+                                                                frame_data[nms_net.DT_GT_IOU],
+                                                                iou_thr=nms_thres).reshape([n_bboxes, 1])
+
+        total_number_of_nms_fails += len(wrongly_suppressed_hypotheses[wrongly_suppressed_hypotheses == True])
+        total_number_of_nms_supps += len(is_suppressed_orig[is_suppressed_orig == True])
+
+
+        # if np.sum(is_suppressed_ideal_case!=is_suppressed_orig) > 0:
+        #     import ipdb; ipdb.set_trace()
+
+        dt_gt_match_perfect_nms.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_orig,
+                dt_is_suppressed_info=is_suppressed_ideal_case))
 
         dt_gt_match_orig_nms.append(
             metrics.match_dt_gt_all_classes(
@@ -83,6 +126,7 @@ def eval_model(sess,
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
                 dt_is_suppressed_info=is_suppressed_orig))
+
         dt_gt_match_new_nms.append(
             metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
@@ -91,13 +135,22 @@ def eval_model(sess,
                 dt_is_suppressed_info=is_suppressed_new))
 
     gt_labels = np.vstack(gt_labels_all)
+
     inference_orig = np.vstack(inference_orig_all)
     inference_new = np.vstack(inference_new_all)
+    inference_oracle = np.vstack(inference_oracle_all)
 
+    dt_gt_match_oracle = np.vstack(dt_gt_match_oracle)
+    dt_gt_match_perfect_nms = np.vstack(dt_gt_match_perfect_nms)
     dt_gt_match_orig = np.vstack(dt_gt_match_orig)
     dt_gt_match_new = np.vstack(dt_gt_match_new)
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
+
+    ap_oracle, roc_oracle = metrics.average_precision_all_classes(
+        dt_gt_match_oracle, inference_oracle, gt_labels)
+    ap_perfect_nms, _ = metrics.average_precision_all_classes(
+        dt_gt_match_perfect_nms, inference_orig, gt_labels)
 
     ap_orig, _ = metrics.average_precision_all_classes(
         dt_gt_match_orig, inference_orig, gt_labels)
@@ -108,15 +161,23 @@ def eval_model(sess,
     ap_new_nms, _ = metrics.average_precision_all_classes(
         dt_gt_match_new_nms, inference_new, gt_labels)
 
+    map_oracle = np.nanmean(ap_oracle)
+    map_perfect_nms = np.nanmean(ap_perfect_nms)
     map_orig = np.nanmean(ap_orig)
     map_orig_nms = np.nanmean(ap_orig_nms)
     map_knet = np.nanmean(ap_new)
     map_knet_nms = np.nanmean(ap_new_nms)
+    mean_nms_fails = total_number_of_nms_fails / float(total_number_of_nms_supps)
 
+
+    logging.info('mAP oracle : %f' % map_oracle)
     logging.info('mAP original inference : %f' % map_orig)
     logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    logging.info('mAP original inference (perfect NMS) : %f' % map_perfect_nms)
     logging.info('mAP knet inference : %f' % map_knet)
     logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
+    logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
+                                                                                 str(mean_nms_fails)))
 
     return map_knet, map_knet_nms
 

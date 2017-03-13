@@ -2,30 +2,30 @@ general:
     start_from_scratch: True
     logging_to_stdout: True
 data_provider:
-    n_features: 0
-    n_bboxes: 300
+    n_features: 10
+    n_bboxes: 5
 nms_network:
     architecture:
         use_object_features: True
         use_coords_features: False
         use_iou_features: True
         fc_ini_layer_size: 256
-        fc_ini_layers_cnt: 0
+        fc_ini_layers_cnt: 2
         fc_pre_layer_size: 256
-        fc_pre_layers_cnt: 0
+        fc_pre_layers_cnt: 2
         knet_hlayer_size: 256
-        n_kernels: 10
-        n_kernel_iterations: 1
+        n_kernels: 16
+        n_kernel_iterations: 2
         reuse_kernels: False
         fc_apres_layer_size: 256
-        fc_apres_layers_cnt: 1
+        fc_apres_layers_cnt: 2
         reuse_apres_fc_layers: False
         softmax_kernel: True
     training:
         pos_weight: 1.0
         n_neg_samples: 10
         use_hinge_loss: False
-        optimizer_step: 0.0001
+        optimizer_step: 0.001
         keep_prob: 0.5
         n_epochs: 100
         n_neg_examples: 10

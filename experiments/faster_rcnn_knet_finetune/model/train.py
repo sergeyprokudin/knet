@@ -140,6 +140,11 @@ def input_ops(n_detections,
                                      None,
                                      n_dt_features])
 
+    input_dict['dt_probs'] = tf.placeholder(tf.float32,
+                                 shape=[
+                                     None,
+                                     21])
+
     input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4])
 
     input_dict['gt_labels'] = tf.placeholder(tf.float32, shape=None)
@@ -198,6 +203,7 @@ def main(_):
 
     nnms_model = nms_net.NMSNetwork(n_classes=N_CLASSES,
                                     input_ops=in_ops,
+                                    loss_type='nms_loss',
                                     **config.nms_network_config)
 
     with tf.Session() as sess:
@@ -228,6 +234,7 @@ def main(_):
                 frame_data = frames_data_train[fid]
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                             nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                              nnms_model.keep_prob: config.keep_prob_train}
@@ -280,6 +287,7 @@ def main(_):
                                            out_dir=test_out_dir,
                                            full_eval=config.full_eval,
                                            nms_thres=config.nms_thres)
+
                 write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
 
                 config.update_results(step_id,

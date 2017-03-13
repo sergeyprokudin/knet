@@ -29,7 +29,7 @@ def shuffle_samples(n_frames):
     return np.random.choice(n_frames, n_frames, replace=False)
 
 
-def input_ops(n_dt_features):
+def input_ops(n_dt_features, n_classes):
 
     input_dict = {}
     n_dt_coords = 4
@@ -40,7 +40,12 @@ def input_ops(n_dt_features):
     input_dict['dt_features'] = tf.placeholder(tf.float32,
                                  shape=[
                                      None,
-                                     n_dt_features])
+                                     n_classes+n_dt_features])
+
+    input_dict['dt_probs'] = tf.placeholder(tf.float32,
+                                 shape=[
+                                     None,
+                                     n_classes])
 
     input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4])
 
@@ -68,7 +73,8 @@ def main(_):
     frames_ids = np.asarray([int(ntpath.basename(path).split('.')[0]) for path in os.listdir(labels_dir)])
 
     n_frames = len(frames_ids)
-
+    n_bboxes_test = 20
+    n_classes = 1
     half = n_frames/2
 
     shuffled_samples = shuffle_samples(n_frames)
@@ -79,14 +85,16 @@ def main(_):
 
     logging.info('building model graph..')
 
-    in_ops = input_ops(config.n_dt_features+1)
+    in_ops = input_ops(config.n_dt_features, n_classes)
 
     nnms_model = nms_net.NMSNetwork(n_classes=1,
-                                    n_bboxes=config.n_bboxes,
                                     input_ops=in_ops,
+                                    loss_type='nms_loss',
                                     **config.nms_network_config)
 
     logging.info('training started..')
+
+
 
     with tf.Session() as sess:
 
@@ -95,9 +103,13 @@ def main(_):
         step_id = 0
         step_times = []
 
-        for epoch_id in range(0, 10):
+        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        run_metadata = tf.RunMetadata()
+
+        for epoch_id in range(0, 100):
 
             for fid in train_frames:
+
 
                 start_step = timer()
 
@@ -109,13 +121,24 @@ def main(_):
 
                 feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                              nnms_model.dt_features: frame_data['dt_features'],
+                             nnms_model.dt_probs: frame_data['dt_probs'],
                              nnms_model.gt_coords: frame_data['gt_coords'],
                              nnms_model.gt_labels: frame_data['gt_labels'],
                              # nnms_model.nms_labels: frame_data['nms_labels'],
                              nnms_model.keep_prob: config.keep_prob_train}
 
-                _ = sess.run([nnms_model.train_step],
-                                                       feed_dict=feed_dict)
+                # if step_id < 1000:
+                #
+                #     _ = sess.run([nnms_model.pair_loss_train_step],
+                #                  feed_dict=feed_dict,
+                #                  options=run_options,
+                #                  run_metadata=run_metadata)
+                # else:
+
+                _ = sess.run([nnms_model.det_train_step],
+                                 feed_dict=feed_dict,
+                                 options=run_options,
+                                 run_metadata=run_metadata)
 
                 # import ipdb; ipdb.set_trace()
 
@@ -125,89 +148,135 @@ def main(_):
                 step_times.append(end_step-start_step)
 
                 if step_id % 1000 == 0:
+
                     logging.info('curr step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
                     train_losses = []
+
                     for tfid in train_frames[0:100]:
 
                         frame_data = get_frame_data_fixed(frame_id=tfid,
                                                     labels_dir=labels_dir,
                                                     detections_dir=detections_dir,
-                                                    n_detections=config.n_bboxes,
+                                                    n_detections=n_bboxes_test,
                                                     n_features=config.n_dt_features)
 
                         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                                      nnms_model.dt_features: frame_data['dt_features'],
+                                     nnms_model.dt_probs: frame_data['dt_probs'],
                                      nnms_model.gt_coords: frame_data['gt_coords'],
                                      nnms_model.gt_labels: frame_data['gt_labels'],
                                      # nnms_model.nms_labels: frame_data['nms_labels'],
                                      nnms_model.keep_prob: 1.0}
 
-                        train_losses.append(sess.run(nnms_model.loss, feed_dict=feed_dict))
+                        det_loss = sess.run([nnms_model.det_loss],
+                                                      feed_dict=feed_dict)
 
-                    logging.info("train loss : %s" % str(np.mean(train_losses)))
+                        train_losses.append(det_loss)
+
+                    logging.info("train loss (det part) : %s" % str(np.mean(train_losses)))
 
                     test_losses = []
+
                     for tfid in test_frames[0:100]:
 
                         frame_data = get_frame_data_fixed(frame_id=tfid,
                                                     labels_dir=labels_dir,
                                                     detections_dir=detections_dir,
-                                                    n_detections=config.n_bboxes,
+                                                    n_detections=n_bboxes_test,
                                                     n_features=config.n_dt_features)
 
                         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                                      nnms_model.dt_features: frame_data['dt_features'],
+                                     nnms_model.dt_probs: frame_data['dt_probs'],
                                      nnms_model.gt_coords: frame_data['gt_coords'],
                                      nnms_model.gt_labels: frame_data['gt_labels'],
                                      # nnms_model.nms_labels: frame_data['nms_labels'],
                                      nnms_model.keep_prob: 1.0}
 
-                        test_losses.append(sess.run(nnms_model.loss, feed_dict=feed_dict))
+                        det_loss = sess.run([nnms_model.det_loss], feed_dict=feed_dict)
 
-                    logging.info("test loss : %s" % str(np.mean(test_losses)))
+                        test_losses.append(det_loss)
 
-                    fid = test_frames[np.random.randint(0,n_test_samples,1)[0]]
-                    frame_data = get_frame_data_fixed(frame_id=fid,
-                            labels_dir=labels_dir,
-                            detections_dir=detections_dir,
-                            n_detections=config.n_bboxes,
-                            n_features=config.n_dt_features)
+                    logging.info("test loss (det part) : %s" % str(np.mean(test_losses)))
 
-                    feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
-                                     nnms_model.dt_features: frame_data['dt_features'],
-                                     nnms_model.gt_coords: frame_data['gt_coords'],
-                                     nnms_model.gt_labels: frame_data['gt_labels'],
-                                     # nnms_model.nms_labels: frame_data['nms_labels'],
-                                     nnms_model.keep_prob: 1.0}
+                    # fid = test_frames[np.random.randint(0,n_test_samples,1)[0]]
+                    # frame_data = get_frame_data_fixed(frame_id=fid,
+                    #         labels_dir=labels_dir,
+                    #         detections_dir=detections_dir,
+                    #         n_detections=n_bboxes_test,
+                    #         n_features=config.n_dt_features)
+                    #
+                    # feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
+                    #                  nnms_model.dt_features: frame_data['dt_features'],
+                    #                  nnms_model.dt_probs: frame_data['dt_probs'],
+                    #                  nnms_model.gt_coords: frame_data['gt_coords'],
+                    #                  nnms_model.gt_labels: frame_data['gt_labels'],
+                    #                  # nnms_model.nms_labels: frame_data['nms_labels'],
+                    #                  nnms_model.keep_prob: 1.0}
+                    #
+                    # #nms_labels = frame_data['nms_labels']
+                    #
+                    # dt_coords, dt_features, dt_probs, pairwise_features, \
+                    # nmsnet_inference, not_supp_prob, nms_loss, det_labels,\
+                    # not_explained_prob, nms_pairwise_labels, pairwise_explain_probs, elementwise_loss,\
+                    #                         dt_dt_iou, pair_initial, nms_labels_tf,\
+                    #                                                 object_and_context_features,\
+                    #                                                                         kernel_matrix\
+                    #     = sess.run([nnms_model.dt_coords,
+                    #                 nnms_model.dt_features,
+                    #                 nnms_model.dt_probs,
+                    #                 nnms_model.pairwise_features,
+                    #                 nnms_model.class_scores,
+                    #                 nnms_model.not_supp_prob,
+                    #                 nnms_model.det_labels,
+                    #                 nnms_model.iou_feature,
+                    #                 nnms_model.pair_initial,
+                    #                 nnms_model.nms_labels,
+                    #                 nnms_model.object_and_context_features,
+                    #                 nnms_model.kernel_matrix],
+                    #                feed_dict=feed_dict)
+                    #
+                    # # kernel = np.squeeze(kernel_matrix)
+                    # # pos_rescaled_features = rescaled_features[np.where(true_labels == 1)]
+                    # # neg_rescaled_features = rescaled_features[np.where(true_labels == 0)]
+                    #
+                    # pos_inference = nmsnet_inference[np.where(det_labels == 1)]
+                    # pos_inference_orig = dt_features[np.where(det_labels == 1)]
+                    # neg_inference = nmsnet_inference[np.where(det_labels == 0)]
+                    # neg_inference_orig = dt_features[np.where(det_labels == 0)]
+                    # logging.info("positive inference samples (original) : %s" % str(pos_inference_orig))
+                    # logging.info("positive inference samples (updated) : %s" % str(pos_inference))
+                    # logging.info("negative inference samples (original : %s" % str(neg_inference_orig))
+                    # logging.info("negative inference samples (updated) : %s" % str(neg_inference))
 
-                    # true_labels = frame_data['nms_labels']
+                    # nms_labels = np.max(nms_pairwise_labels, axis=1)
 
-                    dt_coords, dt_features, spatial_features, nmsnet_inference, loss, iou_tf, true_labels \
-                        = sess.run([nnms_model.dt_coords,
-                                    nnms_model.dt_features,
-                                    nnms_model.spatial_features,
-                                    nnms_model.class_scores,
-                                    nnms_model.loss,
-                                    nnms_model.iou_feature,
-                                    nnms_model.labels],
-                                   feed_dict=feed_dict)
+                    # pos_nms_inference = not_explained_prob[np.where(nms_labels_tf == 1)]
+                    # neg_nms_inference = not_explained_prob[np.where(nms_labels_tf == 0)]
+                    # logging.info("probs for samples NOT to be suppressed : %s" % str(pos_nms_inference))
+                    # logging.info("probs for samples to be suppressed : %s" % str(neg_nms_inference))
 
-                    pos_inference = nmsnet_inference[np.where(true_labels == 1)]
-                    neg_inference = nmsnet_inference[np.where(true_labels == 0)]
+                    # suppression_map = pairwise_features[:, :, 2] > pairwise_features[:, :, 1]
+                    # iou_map = pairwise_features[:, :, 0] > 0.5
+                    #
+                    # nms_pairwise = suppression_map & iou_map
+                    #
+                    # #import ipdb; ipdb.set_trace()
+                    #
+                    # # iou_np = frame_data['dt_dt_iou']
+                    # dt_dt_iou = dt_dt_iou.reshape([n_bboxes_test, n_bboxes_test])
 
-                    # iou_np = frame_data['dt_dt_iou']
-                    # iou_tf = iou_tf.reshape([config.n_bboxes, config.n_bboxes])
 
-                    logging.info("positive inference samples : %s" % str(pos_inference))
-                    logging.info("negative inference samples : %s" % str(neg_inference))
+                    # if step_id % 10 == 0:
+                    #    import ipdb; ipdb.set_trace()
 
                     train_map, test_map_nms = eval_supp.eval_model(sess,
                                                               nnms_model,
                                                               detections_dir=detections_dir,
                                                               labels_dir=labels_dir,
-                                                              eval_frames=train_frames[0:100],
-                                                              n_bboxes=config.n_bboxes,
+                                                              eval_frames=train_frames[0:1000],
+                                                              n_bboxes=n_bboxes_test,
                                                               n_features=config.n_dt_features,
                                                               nms_thres=0.5)
 
@@ -215,11 +284,14 @@ def main(_):
                                                              nnms_model,
                                                              detections_dir=detections_dir,
                                                              labels_dir=labels_dir,
-                                                             eval_frames=test_frames[0:100],
-                                                             n_bboxes=config.n_bboxes,
+                                                             eval_frames=test_frames[0:1000],
+                                                             n_bboxes=n_bboxes_test,
                                                              n_features=config.n_dt_features,
                                                              nms_thres=0.5)
-                    # import ipdb; ipdb.set_trace()
+
+
+    import ipdb; ipdb.set_trace()
+
     return
 
 if __name__ == '__main__':
