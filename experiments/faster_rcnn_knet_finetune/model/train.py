@@ -302,8 +302,8 @@ def main(_):
 
                 config.save_results()
 
-                if test_map_nms < test_map_knet:
-                    learning_rate = 0.0001
+                if test_map_nms < test_map_knet+0.01:
+                    learning_rate *= 0.1
 
                 saver.save(sess, config.model_file, global_step=step_id)
     return
