@@ -103,7 +103,7 @@ def main(_):
 
         step_id = 0
         step_times = []
-
+        data_times = []
         # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         # run_metadata = tf.RunMetadata()
 
@@ -119,6 +119,8 @@ def main(_):
                                             detections_dir=detections_dir,
                                             n_detections=config.n_bboxes,
                                             n_features=config.n_dt_features)
+
+                data_step = timer()
 
                 feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                              nnms_model.dt_features: frame_data['dt_features'],
@@ -150,10 +152,13 @@ def main(_):
 
                 end_step = timer()
                 step_times.append(end_step-start_step)
+                data_times.append(data_step-start_step)
 
                 if step_id % 1000 == 0:
 
-                    logging.info('curr step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
+                    logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
+                                                                                                     str(np.mean(step_times)),
+                                                                                                     str(np.mean(data_times))))
 
                     train_losses = []
 

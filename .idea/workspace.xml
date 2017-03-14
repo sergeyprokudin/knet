@@ -59,8 +59,8 @@
           <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.5367742">
-                  <caret line="144" column="52" selection-start-line="144" selection-start-column="52" selection-end-line="144" selection-end-column="52" />
+                <state vertical-scroll-proportion="0.5832258">
+                  <caret line="162" column="37" selection-start-line="162" selection-start-column="37" selection-end-line="162" selection-end-column="37" />
                   <folding>
                     <element signature="e#753#811#0" expanded="false" />
                   </folding>
@@ -1218,8 +1218,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5367742">
-          <caret line="144" column="52" selection-start-line="144" selection-start-column="52" selection-end-line="144" selection-end-column="52" />
+        <state vertical-scroll-proportion="0.5832258">
+          <caret line="162" column="37" selection-start-line="162" selection-start-column="37" selection-end-line="162" selection-end-column="37" />
           <folding>
             <element signature="e#753#811#0" expanded="false" />
           </folding>
