@@ -3,7 +3,7 @@ general:
     logging_to_stdout: True
 data_provider:
     n_features: 100
-    n_bboxes: 100
+    n_bboxes: 300
 nms_network:
     architecture:
         use_object_features: True

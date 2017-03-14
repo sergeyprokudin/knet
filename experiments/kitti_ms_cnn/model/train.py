@@ -280,7 +280,7 @@ def main(_):
                     # if step_id % 10 == 0:
                     #    import ipdb; ipdb.set_trace()
 
-                    train_map, test_map_nms = eval_supp.eval_model(sess,
+                    train_map_knet, train_map_nms = eval_supp.eval_model(sess,
                                                               nnms_model,
                                                               detections_dir=detections_dir,
                                                               labels_dir=labels_dir,
@@ -289,7 +289,7 @@ def main(_):
                                                               n_features=config.n_dt_features,
                                                               nms_thres=0.5)
 
-                    test_map, test_map_nms = eval_supp.eval_model(sess,
+                    test_map_knet, test_map_nms= eval_supp.eval_model(sess,
                                                              nnms_model,
                                                              detections_dir=detections_dir,
                                                              labels_dir=labels_dir,
@@ -298,6 +298,8 @@ def main(_):
                                                              n_features=config.n_dt_features,
                                                              nms_thres=0.5)
 
+                    if test_map_knet > test_map_nms:
+                        learning_rate = 0.0001
 
     import ipdb; ipdb.set_trace()
 

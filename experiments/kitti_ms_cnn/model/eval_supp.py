@@ -179,7 +179,7 @@ def eval_model(sess,
     logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
                                                                                  str(mean_nms_fails)))
 
-    return map_knet, map_knet_nms
+    return map_knet, map_orig_nms
 
 
 def print_debug_info(nnms_model, sess, frame_data, outdir, fid):

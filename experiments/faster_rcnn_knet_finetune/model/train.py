@@ -237,7 +237,8 @@ def main(_):
                              nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-                             nnms_model.keep_prob: config.keep_prob_train}
+                             nnms_model.keep_prob: config.keep_prob_train,
+                             nnms_model.learning_rate: 0.0001}
 
                 start_step = timer()
 
