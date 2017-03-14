@@ -76,6 +76,7 @@ def main(_):
     n_bboxes_test = 20
     n_classes = 1
     half = n_frames/2
+    learning_rate = 0.001
 
     shuffled_samples = shuffle_samples(n_frames)
     train_frames = frames_ids[shuffled_samples[0:half]]
@@ -125,12 +126,12 @@ def main(_):
                              nnms_model.gt_coords: frame_data['gt_coords'],
                              nnms_model.gt_labels: frame_data['gt_labels'],
                              # nnms_model.nms_labels: frame_data['nms_labels'],
-                             nnms_model.keep_prob: config.keep_prob_train}
+                             nnms_model.keep_prob: config.keep_prob_train,
+                             nnms_model.learning_rate: learning_rate}
 
-
-                if step_id > 3000:
-                    nnms_model.optimizer_step = 0.0001
-                    logging.info('decreasing learning rate to %s' % str(nnms_model.optimizer_step))
+                if step_id == 3000:
+                    learning_rate = 0.0001
+                    logging.info('decreasing learning rate to %s' % str(learning_rate))
 
                 # if step_id < 1000:
                 #

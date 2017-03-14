@@ -56,9 +56,12 @@ class NMSNetwork:
         train_args = kwargs.get('training', {})
         self.pos_weight = train_args.get('pos_weight', 1)
         self.softmax_kernel = train_args.get('softmax_kernel', True)
-        self.optimizer_step = train_args.get('optimizer_step', 0.001)
+
         self.n_neg_examples = train_args.get('n_neg_examples',  10)
         self.use_hinge_loss = train_args.get('use_hinge_loss',  False)
+
+        #self.optimizer_step = train_args.get('optimizer_step', 0.001)
+        self.learning_rate = tf.placeholder(tf.float32)
 
         if input_ops is None:
             self.dt_coords, self.dt_features, self.dt_probs, \
@@ -727,11 +730,11 @@ class NMSNetwork:
         return fc_chain
 
     def _det_train_ops(self):
-        train_step = tf.train.AdamOptimizer(self.optimizer_step).minimize(self.det_loss)
+        train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(self.det_loss)
         return train_step
 
     def _train_step(self, loss):
-        train_step = tf.train.AdamOptimizer(self.optimizer_step).minimize(loss)
+        train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
         return train_step
 
     def _summary_ops(self):
