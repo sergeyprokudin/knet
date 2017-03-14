@@ -104,8 +104,8 @@ def main(_):
         step_id = 0
         step_times = []
 
-        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        run_metadata = tf.RunMetadata()
+        # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        # run_metadata = tf.RunMetadata()
 
         for epoch_id in range(0, 100):
 
@@ -142,9 +142,7 @@ def main(_):
                 # else:
 
                 _ = sess.run([nnms_model.det_train_step],
-                                 feed_dict=feed_dict,
-                                 options=run_options,
-                                 run_metadata=run_metadata)
+                                 feed_dict=feed_dict)
 
                 # import ipdb; ipdb.set_trace()
 
