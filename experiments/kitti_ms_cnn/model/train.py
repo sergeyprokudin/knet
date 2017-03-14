@@ -127,6 +127,11 @@ def main(_):
                              # nnms_model.nms_labels: frame_data['nms_labels'],
                              nnms_model.keep_prob: config.keep_prob_train}
 
+
+                if step_id > 3000:
+                    nnms_model.optimizer_step = 0.0001
+                    logging.info('decreasing learning rate to %s' % str(nnms_model.optimizer_step))
+
                 # if step_id < 1000:
                 #
                 #     _ = sess.run([nnms_model.pair_loss_train_step],

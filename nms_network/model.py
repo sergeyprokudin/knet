@@ -107,9 +107,7 @@ class NMSNetwork:
 
             elif loss_type == 'nms_loss':
 
-                self.iou_feature, self.pairwise_features,\
-                self.pairwise_explain_logits, self.pairwise_explain_probs, \
-                self.logits, self.not_explained_prob, self.class_scores = self._inference_ops()
+                self.iou_feature, self.logits, self.class_scores = self._inference_ops()
 
                 # self.iou_feature, self.pairwise_features, self.pairwise_explain_logits,
                 # self.pairwise_explain_probs = self._alternative_inference_ops4()
@@ -543,26 +541,13 @@ class NMSNetwork:
 
         pairwise_features = pairwise_features - diag
 
-        pairwise_explain_logits = self._kernel(pairwise_features, n_pairwise_features, hlayer_size=512)
+        kernel_features = self._kernel(pairwise_features, n_pairwise_features, hlayer_size=512, n_kernels=self.n_kernels)
 
-        pairwise_explain_probs = tf.nn.sigmoid(pairwise_explain_logits)
+        kernel_features_sigmoid = tf.nn.sigmoid(kernel_features)
 
-        initial_prob = tf.ones(shape=[self.n_bboxes, 1])
+        kernel_max = tf.reshape(tf.reduce_max(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
 
-        # import ipdb; ipdb.set_trace()
-
-        max_explained_prob = tf.reshape(tf.reduce_max(pairwise_explain_probs, axis=1), [self.n_bboxes, 1])
-
-        not_explained_prob = tf.sub(initial_prob, max_explained_prob)
-
-        #
-        # class_scores = tf.mul(not_explained_prob, self.dt_probs)
-
-        kernel_max = tf.reshape(tf.reduce_max(pairwise_explain_probs, axis=1), [self.n_bboxes, 1])
-
-        self.kernel_matrix = pairwise_explain_probs
-
-        kernel_sum = tf.reshape(tf.reduce_sum(pairwise_explain_probs, axis=1), [self.n_bboxes, 1])
+        kernel_sum = tf.reshape(tf.reduce_sum(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
 
         object_and_context_features = tf.concat(1, [self.dt_features, kernel_sum, kernel_max])
 
@@ -612,7 +597,7 @@ class NMSNetwork:
             [1, 1],
             activation_fn=None)
 
-        pairwise_potentials = tf.squeeze(tf.squeeze(conv3, axis=0), axis=2)
+        pairwise_potentials = tf.squeeze(conv3, axis=0)
 
         return pairwise_potentials
 
