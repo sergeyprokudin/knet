@@ -179,6 +179,8 @@ def main(_):
                                       root_log_dir=FLAGS.log_dir,
                                       config_path=FLAGS.config_path)
 
+    learning_rate = 0.001
+
     config.save_results()
 
     logging.info('loading data..')
@@ -238,7 +240,7 @@ def main(_):
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                              nnms_model.keep_prob: config.keep_prob_train,
-                             nnms_model.learning_rate: 0.0001}
+                             nnms_model.learning_rate: learning_rate}
 
                 start_step = timer()
 
@@ -269,7 +271,7 @@ def main(_):
 
                 logging.info('evaluating on TRAIN..')
                 train_out_dir = os.path.join(config.log_dir, 'train')
-                train_map, train_map_nms = eval.eval_model(sess, nnms_model,
+                train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
                                             frames_data_train,
                                             global_step=step_id,
                                             n_eval_frames=config.n_eval_frames,
@@ -277,11 +279,11 @@ def main(_):
                                             full_eval=config.full_eval,
                                             nms_thres=config.nms_thres)
 
-                write_scalar_summary(train_map, 'train_map', summary_writer, step_id)
+                write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
-                test_map, test_map_nms = eval.eval_model(sess, nnms_model,
+                test_map_knet, test_map_nms = eval.eval_model(sess, nnms_model,
                                            frames_data_test,
                                            global_step=step_id,
                                            n_eval_frames=config.n_eval_frames,
@@ -289,16 +291,19 @@ def main(_):
                                            full_eval=config.full_eval,
                                            nms_thres=config.nms_thres)
 
-                write_scalar_summary(test_map, 'test_map', summary_writer, step_id)
+                write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 
                 config.update_results(step_id,
-                                      train_map,
+                                      train_map_knet,
                                       train_map_nms,
-                                      test_map,
+                                      test_map_knet,
                                       test_map_nms,
                                       np.mean(step_times))
 
                 config.save_results()
+
+                if test_map_nms < test_map_knet:
+                    learning_rate = 0.0001
 
                 saver.save(sess, config.model_file, global_step=step_id)
     return

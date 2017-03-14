@@ -125,7 +125,7 @@ def eval_model(sess, nnms_model, frames_data,
     logging.info('mAP knet inference : %f' % map_knet)
     logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
 
-    return map_knet, map_knet_nms
+    return map_knet, map_orig_nms
 
 
 def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
