@@ -285,16 +285,16 @@ def main(_):
                                                               detections_dir=detections_dir,
                                                               labels_dir=labels_dir,
                                                               eval_frames=train_frames[0:1000],
-                                                              n_bboxes=n_bboxes_test,
+                                                              n_bboxes=config.n_bboxes,
                                                               n_features=config.n_dt_features,
                                                               nms_thres=0.5)
 
-                    test_map_knet, test_map_nms= eval_supp.eval_model(sess,
+                    test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                                              nnms_model,
                                                              detections_dir=detections_dir,
                                                              labels_dir=labels_dir,
                                                              eval_frames=test_frames[0:1000],
-                                                             n_bboxes=n_bboxes_test,
+                                                             n_bboxes=config.n_bboxes,
                                                              n_features=config.n_dt_features,
                                                              nms_thres=0.5)
 

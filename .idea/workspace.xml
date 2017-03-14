@@ -28,9 +28,6 @@
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" afterPath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" />
@@ -60,11 +57,11 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.0">
-                  <caret line="301" column="32" selection-start-line="301" selection-start-column="32" selection-end-line="301" selection-end-column="32" />
+                <state vertical-scroll-proportion="5.2116127">
+                  <caret line="291" column="63" selection-start-line="291" selection-start-column="63" selection-end-line="291" selection-end-column="63" />
                   <folding>
                     <element signature="e#753#811#0" expanded="false" />
                   </folding>
@@ -86,11 +83,21 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="config_cluster.yml" pinned="false" current-in-tab="true">
+          <file leaf-file-name="config_cluster.yml" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.24966623">
-                  <caret line="11" column="30" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
+                <state vertical-scroll-proportion="-3.9230769">
+                  <caret line="6" column="12" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="12" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="eval_supp.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="15" column="4" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="4" />
                   <folding />
                 </state>
               </provider>
@@ -100,20 +107,27 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/nms_network/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="122.22222">
-                  <caret line="63" column="26" selection-start-line="63" selection-start-column="13" selection-end-line="63" selection-end-column="26" />
+                <state vertical-scroll-proportion="0.22860962">
+                  <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
                   <folding>
+                    <element signature="e#649#5757#0" expanded="false" />
+                    <element signature="e#5794#6679#0" expanded="false" />
                     <element signature="e#6724#12911#0" expanded="false" />
                     <element signature="e#12963#14789#0" expanded="false" />
                     <element signature="e#14843#19214#0" expanded="false" />
                     <element signature="e#19268#21486#0" expanded="false" />
+                    <element signature="e#21527#24245#0" expanded="false" />
+                    <element signature="e#24405#25112#0" expanded="false" />
                     <element signature="e#25158#26630#0" expanded="false" />
                     <element signature="e#26675#27695#0" expanded="false" />
                     <element signature="e#27731#28842#0" expanded="false" />
                     <element signature="e#29065#30645#0" expanded="false" />
+                    <element signature="e#30685#30790#0" expanded="false" />
+                    <element signature="e#30833#30929#0" expanded="false" />
+                    <element signature="e#30967#31085#0" expanded="false" />
                     <element signature="e#31121#31281#0" expanded="false" />
                   </folding>
                 </state>
@@ -140,10 +154,10 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="data.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="data.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.78064513">
+                <state vertical-scroll-proportion="0.0">
                   <caret line="135" column="12" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="12" />
                   <folding />
                 </state>
@@ -669,7 +683,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="2560" height="1337" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16541946" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297785" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -678,7 +692,7 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32895815" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32895815" sideWeight="0.4986215" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24970461" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.34126332" sideWeight="0.49389523" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.34126332" sideWeight="0.49389523" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -751,11 +765,6 @@
           <url>file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py</url>
           <line>31</line>
           <option name="timeStamp" value="21" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/nms_network/model.py</url>
-          <line>30</line>
-          <option name="timeStamp" value="23" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/nms_network/model.py</url>
@@ -1048,36 +1057,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="122.22222">
-          <caret line="63" column="26" selection-start-line="63" selection-start-column="13" selection-end-line="63" selection-end-column="26" />
-          <folding>
-            <element signature="e#6724#12911#0" expanded="false" />
-            <element signature="e#12963#14789#0" expanded="false" />
-            <element signature="e#14843#19214#0" expanded="false" />
-            <element signature="e#19268#21486#0" expanded="false" />
-            <element signature="e#25158#26630#0" expanded="false" />
-            <element signature="e#26675#27695#0" expanded="false" />
-            <element signature="e#27731#28842#0" expanded="false" />
-            <element signature="e#29065#30645#0" expanded="false" />
-            <element signature="e#31121#31281#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-10.461538">
           <caret line="16" column="21" selection-start-line="16" selection-start-column="21" selection-end-line="16" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="181" column="33" selection-start-line="181" selection-start-column="33" selection-end-line="181" selection-end-column="33" />
           <folding />
         </state>
       </provider>
@@ -1130,16 +1113,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="301" column="32" selection-start-line="301" selection-start-column="32" selection-end-line="301" selection-end-column="32" />
-          <folding>
-            <element signature="e#753#811#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1152,19 +1125,62 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.24966623">
-          <caret line="11" column="30" selection-start-line="11" selection-start-column="30" selection-end-line="11" selection-end-column="30" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="135" column="12" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="12" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
+    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.78064513">
-          <caret line="135" column="12" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="12" />
+        <state vertical-scroll-proportion="0.22860962">
+          <caret line="30" column="0" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+          <folding>
+            <element signature="e#649#5757#0" expanded="false" />
+            <element signature="e#5794#6679#0" expanded="false" />
+            <element signature="e#6724#12911#0" expanded="false" />
+            <element signature="e#12963#14789#0" expanded="false" />
+            <element signature="e#14843#19214#0" expanded="false" />
+            <element signature="e#19268#21486#0" expanded="false" />
+            <element signature="e#21527#24245#0" expanded="false" />
+            <element signature="e#24405#25112#0" expanded="false" />
+            <element signature="e#25158#26630#0" expanded="false" />
+            <element signature="e#26675#27695#0" expanded="false" />
+            <element signature="e#27731#28842#0" expanded="false" />
+            <element signature="e#29065#30645#0" expanded="false" />
+            <element signature="e#30685#30790#0" expanded="false" />
+            <element signature="e#30833#30929#0" expanded="false" />
+            <element signature="e#30967#31085#0" expanded="false" />
+            <element signature="e#31121#31281#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="15" column="4" selection-start-line="15" selection-start-column="4" selection-end-line="15" selection-end-column="4" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-3.9230769">
+          <caret line="6" column="12" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="5.2116127">
+          <caret line="291" column="63" selection-start-line="291" selection-start-column="63" selection-end-line="291" selection-end-column="63" />
+          <folding>
+            <element signature="e#753#811#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>

@@ -1,6 +1,6 @@
 general:
     start_from_scratch: True
-    logging_to_stdout: True
+    logging_to_stdout: False
 data_provider:
     n_features: 100
     n_bboxes: 300
