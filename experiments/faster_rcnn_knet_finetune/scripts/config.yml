@@ -27,7 +27,7 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         use_hinge_loss: False
-        optimizer_step: 0.001
+        learning_rate: 0.001
         keep_prob: 1.0
         n_epochs: 100
     evaluation:

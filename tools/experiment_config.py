@@ -55,6 +55,7 @@ class ExperimentConfig:
         self.train_config = self.nms_network_config.get('training', {})
         self.keep_prob_train = self.train_config.get('keep_prob')
 
+        self.learning_rate = self.train_config.get('learning_rate', 0.001)
         # results details
         self.mean_train_step_time = 0.0
 

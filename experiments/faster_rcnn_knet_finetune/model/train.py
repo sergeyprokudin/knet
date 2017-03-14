@@ -179,7 +179,7 @@ def main(_):
                                       root_log_dir=FLAGS.log_dir,
                                       config_path=FLAGS.config_path)
 
-    learning_rate = 0.001
+    learning_rate = config.learning_rate
 
     config.save_results()
 
@@ -302,7 +302,7 @@ def main(_):
 
                 config.save_results()
 
-                if test_map_nms < test_map_knet+0.01:
+                if test_map_knet > 0.48:
                     learning_rate *= 0.1
 
                 saver.save(sess, config.model_file, global_step=step_id)
