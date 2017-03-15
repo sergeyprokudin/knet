@@ -27,6 +27,9 @@ def eval_model(sess,
     dt_gt_match_orig_nms = []
     dt_gt_match_new_nms = []
 
+    nms_thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    dt_gt_match_orig_nms_all = [[] for i in range(0, len(nms_thres))]
+
     inference_orig_all = []
     inference_new_all = []
     gt_labels_all = []
@@ -77,12 +80,19 @@ def eval_model(sess,
         is_suppressed_new = nms.nms_all_classes(
             dt_dt_iou, inference_new, iou_thr=nms_thres)
 
-        dt_gt_match_orig_nms.append(
-            metrics.match_dt_gt_all_classes(
+
+        is_suppressed_orig_all = nms.nms_all_classes_all_thresholds(dt_dt_iou,
+                                                                    thrs=nms_thresholds)
+
+        import ipdb; ipdb.set_trace()
+
+        for i in range(0, is_suppressed_orig_all.shape[2]):
+            dt_gt_match_orig_nms_all[i].append(metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
-                dt_is_suppressed_info=is_suppressed_orig))
+                dt_is_suppressed_info=is_suppressed_orig_all[:, :, i]))
+
         dt_gt_match_new_nms.append(
             metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
@@ -100,9 +110,18 @@ def eval_model(sess,
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
     ap_orig, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig, inference_orig, gt_labels)
-    ap_orig_nms, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig_nms, inference_orig, gt_labels)
+    dt_gt_match_orig, inference_orig, gt_labels)
+
+    max_map_orig_nms = 0
+
+    for i in dt_gt_match_orig_nms_all.items():
+        ap_orig_nms, _ = metrics.average_precision_all_classes(
+            dt_gt_match_orig_nms_all[i], inference_orig, gt_labels)
+        map_orig_nms = np.nanmean(ap_orig_nms)
+        if map_orig_nms > max_map_orig_nms:
+            max_map_orig_nms = map_orig_nms
+        max_nms_thres = nms_thresholds[i]
+
     ap_new, _ = metrics.average_precision_all_classes(
         dt_gt_match_new, inference_new, gt_labels)
     ap_new_nms, _ = metrics.average_precision_all_classes(
@@ -114,7 +133,7 @@ def eval_model(sess,
     map_knet_nms = np.nanmean(ap_new_nms)
 
     logging.info('mAP original inference : %f' % map_orig)
-    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    logging.info('mAP original inference (best NMS = %s) : %f' % (max_map_orig_nms, str(max_nms_thres)))
     logging.info('mAP knet inference : %f' % map_knet)
     logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
 

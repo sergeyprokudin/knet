@@ -544,7 +544,10 @@ class NMSNetwork:
 
         pairwise_features = pairwise_features - diag
 
-        kernel_features = self._kernel(pairwise_features, n_pairwise_features, hlayer_size=512, n_kernels=self.n_kernels)
+        kernel_features = self._kernel(pairwise_features,
+                                       n_pairwise_features,
+                                       hlayer_size=self.knet_hlayer_size,
+                                       n_kernels=self.n_kernels)
 
         kernel_features_sigmoid = tf.nn.sigmoid(kernel_features)
 
@@ -557,11 +560,11 @@ class NMSNetwork:
         self.object_and_context_features = object_and_context_features
 
         fc1 = slim.layers.fully_connected(object_and_context_features,
-                                          512,
+                                          self.fc_apres_layer_size,
                                           activation_fn=tf.nn.relu)
 
         fc2 = slim.layers.fully_connected(fc1,
-                                          512,
+                                          self.fc_apres_layer_size,
                                           activation_fn=tf.nn.relu)
 
         logits = slim.fully_connected(fc2, self.n_classes, activation_fn=None)

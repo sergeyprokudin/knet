@@ -20,7 +20,7 @@ def eval_model(sess,
                eval_frames,
                n_bboxes,
                n_features,
-               nms_thres=0.5):
+               nms_thres=0.7):
 
     dt_gt_match_orig = []
     dt_gt_match_new = []
@@ -28,6 +28,10 @@ def eval_model(sess,
     dt_gt_match_perfect_nms = []
     dt_gt_match_orig_nms = []
     dt_gt_match_new_nms = []
+
+    nms_thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9]
+
+    dt_gt_match_orig_nms_all = [[] for i in range(0, len(nms_thresholds))]
 
     inference_orig_all = []
     inference_new_all = []
@@ -65,6 +69,7 @@ def eval_model(sess,
         inference_new, inference_oracle,  dt_dt_iou = sess.run(
             [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature], feed_dict=feed_dict)
 
+
         inference_new_all.append(inference_new)
         inference_oracle_all.append(inference_oracle)
         eval_data[fid]['inference_new'] = inference_new
@@ -90,6 +95,17 @@ def eval_model(sess,
 
         is_suppressed_orig = nms.nms_all_classes(
             dt_dt_iou, inference_orig, iou_thr=nms_thres)
+
+        is_suppressed_orig_all = nms.nms_all_classes_all_thresholds(dt_dt_iou,
+                                                                    inference_orig,
+                                                                    thrs=nms_thresholds)
+
+        for i in range(0, is_suppressed_orig_all.shape[2]):
+            dt_gt_match_orig_nms_all[i].append(metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_orig,
+                dt_is_suppressed_info=is_suppressed_orig_all[:, :, i]))
 
         is_suppressed_new = nms.nms_all_classes(
             dt_dt_iou, inference_new, iou_thr=nms_thres)
@@ -145,6 +161,10 @@ def eval_model(sess,
     dt_gt_match_orig = np.vstack(dt_gt_match_orig)
     dt_gt_match_new = np.vstack(dt_gt_match_new)
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
+
+    for i in range(0, len(dt_gt_match_orig_nms_all)):
+        dt_gt_match_orig_nms_all[i] = np.vstack(dt_gt_match_orig_nms_all[i])
+
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
     ap_oracle, roc_oracle = metrics.average_precision_all_classes(
@@ -161,6 +181,16 @@ def eval_model(sess,
     ap_new_nms, _ = metrics.average_precision_all_classes(
         dt_gt_match_new_nms, inference_new, gt_labels)
 
+    max_map_orig_nms = 0
+
+    for i in range(0, len(dt_gt_match_orig_nms_all)):
+        ap_orig_nms, _ = metrics.average_precision_all_classes(
+            dt_gt_match_orig_nms_all[i], inference_orig, gt_labels)
+        map_orig_nms = np.nanmean(ap_orig_nms)
+        if map_orig_nms > max_map_orig_nms:
+            max_map_orig_nms = map_orig_nms
+            max_nms_thres = nms_thresholds[i]
+
     map_oracle = np.nanmean(ap_oracle)
     map_perfect_nms = np.nanmean(ap_perfect_nms)
     map_orig = np.nanmean(ap_orig)
@@ -172,14 +202,14 @@ def eval_model(sess,
 
     logging.info('mAP oracle : %f' % map_oracle)
     logging.info('mAP original inference : %f' % map_orig)
-    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    logging.info('mAP original inference (best NMS IoU = %f) : %f' % (max_nms_thres, max_map_orig_nms))
     logging.info('mAP original inference (perfect NMS) : %f' % map_perfect_nms)
     logging.info('mAP knet inference : %f' % map_knet)
     logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
     logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
                                                                                  str(mean_nms_fails)))
 
-    return map_knet, map_orig_nms
+    return map_knet, max_map_orig_nms
 
 
 def print_debug_info(nnms_model, sess, frame_data, outdir, fid):

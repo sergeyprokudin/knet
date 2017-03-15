@@ -95,8 +95,6 @@ def main(_):
 
     logging.info('training started..')
 
-
-
     with tf.Session() as sess:
 
         sess.run(nnms_model.init_op)
@@ -154,7 +152,7 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 3000 == 0:
+                if step_id % 1000 == 0:
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
@@ -284,21 +282,21 @@ def main(_):
                                                               nnms_model,
                                                               detections_dir=detections_dir,
                                                               labels_dir=labels_dir,
-                                                              eval_frames=train_frames[0:100],
+                                                              eval_frames=train_frames[0:1000],
                                                               n_bboxes=config.n_bboxes,
                                                               n_features=config.n_dt_features,
-                                                              nms_thres=0.5)
+                                                              nms_thres=0.7)
 
                     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                                              nnms_model,
                                                              detections_dir=detections_dir,
                                                              labels_dir=labels_dir,
-                                                             eval_frames=test_frames[0:100],
+                                                             eval_frames=test_frames[0:1000],
                                                              n_bboxes=config.n_bboxes,
                                                              n_features=config.n_dt_features,
-                                                             nms_thres=0.5)
+                                                             nms_thres=0.7)
 
-                    if test_map_knet > test_map_nms:
+                    if test_map_knet > test_map_nms-0.5:
                         learning_rate = 0.0001
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 
