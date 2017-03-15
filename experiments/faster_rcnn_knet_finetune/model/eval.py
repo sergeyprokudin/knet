@@ -29,6 +29,7 @@ def eval_model(sess, nnms_model, frames_data,
     inference_new_all = []
     coords = []
     gt_labels_all = []
+    losses = []
 
     n_total_frames = len(frames_data.keys())
 
@@ -49,6 +50,8 @@ def eval_model(sess, nnms_model, frames_data,
         feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                      nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                      nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
+                     nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                     nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}
 
         dt_scores = frame_data[nms_net.DT_SCORES]
@@ -57,8 +60,11 @@ def eval_model(sess, nnms_model, frames_data,
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, dt_dt_iou = sess.run(
-            [nnms_model.class_scores, nnms_model.iou_feature], feed_dict=feed_dict)
+        inference_new, dt_dt_iou, loss = sess.run(
+            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
+
+        losses.append(loss)
+
         inference_new_all.append(inference_new)
         eval_data[fid]['inference_new'] = inference_new
 
@@ -120,6 +126,7 @@ def eval_model(sess, nnms_model, frames_data,
     map_knet = np.nanmean(ap_new)
     map_knet_nms = np.nanmean(ap_new_nms)
 
+    logging.info('model loss : %f' % np.mean(losses))
     logging.info('mAP original inference : %f' % map_orig)
     logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
     logging.info('mAP knet inference : %f' % map_knet)
@@ -139,7 +146,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
     inference_orig = frame_data[nms_net.DT_SCORES]
     inference, labels, loss = sess.run(
         [nnms_model.class_scores, nnms_model.labels, nnms_model.loss], feed_dict=feed_dict)
-    logging.info("loss : %f" % loss)
+    # logging.info("loss : %f" % loss)
     # logging.info("initial scores for pos values : %s"%frame_data[DT_FEATURES]
     # [np.where(frame_data[DT_LABELS][0:N_OBJECTS]>0)])
 

@@ -93,14 +93,15 @@ def match_dt_gt_all_classes(dt_gt_iou,
                 dt_is_suppressed_per_class == False,
                 class_label] = match_dt_gt(
                 class_dt_gt_iou,
-                class_predictions)
+                class_predictions,
+                iou_thr=iou_thr)
             is_matched_all_classes[
                 dt_is_suppressed_per_class == True,
                 class_label] = -1
         else:
             is_matched_all_classes[
                 :, class_label] = match_dt_gt(
-                class_dt_gt_iou, class_predictions)
+                class_dt_gt_iou, class_predictions,iou_thr=iou_thr)
     return is_matched_all_classes
 
 

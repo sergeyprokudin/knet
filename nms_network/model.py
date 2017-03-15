@@ -28,11 +28,13 @@ class NMSNetwork:
                  n_classes,
                  loss_type='best_iou',
                  input_ops=None,
+                 gt_match_iou_thr=0.5,
                  **kwargs):
 
         # model main parameters
         self.n_dt_coords = 4
         self.n_classes = n_classes
+        self.gt_match_iou_thr = gt_match_iou_thr
         #self.n_bboxes = n_bboxes
 
         # architecture params
@@ -618,7 +620,7 @@ class NMSNetwork:
 
         for class_id in range(0, self.n_classes):
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id,
-                                                                      iou_threshold=0.5)
+                                                                      iou_threshold=self.gt_match_iou_thr)
             # self.gt_per_labels.append(gt_per_label)
             class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_scores,
                                                                          gt_per_label,

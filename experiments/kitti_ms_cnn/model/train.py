@@ -91,6 +91,7 @@ def main(_):
     nnms_model = nms_net.NMSNetwork(n_classes=1,
                                     input_ops=in_ops,
                                     loss_type='nms_loss',
+                                    gt_match_iou_thr=0.7,
                                     **config.nms_network_config)
 
     logging.info('training started..')
@@ -108,7 +109,6 @@ def main(_):
         for epoch_id in range(0, 10):
 
             for fid in train_frames:
-
 
                 start_step = timer()
 
@@ -296,7 +296,7 @@ def main(_):
                                                              n_features=config.n_dt_features,
                                                              nms_thres=0.7)
 
-                    if test_map_knet > test_map_nms-0.5:
+                    if test_map_knet > test_map_nms-0.005:
                         learning_rate = 0.0001
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 

@@ -232,28 +232,28 @@ def main(_):
 
             step_times = []
 
-            for fid in shuffle_samples(n_frames_train):
-                frame_data = frames_data_train[fid]
-                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
-                             nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-                             nnms_model.keep_prob: config.keep_prob_train,
-                             nnms_model.learning_rate: learning_rate}
-
-                start_step = timer()
-
-                summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
-                                      feed_dict=feed_dict)
-                end_step = timer()
-
-                step_times.append(end_step-start_step)
-
-                summary_writer.add_summary(summary, global_step=step_id)
-                summary_writer.flush()
-
-                step_id += 1
+            # for fid in shuffle_samples(n_frames_train):
+            #     frame_data = frames_data_train[fid]
+            #     feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+            #                  nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+            #                  nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
+            #                  nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+            #                  nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+            #                  nnms_model.keep_prob: config.keep_prob_train,
+            #                  nnms_model.learning_rate: learning_rate}
+            #
+            #     start_step = timer()
+            #
+            #     summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
+            #                           feed_dict=feed_dict)
+            #     end_step = timer()
+            #
+            #     step_times.append(end_step-start_step)
+            #
+            #     summary_writer.add_summary(summary, global_step=step_id)
+            #     summary_writer.flush()
+            #
+            #     step_id += 1
 
             if step_id % config.eval_step == 0:
 

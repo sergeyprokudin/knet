@@ -20,7 +20,8 @@ def eval_model(sess,
                eval_frames,
                n_bboxes,
                n_features,
-               nms_thres=0.7):
+               nms_thres=0.7,
+               gt_match_iou_thres=0.7):
 
     dt_gt_match_orig = []
     dt_gt_match_new = []
@@ -79,19 +80,22 @@ def eval_model(sess,
             metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
-                inference_orig))
+                inference_orig,
+                iou_thr=gt_match_iou_thres))
 
         dt_gt_match_new.append(
             metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
-                inference_new))
+                inference_new,
+                iou_thr=gt_match_iou_thres))
 
         dt_gt_match_oracle.append(
             metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
-                inference_oracle))
+                inference_oracle,
+                iou_thr=gt_match_iou_thres))
 
         is_suppressed_orig = nms.nms_all_classes(
             dt_dt_iou, inference_orig, iou_thr=nms_thres)
@@ -105,7 +109,8 @@ def eval_model(sess,
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
-                dt_is_suppressed_info=is_suppressed_orig_all[:, :, i]))
+                dt_is_suppressed_info=is_suppressed_orig_all[:, :, i],
+                iou_thr=gt_match_iou_thres))
 
         is_suppressed_new = nms.nms_all_classes(
             dt_dt_iou, inference_new, iou_thr=nms_thres)
@@ -134,6 +139,7 @@ def eval_model(sess,
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
+                iou_thr=gt_match_iou_thres,
                 dt_is_suppressed_info=is_suppressed_ideal_case))
 
         dt_gt_match_orig_nms.append(
@@ -141,6 +147,7 @@ def eval_model(sess,
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
+                iou_thr=gt_match_iou_thres,
                 dt_is_suppressed_info=is_suppressed_orig))
 
         dt_gt_match_new_nms.append(
@@ -148,6 +155,7 @@ def eval_model(sess,
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_new,
+                iou_thr=gt_match_iou_thres,
                 dt_is_suppressed_info=is_suppressed_new))
 
     gt_labels = np.vstack(gt_labels_all)
@@ -198,7 +206,6 @@ def eval_model(sess,
     map_knet = np.nanmean(ap_new)
     map_knet_nms = np.nanmean(ap_new_nms)
     mean_nms_fails = total_number_of_nms_fails / float(total_number_of_nms_supps)
-
 
     logging.info('mAP oracle : %f' % map_oracle)
     logging.info('mAP original inference : %f' % map_orig)
