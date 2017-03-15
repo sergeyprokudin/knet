@@ -152,7 +152,7 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 1000 == 0:
+                if step_id % 5000 == 0:
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
@@ -282,7 +282,7 @@ def main(_):
                                                               nnms_model,
                                                               detections_dir=detections_dir,
                                                               labels_dir=labels_dir,
-                                                              eval_frames=train_frames[0:1000],
+                                                              eval_frames=train_frames,
                                                               n_bboxes=config.n_bboxes,
                                                               n_features=config.n_dt_features,
                                                               nms_thres=0.7)
@@ -291,12 +291,12 @@ def main(_):
                                                              nnms_model,
                                                              detections_dir=detections_dir,
                                                              labels_dir=labels_dir,
-                                                             eval_frames=test_frames[0:1000],
+                                                             eval_frames=test_frames,
                                                              n_bboxes=config.n_bboxes,
                                                              n_features=config.n_dt_features,
                                                              nms_thres=0.7)
 
-                    if test_map_knet > test_map_nms-0.005:
+                    if test_map_knet > test_map_nms:
                         learning_rate = 0.0001
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 
@@ -305,7 +305,7 @@ def main(_):
                                               detections_dir=detections_dir,
                                               labels_dir=labels_dir,
                                               eval_frames=train_frames,
-                                              n_bboxes=config.n_bboxes,
+                                              n_bboxes=300,
                                               n_features=config.n_dt_features,
                                               nms_thres=0.5)
 
@@ -314,7 +314,7 @@ def main(_):
                                              detections_dir=detections_dir,
                                              labels_dir=labels_dir,
                                              eval_frames=test_frames,
-                                             n_bboxes=config.n_bboxes,
+                                             n_bboxes=300,
                                              n_features=config.n_dt_features,
                                              nms_thres=0.5)
     import ipdb; ipdb.set_trace()
