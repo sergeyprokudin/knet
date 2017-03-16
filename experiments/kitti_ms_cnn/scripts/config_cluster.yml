@@ -3,7 +3,7 @@ general:
     logging_to_stdout: False
 data_provider:
     n_features: 100
-    n_bboxes: 50
+    n_bboxes: 300
 nms_network:
     architecture:
         use_object_features: True
@@ -14,7 +14,7 @@ nms_network:
         fc_pre_layer_size: 256
         fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
-        n_kernels: 32
+        n_kernels: 128
         n_kernel_iterations: 1
         reuse_kernels: False
         fc_apres_layer_size: 256

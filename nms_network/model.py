@@ -557,7 +557,7 @@ class NMSNetwork:
 
         kernel_sum = tf.reshape(tf.reduce_sum(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
 
-        object_and_context_features = tf.concat(1, [self.dt_features, kernel_max])
+        object_and_context_features = tf.concat(1, [self.dt_features, kernel_max, kernel_sum])
 
         self.object_and_context_features = object_and_context_features
 

@@ -42,7 +42,7 @@ N_CLASS_SCORES = 21
 N_DT_FEATURES_FULL = N_CLASS_SCORES + N_FC_FEATURES_FULL
 N_DT_FEATURES_SHORT = N_CLASS_SCORES + N_FC_FEATURES_SHORT
 N_OBJECTS = 20
-N_CLASSES = 21
+N_CLASSES = 1
 
 
 def get_frame_data(fid, data, n_bboxes):
@@ -233,8 +233,12 @@ def main(_):
 
             step_times = []
 
+            import ipdb; ipdb.set_trace()
+
             for fid in shuffle_samples(n_frames_train):
+
                 frame_data = frames_data_train[fid]
+
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                              nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],

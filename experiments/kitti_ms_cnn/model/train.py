@@ -120,6 +120,8 @@ def main(_):
 
                 data_step = timer()
 
+                import ipdb; ipdb.set_trace()
+
                 feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                              nnms_model.dt_features: frame_data['dt_features'],
                              nnms_model.dt_probs: frame_data['dt_probs'],
@@ -285,7 +287,7 @@ def main(_):
                                                               eval_frames=train_frames,
                                                               n_bboxes=config.n_bboxes,
                                                               n_features=config.n_dt_features,
-                                                              nms_thres=0.7)
+                                                              nms_thres=0.75)
 
                     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                                              nnms_model,
@@ -294,7 +296,7 @@ def main(_):
                                                              eval_frames=test_frames,
                                                              n_bboxes=config.n_bboxes,
                                                              n_features=config.n_dt_features,
-                                                             nms_thres=0.7)
+                                                             nms_thres=0.75)
 
                     if test_map_knet > test_map_nms:
                         learning_rate = 0.0001
@@ -305,18 +307,18 @@ def main(_):
                                               detections_dir=detections_dir,
                                               labels_dir=labels_dir,
                                               eval_frames=train_frames,
-                                              n_bboxes=300,
+                                              n_bboxes=config.n_bboxes,
                                               n_features=config.n_dt_features,
-                                              nms_thres=0.5)
+                                              nms_thres=0.75)
 
     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                              nnms_model,
                                              detections_dir=detections_dir,
                                              labels_dir=labels_dir,
                                              eval_frames=test_frames,
-                                             n_bboxes=300,
+                                             n_bboxes=config.n_bboxes,
                                              n_features=config.n_dt_features,
-                                             nms_thres=0.5)
+                                             nms_thres=0.75)
     import ipdb; ipdb.set_trace()
 
     return

@@ -14,7 +14,7 @@ nms_network:
         fc_pre_layer_size: 256
         fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
-        n_kernels: 32
+        n_kernels: 128
         n_kernel_iterations: 2
         reuse_kernels: False
         fc_apres_layer_size: 256
@@ -32,4 +32,4 @@ nms_network:
     evaluation:
         eval_step: 1
         full_eval: True
-        nms_thres: 0.5
+        nms_thres: 0.75
