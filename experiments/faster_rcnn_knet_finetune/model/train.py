@@ -44,6 +44,13 @@ N_DT_FEATURES_SHORT = N_CLASS_SCORES + N_FC_FEATURES_SHORT
 N_OBJECTS = 20
 N_CLASSES = 1
 
+CLASSES = ['__background__', # always index 0
+           'aeroplane', 'bicycle', 'bird', 'boat',
+           'bottle', 'bus', 'car', 'cat', 'chair',
+           'cow', 'diningtable', 'dog', 'horse',
+           'motorbike', 'person', 'pottedplant',
+           'sheep', 'sofa', 'train', 'tvmonitor']
+
 
 def get_frame_data(fid, data, n_bboxes):
     frame_data = {}
@@ -71,6 +78,11 @@ def get_frame_data(fid, data, n_bboxes):
     return frame_data
 
 
+def softmax(logits):
+    n_classes = logits.shape[1]
+    return np.exp(logits) / np.tile(np.sum(np.exp(logits),
+                                           axis=1).reshape(-1, 1), [1, n_classes])
+
 def split_by_frames(data, n_bboxes):
     unique_fids = np.unique(np.hstack([data[nms_net.DT_COORDS][:, 0], data[nms_net.GT_COORDS][:, 0]])).astype(int)
     get_frame_data_partial = partial(get_frame_data, data=data, n_bboxes=n_bboxes)
@@ -84,7 +96,9 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
         dt_features_path = os.path.join(data_dir, 'dt_features_short.pkl')
     else :
         dt_features_path = os.path.join(data_dir, 'dt_features_full.pkl')
+
     data = {}
+
     data[nms_net.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
     data[nms_net.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
     data[nms_net.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
@@ -94,7 +108,15 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
     return frames_data_train
 
 
-def load_data(data_dir, n_bboxes, use_short_features=False):
+def select_one_class(frame_data, class_id):
+    selected_ix = np.where(frame_data[nms_net.GT_LABELS] == class_id)[0]
+    frame_data[nms_net.GT_LABELS] = np.zeros(len(selected_ix)) # frame_data[nms_net.GT_LABELS][selected_ix]
+    frame_data[nms_net.GT_COORDS] = frame_data[nms_net.GT_COORDS][selected_ix]
+    frame_data[nms_net.DT_SCORES] = softmax(frame_data[nms_net.DT_SCORES])[:, class_id]
+    return frame_data
+
+
+def load_data(data_dir, n_bboxes, use_short_features=False, one_class=False, class_id=0):
     if use_short_features:
         frames_data_cache_file = os.path.join(data_dir, 'frames_data_short_' + str(n_bboxes) + '.pkl')
     else:
@@ -107,6 +129,9 @@ def load_data(data_dir, n_bboxes, use_short_features=False):
             'computing frame bbox data (IoU, labels, etc) - this could take some time..')
         frames_data = preprocess_data(data_dir, n_bboxes, use_short_features=use_short_features)
         joblib.dump(frames_data, frames_data_cache_file)
+    if one_class:
+        for fid in frames_data.keys():
+            frames_data[fid] = select_one_class(frames_data[fid], class_id)
     return frames_data
 
 
@@ -126,7 +151,7 @@ def write_scalar_summary(value, name, summary_writer, step_id):
     return
 
 
-def input_ops(n_detections,
+def input_ops(n_classes,
               n_dt_features):
 
     input_dict = {}
@@ -143,7 +168,7 @@ def input_ops(n_detections,
     input_dict['dt_probs'] = tf.placeholder(tf.float32,
                                  shape=[
                                      None,
-                                     21])
+                                     n_classes])
 
     input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4])
 
@@ -181,17 +206,33 @@ def main(_):
 
     learning_rate = config.learning_rate
 
+    class_of_interest = 'person'
+
     config.save_results()
 
     logging.info('loading data..')
     logging.info('train..')
     frames_data_train = load_data(config.train_data_dir,
                                   n_bboxes=config.n_bboxes,
-                                  use_short_features=config.use_reduced_fc_features)
+                                  use_short_features=config.use_reduced_fc_features,
+                                  one_class=True,
+                                  class_id=CLASSES.index(class_of_interest))
+
+    train_class_instances = 0
+    for fid in frames_data_train.keys():
+        train_class_instances += len(frames_data_train[fid]['gt_labels'])
+    logging.info("number of gt objects of class %s in train : %d" % (class_of_interest, train_class_instances))
+
     logging.info('test..')
     frames_data_test = load_data(config.test_data_dir,
                                  n_bboxes=config.n_bboxes,
-                                 use_short_features=config.use_reduced_fc_features)
+                                 use_short_features=config.use_reduced_fc_features,
+                                 one_class=True,
+                                 class_id=CLASSES.index(class_of_interest))
+    test_class_instances = 0
+    for fid in frames_data_test.keys():
+        test_class_instances += len(frames_data_test[fid]['gt_labels'])
+    logging.info("number of gt objects of class %s in test : %d" % (class_of_interest, test_class_instances))
 
     if config.shuffle_train_test:
         frames_data_train, frames_data_test = shuffle_train_test(frames_data_train, frames_data_test)
@@ -201,12 +242,12 @@ def main(_):
 
     logging.info('building model graph..')
 
-    in_ops = input_ops(config.n_bboxes, config.n_dt_features)
+    in_ops = input_ops(config.n_bboxes, N_CLASSES)
 
     nnms_model = nms_net.NMSNetwork(n_classes=N_CLASSES,
                                     input_ops=in_ops,
                                     loss_type='nms_loss',
-                                    gt_match_iou_thr=0.8,
+                                    gt_match_iou_thr=0.5,
                                     **config.nms_network_config)
 
     with tf.Session() as sess:
@@ -233,15 +274,13 @@ def main(_):
 
             step_times = []
 
-            import ipdb; ipdb.set_trace()
-
             for fid in shuffle_samples(n_frames_train):
 
                 frame_data = frames_data_train[fid]
 
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
+                             nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                              nnms_model.keep_prob: config.keep_prob_train,
@@ -289,12 +328,12 @@ def main(_):
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
                 test_map_knet, test_map_nms = eval.eval_model(sess, nnms_model,
-                                           frames_data_test,
-                                           global_step=step_id,
-                                           n_eval_frames=config.n_eval_frames,
-                                           out_dir=test_out_dir,
-                                           full_eval=config.full_eval,
-                                           nms_thres=config.nms_thres)
+                                                               frames_data_test,
+                                                               global_step=step_id,
+                                                               n_eval_frames=config.n_eval_frames,
+                                                               out_dir=test_out_dir,
+                                                               full_eval=config.full_eval,
+                                                               nms_thres=config.nms_thres)
 
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 

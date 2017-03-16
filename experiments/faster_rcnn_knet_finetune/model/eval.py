@@ -49,7 +49,7 @@ def eval_model(sess, nnms_model, frames_data,
 
         feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                      nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                     nnms_model.dt_probs: frame_data[nms_net.DT_FEATURES][:, 0:21],
+                     nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
                      nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                      nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}

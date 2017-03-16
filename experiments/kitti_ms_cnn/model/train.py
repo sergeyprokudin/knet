@@ -120,7 +120,7 @@ def main(_):
 
                 data_step = timer()
 
-                import ipdb; ipdb.set_trace()
+                # import ipdb; ipdb.set_trace()
 
                 feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                              nnms_model.dt_features: frame_data['dt_features'],
@@ -319,7 +319,7 @@ def main(_):
                                              n_bboxes=config.n_bboxes,
                                              n_features=config.n_dt_features,
                                              nms_thres=0.75)
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
 
     return
 
