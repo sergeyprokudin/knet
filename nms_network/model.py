@@ -89,10 +89,10 @@ class NMSNetwork:
             self.labels = self.det_labels
             self.loss = self.det_loss
 
-            self.nms_labels, self.elementwise_loss, self.nms_loss = self._nms_loss()
+            # self.nms_labels, self.elementwise_loss, self.nms_loss = self._nms_loss()
             # self.labels = self.nms_labels
             # self.loss = self.nms_loss
-            self.nms_prob = self.class_scores
+            # self.nms_prob = self.class_scores
             # self.class_scores = tf.multiply(self.dt_probs, 1-self.nms_prob)
             self.train_step = self._train_step(self.loss)
             # self.loss = self.pairwise_nms_loss + self.nms_loss

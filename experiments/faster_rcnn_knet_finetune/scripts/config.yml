@@ -1,12 +1,12 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
+    class_of_interest: all
 data_provider:
     use_reduced_fc_features: True
     shuffle_train_test: False
     n_features : 121
     n_bboxes: 20
-    class_of_interest: pottedplant
 nms_network:
     architecture:
         use_object_features: True
@@ -17,7 +17,7 @@ nms_network:
         fc_pre_layer_size: 256
         fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
-        n_kernels: 128
+        n_kernels: 256
         n_kernel_iterations: 1
         reuse_kernels: False
         fc_apres_layer_size: 512
@@ -28,11 +28,11 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         use_hinge_loss: False
-        learning_rate: 0.0001
+        learning_rate: 0.00001
         keep_prob: 1.0
-        n_epochs: 15
+        n_epochs: 50
     evaluation:
         eval_step: 3
-        full_eval: False
+        full_eval: True
         n_eval_frames: 1000
         nms_thres: 0.5

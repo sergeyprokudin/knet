@@ -42,7 +42,7 @@ N_CLASS_SCORES = 21
 N_DT_FEATURES_FULL = N_CLASS_SCORES + N_FC_FEATURES_FULL
 N_DT_FEATURES_SHORT = N_CLASS_SCORES + N_FC_FEATURES_SHORT
 N_OBJECTS = 20
-N_CLASSES = 1
+TOTAL_NUMBER_OF_CLASSES = 21
 
 CLASSES = ['__background__', # always index 0
            'aeroplane', 'bicycle', 'bird', 'boat',
@@ -64,9 +64,9 @@ def get_frame_data(fid, data, n_bboxes):
     frame_data[nms_net.DT_GT_IOU] = bbox_utils.compute_sets_iou(
         frame_data[nms_net.DT_COORDS], frame_data[nms_net.GT_COORDS])
     # frame_data[nnms.DT_DT_IOU] = bbox_utils.compute_sets_iou(frame_data[nnms.DT_COORDS], frame_data[nnms.DT_COORDS])
-    frame_data[nms_net.DT_LABELS] = np.zeros([n_bboxes, N_CLASSES])
-    frame_data[nms_net.DT_LABELS_BASIC] = np.zeros([n_bboxes, N_CLASSES])
-    for class_id in range(0, N_CLASSES):
+    frame_data[nms_net.DT_LABELS] = np.zeros([n_bboxes, TOTAL_NUMBER_OF_CLASSES])
+    frame_data[nms_net.DT_LABELS_BASIC] = np.zeros([n_bboxes, TOTAL_NUMBER_OF_CLASSES])
+    for class_id in range(0, TOTAL_NUMBER_OF_CLASSES):
         class_gt_boxes = frame_data[nms_net.GT_LABELS] == class_id
         class_dt_gt = frame_data[nms_net.DT_GT_IOU][:, class_gt_boxes]
         if class_dt_gt.shape[1] != 0:
@@ -213,9 +213,16 @@ def main(_):
 
     learning_rate = config.learning_rate
 
-    class_of_interest = config.config['class_of_interest']
+    class_of_interest = config.config['general']['class_of_interest']
 
-    class_ix = CLASSES.index(class_of_interest)
+    if class_of_interest == 'all':
+        is_one_class = False
+        class_ix = 0
+        n_classes = TOTAL_NUMBER_OF_CLASSES
+    else:
+        is_one_class = True
+        class_ix = CLASSES.index(class_of_interest)
+        n_classes = 1
 
     config.save_results()
 
@@ -224,7 +231,7 @@ def main(_):
     frames_data_train = load_data(config.train_data_dir,
                                   n_bboxes=config.n_bboxes,
                                   use_short_features=config.use_reduced_fc_features,
-                                  one_class=True,
+                                  one_class=is_one_class,
                                   class_id=class_ix)
 
     train_class_instances = 0
@@ -237,7 +244,7 @@ def main(_):
     frames_data_test = load_data(config.test_data_dir,
                                  n_bboxes=config.n_bboxes,
                                  use_short_features=config.use_reduced_fc_features,
-                                 one_class=True,
+                                 one_class=is_one_class,
                                  class_id=class_ix)
     test_class_instances = 0
     for fid in frames_data_test.keys():
@@ -252,9 +259,9 @@ def main(_):
 
     logging.info('building model graph..')
 
-    in_ops = input_ops(n_classes=N_CLASSES, n_dt_features=config.n_dt_features)
+    in_ops = input_ops(n_classes=n_classes, n_dt_features=config.n_dt_features)
 
-    nnms_model = nms_net.NMSNetwork(n_classes=N_CLASSES,
+    nnms_model = nms_net.NMSNetwork(n_classes=n_classes,
                                     input_ops=in_ops,
                                     loss_type='nms_loss',
                                     gt_match_iou_thr=0.5,
@@ -312,38 +319,38 @@ def main(_):
 
                 step_id += 1
 
-            if epoch_id % 3 == 0:
+            if epoch_id % config.eval_step == 0:
 
                 logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
-                fid = shuffle_samples(n_frames_test)[0]
-
-                frame_data = frames_data_test[fid]
-
-                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
-                             nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
-
-                nms_loss, nms_labels, nms_prob, class_score, \
-                pair_features, iou_feature, object_context_features, det_labels, det_loss, loss_opt = sess.run([nnms_model.nms_loss,
-                                                                                       nnms_model.nms_labels,
-                                                                                       nnms_model.nms_prob,
-                                                                                       nnms_model.class_scores,
-                                                                                       nnms_model.pairwise_obj_features,
-                                                                                       nnms_model.iou_feature,
-                                                                                nnms_model.object_and_context_features,
-                                                                                            nnms_model.det_labels,
-                                                                                            nnms_model.det_loss_elementwise,
-                                                                                            nnms_model.loss],
-                                                                                      feed_dict=feed_dict)
-
-                from tools import nms
-
-                iou_feature = iou_feature.reshape([config.n_bboxes, config.n_bboxes])
-
-                is_suppressed_labels = nms.nms_all_classes(iou_feature, frame_data[nms_net.DT_SCORES], iou_thr=0.5)
+                # fid = shuffle_samples(n_frames_test)[0]
+                #
+                # frame_data = frames_data_test[fid]
+                #
+                # feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                #              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                #              nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+                #              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                #              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
+                #
+                # nms_loss, nms_labels, nms_prob, class_score, \
+                # pair_features, iou_feature, object_context_features, det_labels, det_loss, loss_opt = sess.run([nnms_model.nms_loss,
+                #                                                                        nnms_model.nms_labels,
+                #                                                                        nnms_model.nms_prob,
+                #                                                                        nnms_model.class_scores,
+                #                                                                        nnms_model.pairwise_obj_features,
+                #                                                                        nnms_model.iou_feature,
+                #                                                                 nnms_model.object_and_context_features,
+                #                                                                             nnms_model.det_labels,
+                #                                                                             nnms_model.det_loss_elementwise,
+                #                                                                             nnms_model.loss],
+                #                                                                       feed_dict=feed_dict)
+                #
+                # from tools import nms
+                #
+                # iou_feature = iou_feature.reshape([config.n_bboxes, config.n_bboxes])
+                #
+                # is_suppressed_labels = nms.nms_all_classes(iou_feature, frame_data[nms_net.DT_SCORES], iou_thr=0.5)
 
                 # import ipdb; ipdb.set_trace()
 
