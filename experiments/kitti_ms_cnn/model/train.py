@@ -8,6 +8,8 @@ from timeit import default_timer as timer
 import gflags
 import ntpath
 import numpy as np
+from numpy.random import RandomState
+
 import os
 import tensorflow as tf
 from google.apputils import app
@@ -15,6 +17,7 @@ from nms_network import model as nms_net
 import eval_supp
 from data import get_frame_data_fixed
 from tools import experiment_config as expconf
+
 
 gflags.DEFINE_string('data_dir', None, 'directory containing train data')
 gflags.DEFINE_string('root_log_dir', None, 'root directory to save logs')
@@ -63,6 +66,8 @@ def main(_):
     config = expconf.ExperimentConfig(data_dir=FLAGS.data_dir,
                                       root_log_dir=FLAGS.root_log_dir,
                                       config_path=FLAGS.config_path)
+
+
 
     logging.info("config info : %s" % config.config)
 

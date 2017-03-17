@@ -110,9 +110,11 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
 
 def select_one_class(frame_data, class_id):
     selected_ix = np.where(frame_data[nms_net.GT_LABELS] == class_id)[0]
-    frame_data[nms_net.GT_LABELS] = np.zeros(len(selected_ix)) # frame_data[nms_net.GT_LABELS][selected_ix]
+    frame_data[nms_net.GT_LABELS] = np.zeros(len(selected_ix))
     frame_data[nms_net.GT_COORDS] = frame_data[nms_net.GT_COORDS][selected_ix]
-    frame_data[nms_net.DT_SCORES] = softmax(frame_data[nms_net.DT_SCORES])[:, class_id]
+    frame_data[nms_net.DT_GT_IOU] = frame_data[nms_net.DT_GT_IOU][:, selected_ix]
+    frame_data[nms_net.DT_SCORES] = softmax(frame_data[nms_net.DT_SCORES])[:, class_id].reshape([-1, 1])
+    frame_data[nms_net.DT_FEATURES][0:21] = softmax(frame_data[nms_net.DT_FEATURES][0:21])
     return frame_data
 
 
@@ -163,18 +165,23 @@ def input_ops(n_classes,
     input_dict['dt_features'] = tf.placeholder(tf.float32,
                                  shape=[
                                      None,
-                                     n_dt_features])
+                                     n_dt_features],
+                                               name='dt_features')
 
     input_dict['dt_probs'] = tf.placeholder(tf.float32,
                                  shape=[
                                      None,
-                                     n_classes])
+                                     n_classes],
+                                            name='dt_probs')
 
-    input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4])
+    input_dict['gt_coords'] = tf.placeholder(tf.float32, shape=[None, 4],
+                                             name='gt_coords')
 
-    input_dict['gt_labels'] = tf.placeholder(tf.float32, shape=None)
+    input_dict['gt_labels'] = tf.placeholder(tf.float32, shape=None,
+                                             name='gt_labels')
 
-    input_dict['keep_prob'] = tf.placeholder(tf.float32)
+    input_dict['keep_prob'] = tf.placeholder(tf.float32,
+                                             name='keep_prob')
 
     return input_dict
 
@@ -207,6 +214,7 @@ def main(_):
     learning_rate = config.learning_rate
 
     class_of_interest = 'person'
+    class_ix = CLASSES.index(class_of_interest)
 
     config.save_results()
 
@@ -216,9 +224,10 @@ def main(_):
                                   n_bboxes=config.n_bboxes,
                                   use_short_features=config.use_reduced_fc_features,
                                   one_class=True,
-                                  class_id=CLASSES.index(class_of_interest))
+                                  class_id=class_ix)
 
     train_class_instances = 0
+
     for fid in frames_data_train.keys():
         train_class_instances += len(frames_data_train[fid]['gt_labels'])
     logging.info("number of gt objects of class %s in train : %d" % (class_of_interest, train_class_instances))
@@ -228,7 +237,7 @@ def main(_):
                                  n_bboxes=config.n_bboxes,
                                  use_short_features=config.use_reduced_fc_features,
                                  one_class=True,
-                                 class_id=CLASSES.index(class_of_interest))
+                                 class_id=class_ix)
     test_class_instances = 0
     for fid in frames_data_test.keys():
         test_class_instances += len(frames_data_test[fid]['gt_labels'])
@@ -242,12 +251,13 @@ def main(_):
 
     logging.info('building model graph..')
 
-    in_ops = input_ops(config.n_bboxes, N_CLASSES)
+    in_ops = input_ops(n_classes=N_CLASSES, n_dt_features=config.n_dt_features)
 
     nnms_model = nms_net.NMSNetwork(n_classes=N_CLASSES,
                                     input_ops=in_ops,
                                     loss_type='nms_loss',
                                     gt_match_iou_thr=0.5,
+                                    class_ix=class_ix,
                                     **config.nms_network_config)
 
     with tf.Session() as sess:
@@ -278,6 +288,8 @@ def main(_):
 
                 frame_data = frames_data_train[fid]
 
+                # import ipdb; ipdb.set_trace()
+
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
                              nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
@@ -299,41 +311,70 @@ def main(_):
 
                 step_id += 1
 
-            if step_id % config.eval_step == 0:
+            if epoch_id % 3 == 0:
 
-                logging.info('step : %d, time : %s' % (step_id, str(np.mean(step_times))))
+                logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
                 fid = shuffle_samples(n_frames_test)[0]
 
                 frame_data = frames_data_test[fid]
 
-                eval.print_debug_info(sess=sess,
-                                      nnms_model=nnms_model,
-                                      frame_data=frame_data,
-                                      outdir=config.log_dir,
-                                      fid=fid)
+                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                             nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+                             nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS]}
+
+                nms_loss, nms_labels, nms_prob, class_score, \
+                pair_features, iou_feature, object_context_features, det_labels, det_loss, loss_opt = sess.run([nnms_model.nms_loss,
+                                                                                       nnms_model.nms_labels,
+                                                                                       nnms_model.nms_prob,
+                                                                                       nnms_model.class_scores,
+                                                                                       nnms_model.pairwise_obj_features,
+                                                                                       nnms_model.iou_feature,
+                                                                                nnms_model.object_and_context_features,
+                                                                                            nnms_model.det_labels,
+                                                                                            nnms_model.det_loss_elementwise,
+                                                                                            nnms_model.loss],
+                                                                                      feed_dict=feed_dict)
+
+                from tools import nms
+
+                iou_feature = iou_feature.reshape([config.n_bboxes, config.n_bboxes])
+
+                is_suppressed_labels = nms.nms_all_classes(iou_feature, frame_data[nms_net.DT_SCORES], iou_thr=0.5)
+
+                # import ipdb; ipdb.set_trace()
+
+                # eval.print_debug_info(sess=sess,
+                #                       nnms_model=nnms_model,
+                #                       frame_data=frame_data,
+                #                       outdir=config.log_dir,
+                #                       fid=fid)
 
                 logging.info('evaluating on TRAIN..')
                 train_out_dir = os.path.join(config.log_dir, 'train')
                 train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
-                                            frames_data_train,
-                                            global_step=step_id,
-                                            n_eval_frames=config.n_eval_frames,
-                                            out_dir=train_out_dir,
-                                            full_eval=config.full_eval,
-                                            nms_thres=config.nms_thres)
+                                                                frames_data_train,
+                                                                global_step=step_id,
+                                                                n_eval_frames=config.n_eval_frames,
+                                                                out_dir=train_out_dir,
+                                                                full_eval=config.full_eval,
+                                                                nms_thres=config.nms_thres,
+                                                                one_class=True)
 
                 write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
                 test_map_knet, test_map_nms = eval.eval_model(sess, nnms_model,
-                                                               frames_data_test,
-                                                               global_step=step_id,
-                                                               n_eval_frames=config.n_eval_frames,
-                                                               out_dir=test_out_dir,
-                                                               full_eval=config.full_eval,
-                                                               nms_thres=config.nms_thres)
+                                                              frames_data_test,
+                                                              global_step=step_id,
+                                                              n_eval_frames=config.n_eval_frames,
+                                                              out_dir=test_out_dir,
+                                                              full_eval=config.full_eval,
+                                                              nms_thres=config.nms_thres,
+                                                              one_class=True)
 
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 

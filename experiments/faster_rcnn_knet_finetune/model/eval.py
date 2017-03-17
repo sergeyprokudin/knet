@@ -15,7 +15,7 @@ def softmax(logits):
 
 def eval_model(sess, nnms_model, frames_data,
                global_step, out_dir, full_eval=False,
-               nms_thres=0.5, n_eval_frames=100):
+               nms_thres=0.5, n_eval_frames=100, one_class=False):
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -54,14 +54,29 @@ def eval_model(sess, nnms_model, frames_data,
                      nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}
 
-        dt_scores = frame_data[nms_net.DT_SCORES]
-        inference_orig = softmax(dt_scores)
+        if one_class:
+            # expecting probability for class being already softmaxed
+            inference_orig = frame_data[nms_net.DT_SCORES]
+        else:
+            inference_orig = softmax(frame_data[nms_net.DT_SCORES])
+
         eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
+
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, dt_dt_iou, loss = sess.run(
-            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
+        inference_new, dt_dt_iou, loss, labels_tf, obj_context_features, pair_features = sess.run(
+            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
+             nnms_model.labels, nnms_model.object_and_context_features,  nnms_model.pairwise_obj_features],
+            feed_dict=feed_dict)
+
+        labels_eval = metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_new)
+
+        # if loss > 0.1:
+        #     import ipdb; ipdb.set_trace()
 
         losses.append(loss)
 
@@ -139,6 +154,7 @@ def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
 
     feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                  nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                 nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
                  nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                  nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                  nnms_model.keep_prob: 1.0}
