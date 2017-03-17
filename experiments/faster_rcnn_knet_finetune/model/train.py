@@ -213,7 +213,8 @@ def main(_):
 
     learning_rate = config.learning_rate
 
-    class_of_interest = 'person'
+    class_of_interest = config.config['class_of_interest']
+
     class_ix = CLASSES.index(class_of_interest)
 
     config.save_results()

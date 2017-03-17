@@ -6,6 +6,7 @@ data_provider:
     shuffle_train_test: False
     n_features : 121
     n_bboxes: 20
+    class_of_interest: pottedplant
 nms_network:
     architecture:
         use_object_features: True
