@@ -17,7 +17,7 @@ nms_network:
         fc_pre_layer_size: 256
         fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
-        n_kernels: 256
+        n_kernels: 128
         n_kernel_iterations: 1
         reuse_kernels: False
         fc_apres_layer_size: 512
@@ -28,7 +28,7 @@ nms_network:
         pos_weight: 1.0
         n_neg_samples: 10
         use_hinge_loss: False
-        learning_rate: 0.00001
+        learning_rate: 0.0001
         keep_prob: 1.0
         n_epochs: 20
     evaluation:

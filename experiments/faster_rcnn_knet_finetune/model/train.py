@@ -369,7 +369,7 @@ def main(_):
                                                                 out_dir=train_out_dir,
                                                                 full_eval=config.full_eval,
                                                                 nms_thres=config.nms_thres,
-                                                                one_class=True)
+                                                                one_class=is_one_class)
 
                 write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
@@ -382,7 +382,7 @@ def main(_):
                                                               out_dir=test_out_dir,
                                                               full_eval=config.full_eval,
                                                               nms_thres=config.nms_thres,
-                                                              one_class=True)
+                                                              one_class=is_one_class)
 
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 
