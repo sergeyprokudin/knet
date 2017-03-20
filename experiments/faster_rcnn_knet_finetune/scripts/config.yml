@@ -32,7 +32,7 @@ nms_network:
         keep_prob: 1.0
         n_epochs: 50
     evaluation:
-        eval_step: 3
+        eval_step: 1
         full_eval: True
         n_eval_frames: 1000
         nms_thres: 0.5
