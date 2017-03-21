@@ -234,8 +234,6 @@ def main(_):
                                   one_class=is_one_class,
                                   class_id=class_ix)
 
-    import ipdb; ipdb.set_trace()
-
     train_class_instances = 0
     for fid in frames_data_train.keys():
         train_class_instances += len(frames_data_train[fid]['gt_labels'])

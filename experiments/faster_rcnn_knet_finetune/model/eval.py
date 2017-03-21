@@ -47,19 +47,19 @@ def eval_model(sess, nnms_model, frames_data,
 
         frame_data = frames_data[fid]
 
-        gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
-
-        feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                     nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                     nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
-                     nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                     nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-                     nnms_model.keep_prob: 1.0}
-
-        inference_new, dt_dt_iou, loss, labels_tf = sess.run(
-            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
-             nnms_model.labels],
-            feed_dict=feed_dict)
+        # gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
+        #
+        # feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+        #              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+        #              nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+        #              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+        #              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+        #              nnms_model.keep_prob: 1.0}
+        #
+        # inference_new, dt_dt_iou, loss, labels_tf = sess.run(
+        #     [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
+        #      nnms_model.labels],
+        #     feed_dict=feed_dict)
 
         if one_class:
             # expecting probability for class being already softmaxed
@@ -71,7 +71,7 @@ def eval_model(sess, nnms_model, frames_data,
 
         eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
         eval_data[fid]['inference_orig'] = inference_orig
-        eval_data[fid]['inference_new'] = inference_new
+        eval_data[fid]['inference_new'] = inference_orig
 
         # labels_eval = metrics.match_dt_gt_all_classes(
         #         frame_data[nms_net.DT_GT_IOU],
