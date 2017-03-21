@@ -63,7 +63,7 @@ def eval_model(sess, nnms_model, frames_data,
 
         if one_class:
             # expecting probability for class being already softmaxed
-            inference_orig = frame_data[nms_net.DT_SCORES]
+            inference_orig = frame_data[nms_net.DT_FEATURES][0:21]
         else:
             inference_orig = softmax(frame_data[nms_net.DT_SCORES])
 
