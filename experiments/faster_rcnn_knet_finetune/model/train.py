@@ -113,8 +113,9 @@ def select_one_class(frame_data, class_id):
     frame_data[nms_net.GT_LABELS] = np.zeros(len(selected_ix))
     frame_data[nms_net.GT_COORDS] = frame_data[nms_net.GT_COORDS][selected_ix]
     frame_data[nms_net.DT_GT_IOU] = frame_data[nms_net.DT_GT_IOU][:, selected_ix]
-    frame_data[nms_net.DT_SCORES] = softmax(frame_data[nms_net.DT_SCORES])[:, class_id].reshape([-1, 1])
-    frame_data[nms_net.DT_FEATURES][0:21] = softmax(frame_data[nms_net.DT_FEATURES][0:21])
+    frame_data[nms_net.DT_SCORES_ORIGINAL] = softmax(frame_data[nms_net.DT_SCORES])
+    frame_data[nms_net.DT_SCORES] = frame_data[nms_net.DT_SCORES_ORIGINAL][:, class_id].reshape([-1, 1])
+    frame_data[nms_net.DT_FEATURES][:, 0:21] = frame_data[nms_net.DT_SCORES_ORIGINAL]
     return frame_data
 
 
