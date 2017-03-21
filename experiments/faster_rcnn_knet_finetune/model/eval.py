@@ -15,7 +15,7 @@ def softmax(logits):
 
 def eval_model(sess, nnms_model, frames_data,
                global_step, out_dir, full_eval=False,
-               nms_thres=0.5, n_eval_frames=100, one_class=False):
+               nms_thres=0.5, n_eval_frames=100, one_class=False, class_ix=None):
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -54,21 +54,21 @@ def eval_model(sess, nnms_model, frames_data,
                      nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}
 
+        inference_new, dt_dt_iou, loss, labels_tf, obj_context_features, pair_features = sess.run(
+            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
+             nnms_model.labels, nnms_model.object_and_context_features,  nnms_model.pairwise_obj_features],
+            feed_dict=feed_dict)
+
         if one_class:
             # expecting probability for class being already softmaxed
             inference_orig = frame_data[nms_net.DT_SCORES]
         else:
             inference_orig = softmax(frame_data[nms_net.DT_SCORES])
 
-        eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
-
         inference_orig_all.append(inference_orig)
-        eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, dt_dt_iou, loss, labels_tf, obj_context_features, pair_features = sess.run(
-            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
-             nnms_model.labels, nnms_model.object_and_context_features,  nnms_model.pairwise_obj_features],
-            feed_dict=feed_dict)
+        eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
+        eval_data[fid]['inference_orig'] = inference_orig
 
         labels_eval = metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
@@ -121,6 +121,8 @@ def eval_model(sess, nnms_model, frames_data,
     dt_gt_match_new = np.vstack(dt_gt_match_new)
     dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
     dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
+
+    import ipdb; ipdb.set_trace()
 
     if full_eval:
         eval_data_file = os.path.join(

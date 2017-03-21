@@ -7,6 +7,7 @@
       <module fileurl="file://$USER_HOME$/YOLO_tensorflow/.idea/YOLO_tensorflow.iml" filepath="$USER_HOME$/YOLO_tensorflow/.idea/YOLO_tensorflow.iml" />
       <module fileurl="file://$USER_HOME$/darknet/.idea/darknet.iml" filepath="$USER_HOME$/darknet/.idea/darknet.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/knet.iml" filepath="$PROJECT_DIR$/.idea/knet.iml" />
+      <module fileurl="file://$USER_HOME$/mscnn/.idea/mscnn.iml" filepath="$USER_HOME$/mscnn/.idea/mscnn.iml" />
       <module fileurl="file://$USER_HOME$/neural_nms/.idea/neural_nms.iml" filepath="$USER_HOME$/neural_nms/.idea/neural_nms.iml" />
       <module fileurl="file://$USER_HOME$/tensorflow-yolo/.idea/tensorflow-yolo.iml" filepath="$USER_HOME$/tensorflow-yolo/.idea/tensorflow-yolo.iml" />
       <module fileurl="file://$USER_HOME$/tf-faster-rcnn/.idea/tf-faster-rcnn.iml" filepath="$USER_HOME$/tf-faster-rcnn/.idea/tf-faster-rcnn.iml" />

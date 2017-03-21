@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="tensorflow-yolo" />
     <orderEntry type="module" module-name="darknet" />
     <orderEntry type="module" module-name="YOLO_tensorflow" />
+    <orderEntry type="module" module-name="mscnn" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="myDocStringFormat" value="NumPy" />

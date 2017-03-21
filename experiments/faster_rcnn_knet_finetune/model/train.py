@@ -234,8 +234,9 @@ def main(_):
                                   one_class=is_one_class,
                                   class_id=class_ix)
 
-    train_class_instances = 0
+    import ipdb; ipdb.set_trace()
 
+    train_class_instances = 0
     for fid in frames_data_train.keys():
         train_class_instances += len(frames_data_train[fid]['gt_labels'])
     logging.info("number of gt objects of class %s in train : %d" % (class_of_interest, train_class_instances))
@@ -256,6 +257,8 @@ def main(_):
 
     n_frames_train = len(frames_data_train.keys())
     n_frames_test = len(frames_data_test.keys())
+
+    logging.info("number of bboxes per image : %d" % config.n_bboxes)
 
     logging.info('building model graph..')
 
@@ -292,32 +295,32 @@ def main(_):
 
             step_times = []
 
-            for fid in shuffle_samples(n_frames_train):
-
-                frame_data = frames_data_train[fid]
-
-                # import ipdb; ipdb.set_trace()
-
-                feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-                             nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
-                             nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-                             nnms_model.keep_prob: config.keep_prob_train,
-                             nnms_model.learning_rate: learning_rate}
-
-                start_step = timer()
-
-                summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
-                                      feed_dict=feed_dict)
-                end_step = timer()
-
-                step_times.append(end_step-start_step)
-
-                summary_writer.add_summary(summary, global_step=step_id)
-                summary_writer.flush()
-
-                step_id += 1
+            # for fid in shuffle_samples(n_frames_train):
+            #
+            #     frame_data = frames_data_train[fid]
+            #
+            #     # import ipdb; ipdb.set_trace()
+            #
+            #     feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+            #                  nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+            #                  nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+            #                  nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+            #                  nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+            #                  nnms_model.keep_prob: config.keep_prob_train,
+            #                  nnms_model.learning_rate: learning_rate}
+            #
+            #     start_step = timer()
+            #
+            #     summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
+            #                           feed_dict=feed_dict)
+            #     end_step = timer()
+            #
+            #     step_times.append(end_step-start_step)
+            #
+            #     summary_writer.add_summary(summary, global_step=step_id)
+            #     summary_writer.flush()
+            #
+            #     step_id += 1
 
             if epoch_id % config.eval_step == 0:
 
@@ -360,18 +363,18 @@ def main(_):
                 #                       outdir=config.log_dir,
                 #                       fid=fid)
 
-                logging.info('evaluating on TRAIN..')
-                train_out_dir = os.path.join(config.log_dir, 'train')
-                train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
-                                                                frames_data_train,
-                                                                global_step=step_id,
-                                                                n_eval_frames=config.n_eval_frames,
-                                                                out_dir=train_out_dir,
-                                                                full_eval=config.full_eval,
-                                                                nms_thres=config.nms_thres,
-                                                                one_class=is_one_class)
-
-                write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
+                # logging.info('evaluating on TRAIN..')
+                # train_out_dir = os.path.join(config.log_dir, 'train')
+                # train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
+                #                                                 frames_data_train,
+                #                                                 global_step=step_id,
+                #                                                 n_eval_frames=config.n_eval_frames,
+                #                                                 out_dir=train_out_dir,
+                #                                                 full_eval=config.full_eval,
+                #                                                 nms_thres=config.nms_thres,
+                #                                                 one_class=is_one_class)
+                #
+                # write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
@@ -386,14 +389,14 @@ def main(_):
 
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 
-                config.update_results(step_id,
-                                      train_map_knet,
-                                      train_map_nms,
-                                      test_map_knet,
-                                      test_map_nms,
-                                      np.mean(step_times))
+                # config.update_results(step_id,
+                #                       train_map_knet,
+                #                       train_map_nms,
+                #                       test_map_knet,
+                #                       test_map_nms,
+                #                       np.mean(step_times))
 
-                config.save_results()
+                # config.save_results()
 
                 if test_map_knet > test_map_nms:
                     learning_rate *= 0.1
