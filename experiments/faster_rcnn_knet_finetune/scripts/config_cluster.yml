@@ -6,7 +6,7 @@ data_provider:
     use_reduced_fc_features: True
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 20
+    n_bboxes: 300
 nms_network:
     architecture:
         use_object_features: True
