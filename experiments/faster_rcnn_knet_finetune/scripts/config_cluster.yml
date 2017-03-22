@@ -3,36 +3,21 @@ general:
     logging_to_stdout: False
     class_of_interest: person
 data_provider:
-    use_reduced_fc_features: True
     shuffle_train_test: False
     n_features : 121
     n_bboxes: 300
 nms_network:
     architecture:
-        use_object_features: True
-        use_coords_features: True
-        use_iou_features: True
-        fc_ini_layer_size: 256
-        fc_ini_layers_cnt: 2
-        fc_pre_layer_size: 256
-        fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
         n_kernels: 128
         n_kernel_iterations: 1
-        reuse_kernels: False
         fc_apres_layer_size: 512
         fc_apres_layers_cnt: 2
-        reuse_apres_fc_layers: False
-        softmax_kernel: True
     training:
-        pos_weight: 1.0
-        n_neg_samples: 10
-        use_hinge_loss: False
         learning_rate: 0.0001
-        keep_prob: 1.0
-        n_epochs: 20
+        n_epochs: 50
     evaluation:
         eval_step: 1
-        full_eval: True
-        n_eval_frames: 1000
+        full_eval: False
+        n_eval_frames: 100
         nms_thres: 0.5

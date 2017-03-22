@@ -249,7 +249,7 @@ class NMSNetwork:
                                                                       iou_threshold=self.gt_match_iou_thr)
 
             class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_scores,
-                                                                        gt_per_label,
+                                                                         gt_per_label,
                                                                          class_id))
 
         labels = tf.pack(class_labels, axis=1)
