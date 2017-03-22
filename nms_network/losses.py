@@ -71,8 +71,7 @@ def binarize(tensor, condition):
         tf.zeros_like(tensor))
 
 
-def compute_match_gt_perfect_per_label_tf(labels,
-                                          labels_gt=None,
+def compute_match_gt_perfect_per_label_tf(labels, matching_gt_mask,
                                           name_or_scope=None):
     """Return 1.0 for the best hypothesis and ground truth match, else 0.0.
     """
@@ -82,17 +81,11 @@ def compute_match_gt_perfect_per_label_tf(labels,
 
         n_gt_hypotheses = tf.shape(labels)[1]
         n_hypotheses = tf.shape(labels)[0]
-        if labels_gt is None:
-            labels_gt = labels
 
         def _not_empty():
-            labels_argmax = tf.argmax(labels, axis=0)
+            labels_argmax = tf.argmax(labels, dimension=0)
             labels_gt_matrix = tf.one_hot(labels_argmax, depth=n_hypotheses)
-            labels_t = tf.transpose(labels_gt)
-            labels_bin = binarize(labels_t,
-                                  tf.greater(labels_t, 0))
-            labels_gt_matrix = tf.multiply(labels_bin, labels_gt_matrix)
-
+            labels_gt_matrix = tf.multiply(labels_gt_matrix, tf.expand_dims(matching_gt_mask,  axis=1))
             # This is a vector of the length of the hypotheses.
             return tf.reduce_sum(labels_gt_matrix, [0])
 
@@ -130,40 +123,6 @@ def compute_match_gt_net_per_label_tf(predictions,
                 tf.mul(tf.transpose(labels_masked_bin),
                        predictions[:, label]))
             return compute_match_gt_perfect_per_label_tf(labels_masked_ordered, matching_gt_mask)
-
-        def _empty():
-            return tf.zeros((n_hypotheses,), dtype=tf.float32)
-
-        return tf.cond(tf.equal(n_gt_hypotheses, 0), _empty, _not_empty)
-
-
-def compute_match_gt_net_per_label_tf_v1(predictions,
-                                      labels,
-                                      name_or_scope=None):
-    """Return 1.0, best predicted hypothesis and ground truth match, else 0.0.
-    If the network is already predicting something useful for a
-    potential ground truth hypothesis we encourage to perform better for
-    this hypothesis. If there is no positive prediction covering a
-    ground truth hypothesis we encourage the best possible match under
-    intersection over union.
-    """
-    with tf.variable_scope(name_or_scope,
-                           default_name='compute_match_gt_net_per_label',
-                           values=[predictions,
-                                   labels]):
-
-        n_gt_hypotheses = tf.shape(labels)[1]
-        n_hypotheses = tf.shape(labels)[0]
-
-        def _not_empty():
-            labels_masked_bin = tf.to_float(tf.greater(labels, 0.0))
-            # We have to substract the min since we search for the max value
-            # and multiply with that value and then threshold.
-            labels_masked_ordered = tf.transpose(
-                tf.multiply(tf.transpose(labels_masked_bin),
-                            predictions - tf.reduce_min(predictions)))
-            return compute_match_gt_perfect_per_label_tf(
-                labels_masked_ordered, labels_masked_bin)
 
         def _empty():
             return tf.zeros((n_hypotheses,), dtype=tf.float32)
