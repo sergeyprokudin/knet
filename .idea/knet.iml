@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="darknet" />
     <orderEntry type="module" module-name="YOLO_tensorflow" />
     <orderEntry type="module" module-name="mscnn" />
+    <orderEntry type="module" module-name="py-faster-rcnn" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="myDocStringFormat" value="NumPy" />

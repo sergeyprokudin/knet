@@ -7,6 +7,7 @@
     <mapping directory="$USER_HOME$/YOLO_tensorflow" vcs="Git" />
     <mapping directory="$USER_HOME$/darknet" vcs="Git" />
     <mapping directory="$USER_HOME$/mscnn" vcs="Git" />
+    <mapping directory="$USER_HOME$/py-faster-rcnn" vcs="Git" />
     <mapping directory="$USER_HOME$/tensorflow-yolo" vcs="Git" />
     <mapping directory="$USER_HOME$/tf-faster-rcnn" vcs="Git" />
   </component>

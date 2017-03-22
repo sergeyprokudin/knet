@@ -248,9 +248,9 @@ class NMSNetwork:
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id,
                                                                       iou_threshold=self.gt_match_iou_thr)
             # self.gt_per_labels.append(gt_per_label)
-            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_scores,
-                                                                         gt_per_label,
-                                                                         class_id))
+            import ipdb; ipdb.set_trace()
+            class_labels.append(losses.compute_match_gt_net_per_label_tf_v1(self.class_scores,
+                                                                            gt_per_label))
 
         labels = tf.pack(class_labels, axis=1)
 

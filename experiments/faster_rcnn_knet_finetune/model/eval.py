@@ -41,113 +41,113 @@ def eval_model(sess, nnms_model, frames_data,
     # for fid in shuffle_samples(n_total_frames)[0:n_eval_frames]:
     for fid in range(0, n_eval_frames):
 
-        logging.info(fid)
-
         eval_data[fid] = {}
 
         frame_data = frames_data[fid]
 
-        # gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
-        #
-        # feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
-        #              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-        #              nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
-        #              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-        #              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-        #              nnms_model.keep_prob: 1.0}
-        #
-        # inference_new, dt_dt_iou, loss, labels_tf = sess.run(
-        #     [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
-        #      nnms_model.labels],
-        #     feed_dict=feed_dict)
+        gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
+
+        feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
+                     nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
+                     nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+                     nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
+                     nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
+                     nnms_model.keep_prob: 1.0}
+
+        inference_new, dt_dt_iou, loss, labels_tf = sess.run(
+            [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
+             nnms_model.labels],
+            feed_dict=feed_dict)
 
         if one_class:
             # expecting probability for class being already softmaxed
-            inference_orig = frame_data[nms_net.DT_SCORES_ORIGINAL]
+            inference_orig_all_classes = frame_data[nms_net.DT_SCORES_ORIGINAL]
+            inference_original = inference_orig_all_classes[:, class_ix].reshape(-1, 1)
+            inference_new_all_classes = np.copy(inference_orig_all_classes)
+            inference_new_all_classes[:, class_ix] = np.squeeze(inference_new, axis=1)
         else:
-            inference_orig = softmax(frame_data[nms_net.DT_SCORES])
-
-        inference_orig_all.append(inference_orig)
+            inference_new_all_classes = inference_new
+            inference_orig_all_classes = softmax(frame_data[nms_net.DT_SCORES])
+            inference_original = inference_orig_all_classes
 
         eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
-        eval_data[fid]['inference_orig'] = inference_orig
-        eval_data[fid]['inference_new'] = inference_orig
+        eval_data[fid]['inference_orig'] = inference_orig_all_classes
+        eval_data[fid]['inference_new'] = inference_new_all_classes
 
-        # labels_eval = metrics.match_dt_gt_all_classes(
-        #         frame_data[nms_net.DT_GT_IOU],
-        #         frame_data[nms_net.GT_LABELS],
-        #         inference_new)
+        labels_eval = metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_original)
 
-        # if loss > 0.1:
-        #     import ipdb; ipdb.set_trace()
+        losses.append(loss)
+        inference_orig_all.append(inference_original)
+        inference_new_all.append(inference_new)
 
-    #     losses.append(loss)
-    #
-    #     inference_new_all.append(inference_new)
-    #
-    #     dt_gt_match_orig.append(
-    #         metrics.match_dt_gt_all_classes(
-    #             frame_data[nms_net.DT_GT_IOU],
-    #             frame_data[nms_net.GT_LABELS],
-    #             inference_orig))
-    #
-    #     dt_gt_match_new.append(
-    #         metrics.match_dt_gt_all_classes(
-    #             frame_data[nms_net.DT_GT_IOU],
-    #             frame_data[nms_net.GT_LABELS],
-    #             inference_new))
-    #
-    #     is_suppressed_orig = nms.nms_all_classes(
-    #         dt_dt_iou, inference_orig, iou_thr=nms_thres)
-    #     is_suppressed_new = nms.nms_all_classes(
-    #         dt_dt_iou, inference_new, iou_thr=nms_thres)
-    #
-    #     dt_gt_match_orig_nms.append(
-    #         metrics.match_dt_gt_all_classes(
-    #             frame_data[nms_net.DT_GT_IOU],
-    #             frame_data[nms_net.GT_LABELS],
-    #             inference_orig,
-    #             dt_is_suppressed_info=is_suppressed_orig))
-    #     dt_gt_match_new_nms.append(
-    #         metrics.match_dt_gt_all_classes(
-    #             frame_data[nms_net.DT_GT_IOU],
-    #             frame_data[nms_net.GT_LABELS],
-    #             inference_new,
-    #             dt_is_suppressed_info=is_suppressed_new))
-    #
-    # gt_labels = np.vstack(gt_labels_all)
-    # inference_orig = np.vstack(inference_orig_all)
-    # inference_new = np.vstack(inference_new_all)
-    #
-    # dt_gt_match_orig = np.vstack(dt_gt_match_orig)
-    # dt_gt_match_new = np.vstack(dt_gt_match_new)
-    # dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
-    # dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
+        dt_gt_match_orig.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_original))
+
+        dt_gt_match_new.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_new))
+
+        is_suppressed_orig = nms.nms_all_classes(
+            dt_dt_iou, inference_original, iou_thr=nms_thres)
+
+        is_suppressed_new = nms.nms_all_classes(
+            dt_dt_iou, inference_new, iou_thr=nms_thres)
+
+        dt_gt_match_orig_nms.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_original,
+                dt_is_suppressed_info=is_suppressed_orig))
+
+        dt_gt_match_new_nms.append(
+            metrics.match_dt_gt_all_classes(
+                frame_data[nms_net.DT_GT_IOU],
+                frame_data[nms_net.GT_LABELS],
+                inference_new,
+                dt_is_suppressed_info=is_suppressed_new))
+
+    gt_labels = np.vstack(gt_labels_all)
+    inference_orig_all = np.vstack(inference_orig_all)
+    inference_new_all = np.vstack(inference_new_all)
+
+    dt_gt_match_orig = np.vstack(dt_gt_match_orig)
+    dt_gt_match_new = np.vstack(dt_gt_match_new)
+    dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
+    dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
     if full_eval:
         eval_data_file = os.path.join(
             out_dir, 'eval_data_step' + str(global_step) + '.pkl')
         joblib.dump(eval_data, eval_data_file)
 
-    # ap_orig, _ = metrics.average_precision_all_classes(
-    #     dt_gt_match_orig, inference_orig, gt_labels)
-    # ap_orig_nms, _ = metrics.average_precision_all_classes(
-    #     dt_gt_match_orig_nms, inference_orig, gt_labels)
-    # ap_new, _ = metrics.average_precision_all_classes(
-    #     dt_gt_match_new, inference_new, gt_labels)
-    # ap_new_nms, _ = metrics.average_precision_all_classes(
-    #     dt_gt_match_new_nms, inference_new, gt_labels)
-    #
-    # map_orig = np.nanmean(ap_orig)
-    # map_orig_nms = np.nanmean(ap_orig_nms)
-    # map_knet = np.nanmean(ap_new)
-    # map_knet_nms = np.nanmean(ap_new_nms)
-    #
-    # logging.info('model loss : %f' % np.mean(losses))
-    # logging.info('mAP original inference : %f' % map_orig)
-    # logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
-    # logging.info('mAP knet inference : %f' % map_knet)
-    # logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
+    ap_orig, _ = metrics.average_precision_all_classes(
+        dt_gt_match_orig, inference_orig_all, gt_labels)
+    ap_orig_nms, _ = metrics.average_precision_all_classes(
+        dt_gt_match_orig_nms, inference_orig_all, gt_labels)
+    ap_new, _ = metrics.average_precision_all_classes(
+        dt_gt_match_new, inference_new_all, gt_labels)
+    ap_new_nms, _ = metrics.average_precision_all_classes(
+        dt_gt_match_new_nms, inference_new_all, gt_labels)
+
+    map_orig = np.nanmean(ap_orig)
+    map_orig_nms = np.nanmean(ap_orig_nms)
+    map_knet = np.nanmean(ap_new)
+    map_knet_nms = np.nanmean(ap_new_nms)
+
+    logging.info('model loss : %f' % np.mean(losses))
+    logging.info('mAP original inference : %f' % map_orig)
+    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    logging.info('mAP knet inference : %f' % map_knet)
+    logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
 
     map_knet = 0
     map_orig_nms = 0
