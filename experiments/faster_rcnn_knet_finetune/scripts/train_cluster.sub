@@ -4,7 +4,7 @@ error = train.job.err
 output = train.job.out
 log = train.job.log
 request_memory = 10000
-#request_gpus = 1
+request_gpus = 1
 request_cpus = 1
 MaxTime = 648000
 periodic_hold = (CurrentTime - JobCurrentStartDate) >= $(MaxTime)
