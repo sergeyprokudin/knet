@@ -98,13 +98,13 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
         dt_features_path = os.path.join(data_dir, 'dt_features_full.pkl')
 
     data = {}
-
     data[nms_net.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
     data[nms_net.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
     data[nms_net.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
     data[nms_net.GT_COORDS] = joblib.load(os.path.join(data_dir, 'gt_coords.pkl'))
     logging.info('finished loading data')
     frames_data_train = split_by_frames(data, n_bboxes)
+
     return frames_data_train
 
 
@@ -271,6 +271,7 @@ def main(_):
                                     gt_match_iou_thr=0.5,
                                     class_ix=class_ix,
                                     **config.nms_network_config)
+    is_lr_decreased = False
 
     with tf.Session() as sess:
         step_id = 0
@@ -373,8 +374,10 @@ def main(_):
 
                 config.save_results()
 
-                if test_map_knet > test_map_nms:
-                    learning_rate *= 0.1
+                if not is_lr_decreased:
+                    if test_map_knet + 0.02 > test_map_nms:
+                        learning_rate = 0.00001
+                        logging.info("learning rate decreased to %d" % learning_rate)
 
                 saver.save(sess, config.model_file, global_step=step_id)
     return
