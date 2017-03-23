@@ -12,12 +12,11 @@ nms_network:
         n_kernels: 128
         n_kernel_iterations: 1
         fc_apres_layer_size: 512
-        fc_apres_layers_cnt: 2
     training:
         learning_rate: 0.0001
-        n_epochs: 50
+        n_epochs: 20
     evaluation:
         eval_step: 1
         full_eval: False
-        n_eval_frames: 500
+        n_eval_frames: 300
         nms_thres: 0.5
