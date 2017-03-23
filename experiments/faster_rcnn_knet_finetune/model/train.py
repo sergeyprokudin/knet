@@ -328,6 +328,7 @@ def main(_):
 
                 if epoch_id % 10 == 0:
                     full_eval = True
+                    learning_rate = 0.00001
                 else:
                     full_eval = config.full_eval
 
@@ -339,18 +340,18 @@ def main(_):
                 #                       outdir=config.log_dir,
                 #                       fid=fid)
 
-                logging.info('evaluating on TRAIN..')
-                train_out_dir = os.path.join(config.log_dir, 'train')
-                train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
-                                                                frames_data_train,
-                                                                global_step=step_id,
-                                                                n_eval_frames=config.n_eval_frames,
-                                                                out_dir=train_out_dir,
-                                                                full_eval=full_eval,
-                                                                nms_thres=config.nms_thres,
-                                                                one_class=is_one_class,
-                                                                class_ix=class_ix)
-                write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
+                # logging.info('evaluating on TRAIN..')
+                # train_out_dir = os.path.join(config.log_dir, 'train')
+                # train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
+                #                                                 frames_data_train,
+                #                                                 global_step=step_id,
+                #                                                 n_eval_frames=config.n_eval_frames,
+                #                                                 out_dir=train_out_dir,
+                #                                                 full_eval=full_eval,
+                #                                                 nms_thres=config.nms_thres,
+                #                                                 one_class=is_one_class,
+                #                                                 class_ix=class_ix)
+                # write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
@@ -366,18 +367,13 @@ def main(_):
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 
                 config.update_results(step_id,
-                                      train_map_knet,
-                                      train_map_nms,
+                                      0.0,
+                                      0.0,
                                       test_map_knet,
                                       test_map_nms,
                                       np.mean(step_times))
 
                 config.save_results()
-
-                if not is_lr_decreased:
-                    if test_map_knet + 0.02 > test_map_nms:
-                        learning_rate = 0.00001
-                        logging.info("learning rate decreased to %d" % learning_rate)
 
                 saver.save(sess, config.model_file, global_step=step_id)
     return
