@@ -322,11 +322,11 @@ def main(_):
 
                 step_id += 1
 
-            if epoch_id+1 % config.eval_step == 0:
+            if epoch_id % config.eval_step == 0:
 
                 logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
-                if epoch_id % 10 == 0:
+                if epoch_id+1 % 10 == 0:
                     full_eval = True
                     learning_rate = 0.00001
                 else:
