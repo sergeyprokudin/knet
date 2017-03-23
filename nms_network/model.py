@@ -195,7 +195,9 @@ class NMSNetwork:
                                           self.fc_apres_layer_size,
                                           activation_fn=tf.nn.relu)
 
-        logits = slim.fully_connected(fc2, self.n_classes, activation_fn=None)
+        fc2_drop = tf.nn.dropout(fc2, self.keep_prob)
+
+        logits = slim.fully_connected(fc2_drop, self.n_classes, activation_fn=None)
 
         class_scores = tf.nn.sigmoid(logits)
 

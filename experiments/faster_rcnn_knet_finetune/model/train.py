@@ -293,7 +293,7 @@ def main(_):
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
         logging.info('training started..')
-        for epoch_id in range(1, config.n_epochs+1):
+        for epoch_id in range(0, config.n_epochs):
 
             step_times = []
 
@@ -322,7 +322,7 @@ def main(_):
 
                 step_id += 1
 
-            if epoch_id % config.eval_step == 0:
+            if epoch_id+1 % config.eval_step == 0:
 
                 logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
