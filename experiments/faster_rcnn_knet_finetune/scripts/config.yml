@@ -1,7 +1,7 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: person
+    class_of_interest: all
 data_provider:
     shuffle_train_test: False
     n_features : 121
