@@ -43,19 +43,18 @@ class ExperimentConfig:
         self.nms_network_config = self.config.get('nms_network', {})
         self.model_file = os.path.join(self.log_dir, 'model')
 
-        train_config = self.nms_network_config.get('training', {})
-
-        self.n_epochs = train_config.get('n_epochs', 10)
-
         self.eval_config = self.nms_network_config.get('evaluation', {})
-        self.eval_step = self.eval_config.get('eval_step', 1000)
-        self.full_eval = self.eval_config.get('full_eval', False)
+        self.eval_step = self.eval_config.get('eval_step', 1)
+        self.full_eval_step = self.eval_config.get('full_eval_step', 5)
         self.n_eval_frames = self.eval_config.get('n_eval_frames', 1000)
         self.nms_thres = self.eval_config.get('nms_thres', 0.5)
-        self.train_config = self.nms_network_config.get('training', {})
-        self.keep_prob_train = self.train_config.get('keep_prob')
 
+        self.train_config = self.nms_network_config.get('training', {})
         self.learning_rate = self.train_config.get('learning_rate', 0.001)
+        self.lr_decay_step = self.train_config.get('lr_decay_step', 5)
+        self.keep_prob_train = self.train_config.get('keep_prob')
+        self.n_epochs = self.train_config.get('n_epochs', 10)
+
         # results details
         self.mean_train_step_time = 0.0
 

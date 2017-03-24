@@ -98,6 +98,7 @@ def preprocess_data(data_dir, n_bboxes, use_short_features=False):
         dt_features_path = os.path.join(data_dir, 'dt_features_full.pkl')
 
     data = {}
+
     data[nms_net.DT_COORDS] = joblib.load(os.path.join(data_dir, 'dt_coords.pkl'))
     data[nms_net.DT_SCORES] = joblib.load(os.path.join(data_dir, 'dt_scores.pkl'))
     data[nms_net.DT_FEATURES] = joblib.load(os.path.join(data_dir, dt_features_path))
@@ -271,7 +272,7 @@ def main(_):
                                     gt_match_iou_thr=0.5,
                                     class_ix=class_ix,
                                     **config.nms_network_config)
-    is_lr_decreased = False
+    lr_decay_applied = False
 
     with tf.Session() as sess:
         step_id = 0
@@ -322,15 +323,20 @@ def main(_):
 
                 step_id += 1
 
+            if (epoch_id+1 % config.lr_decay_step == 0) and (not lr_decay_applied):
+                learning_rate *= 0.1
+                lr_decay_applied = True
+                logging.info('decreasing learning rate to %d' % learning_rate)
+
             if epoch_id % config.eval_step == 0:
 
                 logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
-                if epoch_id+1 % 10 == 0:
+                if epoch_id+1 % config.full_eval_step == 0:
                     full_eval = True
-                    learning_rate = 0.00001
+                    logging.info('running full evaluation : %d' % full_eval)
                 else:
-                    full_eval = config.full_eval
+                    full_eval = False
 
                 # import ipdb; ipdb.set_trace()
 

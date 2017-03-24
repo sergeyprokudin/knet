@@ -36,6 +36,7 @@ class NMSNetwork:
         # model main parameters
         self.n_dt_coords = 4
         self.n_classes = n_classes
+        self.k_top_hyp = 5
         self.gt_match_iou_thr = gt_match_iou_thr
         self.class_ix = class_ix
         #self.n_bboxes = n_bboxes
@@ -134,31 +135,68 @@ class NMSNetwork:
 
     def _inference_ops(self):
 
+        if self.n_classes == 1:
+            highest_prob = tf.reduce_max(self.dt_probs, axis=1)
+        else:
+            # we are considering all classes, skip the backgorund class
+            highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
+
+        _, top_ix = tf.nn.top_k(highest_prob,  k=self.k_top_hyp)
+
         pairwise_coords_features = spatial.construct_pairwise_features_tf(
-            self.dt_coords)
+            self.dt_coords, self.dt_coords)
+
+        pairwise_coords_features_top_k = spatial.construct_pairwise_features_tf(
+            self.dt_coords, tf.gather(self.dt_coords, top_ix))
 
         spatial_features_list = []
         n_pairwise_features = 0
 
         iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features)
+        iou_feature_top_k = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features_top_k)
+
         if self.use_iou_features:
-            spatial_features_list.append(iou_feature)
+            spatial_features_list.append(iou_feature_top_k)
             n_pairwise_features += 1
 
         pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
 
+        pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
+                                                                             tf.gather(self.dt_features, top_ix))
+
         if self.use_object_features:
-            spatial_features_list.append(pairwise_obj_features)
+            spatial_features_list.append(pairwise_obj_features_top_k)
             n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
             score_diff_sign_feature = tf.sign(
-                    pairwise_obj_features[:, :, 0:self.n_dt_features]-pairwise_obj_features[:, :, self.n_dt_features:])
-            score_diff_feature = pairwise_obj_features[:, :, 0:self.n_dt_features] - \
+                    pairwise_obj_features[:, :, 0:self.n_dt_features]-
+                    pairwise_obj_features[:, :, self.n_dt_features:])
+            score_diff_feature = pairwise_obj_features[:, :, 0:self.n_dt_features] -\
                                  pairwise_obj_features[:, :, self.n_dt_features:]
             spatial_features_list.append(score_diff_sign_feature)
             spatial_features_list.append(score_diff_feature)
             n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
 
+        # if self.use_object_features:
+        #     spatial_features_list.append(pairwise_obj_features_top_k)
+        #     n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+        #     score_diff_sign_feature = tf.sign(
+        #             pairwise_obj_features_top_k[:, :, 0:self.n_dt_features]-
+        #             pairwise_obj_features_top_k[:, :, self.n_dt_features:])
+        #     score_diff_feature = pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -\
+        #                          pairwise_obj_features_top_k[:, :, self.n_dt_features:]
+        #     spatial_features_list.append(score_diff_sign_feature)
+        #     spatial_features_list.append(score_diff_feature)
+        #     n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+
         pairwise_features = tf.concat(2, spatial_features_list)
+
+        # import ipdb; ipdb.set_trace()
+        # self_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
+        # self_values = tf.gather_nd(pairwise_features, self_indices)
+        # self_shape = [self.k_top_hyp, self.k_top_hyp, n_pairwise_features]
+        # delta = tf.SparseTensor(self_indices, self_values, self_shape)
+        #
+        # pairwise_features = pairwise_features - delta
 
         diagonals = []
 
@@ -209,11 +247,12 @@ class NMSNetwork:
                 hlayer_size,
                 n_kernels=1):
 
-        n_objects = tf.shape(pairwise_features)[0]
+        n_objects_1 = tf.shape(pairwise_features)[0]
+        n_objects_2 = tf.shape(pairwise_features)[1]
 
         pairwise_features_reshaped = tf.reshape(
             pairwise_features, [
-                1, n_objects, n_objects, n_pair_features])
+                1, n_objects_1, n_objects_2, n_pair_features])
 
         conv1 = slim.layers.conv2d(
             pairwise_features_reshaped,
