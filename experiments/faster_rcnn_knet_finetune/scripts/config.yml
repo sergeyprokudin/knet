@@ -5,7 +5,7 @@ general:
 data_provider:
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 5
+    n_bboxes: 20
 nms_network:
     architecture:
         knet_hlayer_size: 512
