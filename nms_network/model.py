@@ -143,8 +143,7 @@ class NMSNetwork:
 
         _, top_ix = tf.nn.top_k(highest_prob,  k=self.k_top_hyp)
 
-        pairwise_coords_features = spatial.construct_pairwise_features_tf(
-            self.dt_coords, self.dt_coords)
+        pairwise_coords_features = spatial.construct_pairwise_features_tf(self.dt_coords)
 
         pairwise_coords_features_top_k = spatial.construct_pairwise_features_tf(
             self.dt_coords, tf.gather(self.dt_coords, top_ix))
@@ -165,7 +164,7 @@ class NMSNetwork:
                                                                              tf.gather(self.dt_features, top_ix))
 
         if self.use_object_features:
-            spatial_features_list.append(pairwise_obj_features_top_k)
+            spatial_features_list.append(pairwise_obj_features)
             n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
             score_diff_sign_feature = tf.sign(
                     pairwise_obj_features[:, :, 0:self.n_dt_features]-

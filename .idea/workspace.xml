@@ -21,7 +21,6 @@
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nms_network/model.py" afterPath="$PROJECT_DIR$/nms_network/model.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" afterPath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" afterPath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" />
@@ -93,20 +92,20 @@
       </split-first>
       <split-second>
         <leaf>
-          <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/nms_network/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.43050846">
-                  <caret line="158" column="12" selection-start-line="158" selection-start-column="12" selection-end-line="158" selection-end-column="12" />
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="173" column="21" selection-start-line="173" selection-start-column="21" selection-end-line="173" selection-end-column="21" />
                   <folding>
                     <element signature="e#4375#5260#0" expanded="false" />
-                    <element signature="e#12787#13807#0" expanded="false" />
-                    <element signature="e#13843#15196#0" expanded="false" />
-                    <element signature="e#15419#16999#0" expanded="false" />
-                    <element signature="e#17039#17144#0" expanded="false" />
-                    <element signature="e#17187#17283#0" expanded="false" />
-                    <element signature="e#17321#17439#0" expanded="false" />
-                    <element signature="e#17475#17635#0" expanded="false" />
+                    <element signature="e#12752#13772#0" expanded="false" />
+                    <element signature="e#13808#15161#0" expanded="false" />
+                    <element signature="e#15384#16964#0" expanded="false" />
+                    <element signature="e#17004#17109#0" expanded="false" />
+                    <element signature="e#17152#17248#0" expanded="false" />
+                    <element signature="e#17286#17404#0" expanded="false" />
+                    <element signature="e#17440#17600#0" expanded="false" />
                   </folding>
                 </state>
               </provider>
@@ -132,11 +131,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="config.yml" pinned="false" current-in-tab="false">
+          <file leaf-file-name="config.yml" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-4.576923">
-                  <caret line="7" column="16" selection-start-line="7" selection-start-column="16" selection-end-line="7" selection-end-column="16" />
+                <state vertical-scroll-proportion="0.29685682">
+                  <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
                   <folding />
                 </state>
               </provider>
@@ -704,7 +703,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/nms_network/model.py</url>
-          <line>376</line>
+          <line>375</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
@@ -719,7 +718,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/nms_network/model.py</url>
-          <line>315</line>
+          <line>314</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
       </breakpoints>
@@ -1094,14 +1093,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-11.769231">
-          <caret line="18" column="20" selection-start-line="18" selection-start-column="20" selection-end-line="18" selection-end-column="20" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.43502825">
@@ -1115,28 +1106,36 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml">
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-4.576923">
-          <caret line="7" column="16" selection-start-line="7" selection-start-column="16" selection-end-line="7" selection-end-column="16" />
+        <state vertical-scroll-proportion="-11.769231">
+          <caret line="18" column="20" selection-start-line="18" selection-start-column="20" selection-end-line="18" selection-end-column="20" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/nms_network/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.43050846">
-          <caret line="158" column="12" selection-start-line="158" selection-start-column="12" selection-end-line="158" selection-end-column="12" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="173" column="21" selection-start-line="173" selection-start-column="21" selection-end-line="173" selection-end-column="21" />
           <folding>
             <element signature="e#4375#5260#0" expanded="false" />
-            <element signature="e#12787#13807#0" expanded="false" />
-            <element signature="e#13843#15196#0" expanded="false" />
-            <element signature="e#15419#16999#0" expanded="false" />
-            <element signature="e#17039#17144#0" expanded="false" />
-            <element signature="e#17187#17283#0" expanded="false" />
-            <element signature="e#17321#17439#0" expanded="false" />
-            <element signature="e#17475#17635#0" expanded="false" />
+            <element signature="e#12752#13772#0" expanded="false" />
+            <element signature="e#13808#15161#0" expanded="false" />
+            <element signature="e#15384#16964#0" expanded="false" />
+            <element signature="e#17004#17109#0" expanded="false" />
+            <element signature="e#17152#17248#0" expanded="false" />
+            <element signature="e#17286#17404#0" expanded="false" />
+            <element signature="e#17440#17600#0" expanded="false" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.29685682">
+          <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
+          <folding />
         </state>
       </provider>
     </entry>
