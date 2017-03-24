@@ -3,7 +3,7 @@ import logging
 import joblib
 import numpy as np
 import os
-from nms_network import model as nms_net
+from nms_network_old import model as nms_net
 from tools import nms, metrics
 from data import get_frame_data
 

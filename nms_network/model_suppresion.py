@@ -144,7 +144,7 @@ class NMSNetwork:
             spatial_features_list.append(pairwise_coords_features)
             n_spatial_features += self.n_dt_coords * 2
 
-        spatial_features = tf.concat(2, spatial_features_list)
+        spatial_features = tf.concat(axis=2, values=spatial_features_list)
 
         diagonals = []
 
@@ -152,13 +152,13 @@ class NMSNetwork:
             d = tf.expand_dims(tf.diag(tf.diag_part(spatial_features[:, :, i])), axis=2)
             diagonals.append(d)
 
-        diag = tf.concat(2, diagonals)
+        diag = tf.concat(axis=2, values=diagonals)
 
         spatial_features = spatial_features - diag
 
         spatial_features = tf.reshape(spatial_features, [self.n_bboxes, n_spatial_features*self.n_bboxes])
 
-        input_features = tf.concat(1, [self.dt_features, spatial_features])
+        input_features = tf.concat(axis=1, values=[self.dt_features, spatial_features])
 
         fc_chain = self._fc_layer_chain(input_tensor=input_features,
                                         layer_size=512,
@@ -189,7 +189,7 @@ class NMSNetwork:
                                                                          gt_per_label,
                                                                          class_id))
 
-        labels = tf.pack(class_labels, axis=1)
+        labels = tf.stack(class_labels, axis=1)
 
         if self.use_hinge_loss:
             loss = slim.losses.hinge_loss(self.logits, labels)
@@ -271,7 +271,7 @@ class NMSNetwork:
 
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.VAR_SCOPE)
 
-        init_op = tf.initialize_variables(variables)
+        init_op = tf.variables_initializer(variables)
 
         return init_op
 

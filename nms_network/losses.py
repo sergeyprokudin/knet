@@ -13,7 +13,7 @@ def mask_argmax_row(data, name_or_scope=None):
         # We create a one hot vector for every column.
         data_mask = tf.one_hot(data_argmax_row, depth=n_data)
 
-        return tf.mul(data, data_mask)
+        return tf.multiply(data, data_mask)
 
 
 def construct_ground_truth_per_label_tf(dt_gt_iou,
@@ -54,7 +54,7 @@ def construct_ground_truth_per_label_tf(dt_gt_iou,
             def _not_empty():
                 zeros = tf.zeros_like(dt_gt_iou_subset)
 
-                labels_ground_truth = tf.select(
+                labels_ground_truth = tf.where(
                     dt_gt_iou_subset < iou_threshold,
                     zeros,
                     dt_gt_iou_subset)
@@ -83,7 +83,7 @@ def compute_match_gt_perfect_per_label_tf(labels, matching_gt_mask,
         n_hypotheses = tf.shape(labels)[0]
 
         def _not_empty():
-            labels_argmax = tf.argmax(labels, dimension=0)
+            labels_argmax = tf.argmax(labels, axis=0)
             labels_gt_matrix = tf.one_hot(labels_argmax, depth=n_hypotheses)
             labels_gt_matrix = tf.multiply(labels_gt_matrix, tf.expand_dims(matching_gt_mask,  axis=1))
             # This is a vector of the length of the hypotheses.
@@ -120,7 +120,7 @@ def compute_match_gt_net_per_label_tf(predictions,
             # we need to remove columns that are not matching any hypothesis
             matching_gt_mask = tf.to_float(tf.not_equal(tf.reduce_sum(labels_masked_bin, 0), 0))
             labels_masked_ordered = tf.transpose(
-                tf.mul(tf.transpose(labels_masked_bin),
+                tf.multiply(tf.transpose(labels_masked_bin),
                        predictions[:, label]))
             return compute_match_gt_perfect_per_label_tf(labels_masked_ordered, matching_gt_mask)
 

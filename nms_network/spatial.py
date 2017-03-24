@@ -35,7 +35,7 @@ def construct_pairwise_features_tf(features_1,
         pair_1 = tf.reshape(pair_1, [-1, n_features])
 
         pair_2 = tf.tile(features_2, [n1_hypotheses, 1])
-        pairwise_features = tf.concat(1, [pair_1, pair_2])
+        pairwise_features = tf.concat(axis=1, values=[pair_1, pair_2])
 
         return tf.reshape(
             pairwise_features,
@@ -64,7 +64,7 @@ def compute_intersection(x_overlap, y_overlap, name_or_scope=None):
     with tf.variable_scope(name_or_scope,
                            default_name='compute_intersection',
                            values=[x_overlap, y_overlap]):
-        return tf.mul(x_overlap, y_overlap)
+        return tf.multiply(x_overlap, y_overlap)
 
 
 def compute_union(width_1, height_1, width_2, height_2,
@@ -76,10 +76,10 @@ def compute_union(width_1, height_1, width_2, height_2,
                                    width_2,
                                    height_2,
                                    intersection]):
-        rect_1 = tf.mul(width_1, height_1, name='rectangle_1')
-        rect_2 = tf.mul(width_2, height_2, name='rectangle_2')
+        rect_1 = tf.multiply(width_1, height_1, name='rectangle_1')
+        rect_2 = tf.multiply(width_2, height_2, name='rectangle_2')
         total = tf.add(rect_1, rect_2, name='rectangle_1_2')
-        return tf.sub(total, intersection, name='union')
+        return tf.subtract(total, intersection, name='union')
 
 
 def compute_pairwise_spatial_features_iou_tf(

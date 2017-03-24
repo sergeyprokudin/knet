@@ -59,7 +59,7 @@ def apply_kernel(kernels, object_features, n_kernels, n_object_features):
     object_features_broadcasted = tf.tile(
         object_features_reshaped, [n_kernels, 1, 1])
 
-    transformed_features = tf.batch_matmul(
+    transformed_features = tf.matmul(
         kernels, object_features_broadcasted)
 
     transformed_features_t = tf.transpose(transformed_features, perm=[1, 0, 2])
