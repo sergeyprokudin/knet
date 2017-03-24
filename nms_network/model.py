@@ -156,7 +156,7 @@ class NMSNetwork:
         iou_feature_top_k = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features_top_k)
 
         if self.use_iou_features:
-            spatial_features_list.append(iou_feature_top_k)
+            spatial_features_list.append(iou_feature)
             n_pairwise_features += 1
 
         pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
