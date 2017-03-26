@@ -66,7 +66,7 @@ class NMSNetwork:
 
         if input_ops is None:
             self.dt_coords, self.dt_features, self.dt_probs, \
-                self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
+                self.gt_labels, self.gt_coords, self.keep_prob = self._inference_ops_experimental()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
@@ -81,7 +81,7 @@ class NMSNetwork:
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.class_scores = self._inference_ops_experimental()
+            self.iou_feature, self.logits, self.class_scores = self._inference_ops()
             self.det_labels, self.det_loss = self._detection_loss_ops()
             self.labels = self.det_labels
             self.loss = self.det_loss

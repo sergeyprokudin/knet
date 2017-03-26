@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" filepath="$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" />
+      <module fileurl="file://$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" filepath="$USER_HOME$/Faster-RCNN_TF/.idea/Faster-RCNN_TF.iml" />
       <module fileurl="file://$USER_HOME$/TensorBox/.idea/TensorBox.iml" filepath="$USER_HOME$/TensorBox/.idea/TensorBox.iml" />
       <module fileurl="file://$USER_HOME$/YOLO_tensorflow/.idea/YOLO_tensorflow.iml" filepath="$USER_HOME$/YOLO_tensorflow/.idea/YOLO_tensorflow.iml" />
       <module fileurl="file://$USER_HOME$/darknet/.idea/darknet.iml" filepath="$USER_HOME$/darknet/.idea/darknet.iml" />
