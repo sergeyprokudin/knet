@@ -13,6 +13,7 @@ nms_network:
         n_kernel_iterations: 1
         fc_apres_layer_size: 512
     training:
+        top_k_hypotheses: 20
         learning_rate: 0.0001
         lr_decay_step: 10
         keep_prob: 1.0

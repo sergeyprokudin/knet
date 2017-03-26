@@ -36,7 +36,7 @@ class NMSNetwork:
         # model main parameters
         self.n_dt_coords = 4
         self.n_classes = n_classes
-        self.k_top_hyp = 10
+
         self.gt_match_iou_thr = gt_match_iou_thr
         self.class_ix = class_ix
         #self.n_bboxes = n_bboxes
@@ -60,13 +60,8 @@ class NMSNetwork:
 
         # training procedure params
         train_args = kwargs.get('training', {})
-        self.pos_weight = train_args.get('pos_weight', 1)
-        self.softmax_kernel = train_args.get('softmax_kernel', True)
 
-        self.n_neg_examples = train_args.get('n_neg_examples',  10)
-        self.use_hinge_loss = train_args.get('use_hinge_loss',  False)
-
-        #self.optimizer_step = train_args.get('optimizer_step', 0.001)
+        self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
         self.learning_rate = tf.placeholder(tf.float32)
 
         if input_ops is None:
@@ -129,7 +124,7 @@ class NMSNetwork:
             # we are considering all classes, skip the backgorund class
             highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
 
-        _, top_ix = tf.nn.top_k(highest_prob,  k=self.k_top_hyp)
+        _, top_ix = tf.nn.top_k(highest_prob, k=self.top_k_hypotheses)
 
         pairwise_coords_features = spatial.construct_pairwise_features_tf(self.dt_coords)
 
@@ -206,7 +201,7 @@ class NMSNetwork:
             # we are considering all classes, skip the backgorund class
             highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
 
-        _, top_ix = tf.nn.top_k(highest_prob,  k=self.k_top_hyp)
+        _, top_ix = tf.nn.top_k(highest_prob, k=self.top_k_hypotheses)
 
         pairwise_coords_features = spatial.construct_pairwise_features_tf(self.dt_coords)
 
@@ -231,9 +226,9 @@ class NMSNetwork:
             spatial_features_list.append(pairwise_obj_features_top_k)
             n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
             score_diff_sign_feature = tf.sign(
-                    pairwise_obj_features_top_k[:, :, 0:self.n_dt_features]-
+                    pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -
                     pairwise_obj_features_top_k[:, :, self.n_dt_features:])
-            score_diff_feature = pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -\
+            score_diff_feature = pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] - \
                                  pairwise_obj_features_top_k[:, :, self.n_dt_features:]
             spatial_features_list.append(score_diff_sign_feature)
             spatial_features_list.append(score_diff_feature)
@@ -241,12 +236,12 @@ class NMSNetwork:
 
         pairwise_features = tf.concat(axis=2, values=spatial_features_list)
 
-        #import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
-        #update_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
-        #update_values = [tf.zeros(n_pairwise_features) for i in range(0, self.k_top_hyp)]
+        # update_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
+        # update_values = [tf.zeros(n_pairwise_features) for i in range(0, self.k_top_hyp)]
 
-        #pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
+        # pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
 
         self.pairwise_obj_features = pairwise_features
 

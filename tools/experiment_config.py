@@ -52,7 +52,9 @@ class ExperimentConfig:
         self.train_config = self.nms_network_config.get('training', {})
         self.learning_rate = self.train_config.get('learning_rate', 0.001)
         self.lr_decay_step = self.train_config.get('lr_decay_step', 5)
-        self.keep_prob_train = self.train_config.get('keep_prob')
+        self.keep_prob_train = self.train_config.get('keep_prob', 1.0)
+        self.top_k_hypotheses = self.train_config.get('top_k_hypotheses', 20)
+
         self.n_epochs = self.train_config.get('n_epochs', 10)
 
         # results details
