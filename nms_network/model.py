@@ -221,7 +221,6 @@ class NMSNetwork:
         pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
                                                                              tf.gather(self.dt_features, top_ix))
 
-
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features_top_k)
             n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
@@ -236,10 +235,25 @@ class NMSNetwork:
 
         pairwise_features = tf.concat(axis=2, values=spatial_features_list)
 
-        # import ipdb; ipdb.set_trace()
+        self_indices = []
+        self_values= []
 
-        # update_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
-        # update_values = [tf.zeros(n_pairwise_features) for i in range(0, self.k_top_hyp)]
+        # for i in range(0, self.top_k_hypotheses):
+        #     for j in range(0, n_pairwise_features):
+        #         print(i, j)
+        #         self_indices.append([top_ix[i], i, j])
+        #         self_values.append(pairwise_features[top_ix[i], i, j])
+
+        # self_indices = [[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
+        # self_values = [pairwise_features[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
+
+        import ipdb; ipdb.set_trace()
+
+        pairwise_features_var = tf.Variable(pairwise_features)
+
+        update_mask = tf.sparse_to_dense(self_indices, tf.shape( pairwise_features), self_values)
+
+        pairwise_features = pairwise_features - update_mask
 
         # pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
 
