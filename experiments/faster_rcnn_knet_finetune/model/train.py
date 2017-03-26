@@ -323,31 +323,25 @@ def main(_):
 
                 step_id += 1
 
-            if (epoch_id+1 % config.lr_decay_step == 0) and (not lr_decay_applied):
+            logging.info('epoch %d finished ' % epoch_id)
+
+            if ((epoch_id+1) % config.lr_decay_step == 0) and (not lr_decay_applied):
                 learning_rate *= 0.1
                 lr_decay_applied = True
-                logging.info('decreasing learning rate to %d' % learning_rate)
+                logging.info('decreasing learning rate to %f' % learning_rate)
 
-            if epoch_id % config.eval_step == 0:
+            if (epoch_id+1) % config.eval_step == 0:
 
                 logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
-                if epoch_id+1 % config.full_eval_step == 0:
+                if (epoch_id+1) % config.full_eval_step == 0:
                     full_eval = True
-                    logging.info('running full evaluation : %d' % full_eval)
                 else:
                     full_eval = False
 
-                # import ipdb; ipdb.set_trace()
-
-                # eval.print_debug_info(sess=sess,
-                #                       nnms_model=nnms_model,
-                #                       frame_data=frame_data,
-                #                       outdir=config.log_dir,
-                #                       fid=fid)
-
                 # logging.info('evaluating on TRAIN..')
                 # train_out_dir = os.path.join(config.log_dir, 'train')
+                # logging.info('full evaluation : %d' % full_eval)
                 # train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
                 #                                                 frames_data_train,
                 #                                                 global_step=step_id,
@@ -361,6 +355,7 @@ def main(_):
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
+                logging.info('full evaluation : %d' % full_eval)
                 test_map_knet, test_map_nms = eval.eval_model(sess, nnms_model,
                                                               frames_data_test,
                                                               global_step=step_id,
@@ -382,6 +377,8 @@ def main(_):
                 config.save_results()
 
                 saver.save(sess, config.model_file, global_step=step_id)
+
+    logging.info('all done.')
     return
 
 if __name__ == '__main__':

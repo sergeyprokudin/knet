@@ -1,7 +1,7 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: all
+    class_of_interest: person
 data_provider:
     shuffle_train_test: False
     n_features : 121
@@ -14,11 +14,11 @@ nms_network:
         fc_apres_layer_size: 512
     training:
         learning_rate: 0.0001
-        lr_decay_step: 3
+        lr_decay_step: 10
         keep_prob: 1.0
         n_epochs: 20
     evaluation:
         eval_step: 1
-        full_eval_step: 2
-        n_eval_frames: 500
+        full_eval_step: 5
+        n_eval_frames: 100
         nms_thres: 0.5

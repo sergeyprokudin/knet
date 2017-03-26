@@ -77,11 +77,19 @@ def eval_model(sess, nnms_model, frames_data,
         labels_eval = metrics.match_dt_gt_all_classes(
                 frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
-                inference_original)
+                inference_new)
+
+        # if np.sum(labels_eval != labels_tf) != 0:
+        #     import ipdb; ipdb.set_trace()
+        # else:
+        #     if np.sum(labels_eval) > 0:
+        #         logging.info('labels are not zero and the same')
 
         losses.append(loss)
         inference_orig_all.append(inference_original)
         inference_new_all.append(inference_new)
+
+        # import ipdb; ipdb.set_trace()
 
         dt_gt_match_orig.append(
             metrics.match_dt_gt_all_classes(
@@ -114,6 +122,9 @@ def eval_model(sess, nnms_model, frames_data,
                 frame_data[nms_net.GT_LABELS],
                 inference_new,
                 dt_is_suppressed_info=is_suppressed_new))
+
+    # if loss < 0:
+    #     import ipdb; ipdb.set_trace()
 
     gt_labels = np.vstack(gt_labels_all)
     inference_orig_all = np.vstack(inference_orig_all)

@@ -36,7 +36,7 @@ class NMSNetwork:
         # model main parameters
         self.n_dt_coords = 4
         self.n_classes = n_classes
-        self.k_top_hyp = 5
+        self.k_top_hyp = 10
         self.gt_match_iou_thr = gt_match_iou_thr
         self.class_ix = class_ix
         #self.n_bboxes = n_bboxes
@@ -86,23 +86,11 @@ class NMSNetwork:
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.class_scores = self._inference_ops()
+            self.iou_feature, self.logits, self.class_scores = self._inference_ops_experimental()
             self.det_labels, self.det_loss = self._detection_loss_ops()
             self.labels = self.det_labels
             self.loss = self.det_loss
-
-            # self.nms_labels, self.elementwise_loss, self.nms_loss = self._nms_loss()
-            # self.labels = self.nms_labels
-            # self.loss = self.nms_loss
-            # self.nms_prob = self.class_scores
-            # self.class_scores = tf.multiply(self.dt_probs, 1-self.nms_prob)
             self.train_step = self._train_step(self.loss)
-            # self.loss = self.pairwise_nms_loss + self.nms_loss
-            # self.joint_train_step = self._train_step(self.loss)
-            # self.pair_loss_train_step = self._train_step(self.pairwise_nms_loss)
-            # self.nms_train_step = self._train_step(self.nms_loss)
-            # self.det_train_step = self._det_train_ops()
-            # self.train_step = self.det_train_step
             self.merged_summaries = self._summary_ops()
 
         self.init_op = self._init_ops()
@@ -145,24 +133,16 @@ class NMSNetwork:
 
         pairwise_coords_features = spatial.construct_pairwise_features_tf(self.dt_coords)
 
-        pairwise_coords_features_top_k = spatial.construct_pairwise_features_tf(
-            self.dt_coords, tf.gather(self.dt_coords, top_ix))
-
         spatial_features_list = []
         n_pairwise_features = 0
 
         iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features)
-        iou_feature_top_k = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features_top_k)
 
         if self.use_iou_features:
             spatial_features_list.append(iou_feature)
-            # spatial_features_list.append(iou_feature_top_k)
             n_pairwise_features += 1
 
         pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
-
-        pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
-                                                                             tf.gather(self.dt_features, top_ix))
 
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features)
@@ -185,25 +165,88 @@ class NMSNetwork:
 
         pairwise_features = pairwise_features - diag
 
-        # if self.use_object_features:
-        #     spatial_features_list.append(pairwise_obj_features_top_k)
-        #     n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
-        #     score_diff_sign_feature = tf.sign(
-        #             pairwise_obj_features_top_k[:, :, 0:self.n_dt_features]-
-        #             pairwise_obj_features_top_k[:, :, self.n_dt_features:])
-        #     score_diff_feature = pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -\
-        #                          pairwise_obj_features_top_k[:, :, self.n_dt_features:]
-        #     spatial_features_list.append(score_diff_sign_feature)
-        #     spatial_features_list.append(score_diff_feature)
-        #     n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+        self.pairwise_obj_features = pairwise_features
 
-        # import ipdb; ipdb.set_trace()
-        # self_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
-        # self_values = tf.split(axis=0, num_or_size_splits=self.k_top_hyp, value=tf.gather_nd(pairwise_features, self_indices))
-        # self_shape = [self.k_top_hyp, self.k_top_hyp, n_pairwise_features]
-        # delta = tf.SparseTensor(self_indices, self_values, self_shape)
-        #
-        # pairwise_features = pairwise_features - delta
+        kernel_features = self._kernel(pairwise_features,
+                                       n_pairwise_features,
+                                       hlayer_size=self.knet_hlayer_size,
+                                       n_kernels=self.n_kernels)
+
+        kernel_features_sigmoid = tf.nn.sigmoid(kernel_features)
+
+        kernel_max = tf.reshape(tf.reduce_max(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
+
+        kernel_sum = tf.reshape(tf.reduce_sum(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
+
+        object_and_context_features = tf.concat(axis=1, values=[self.dt_features, kernel_max, kernel_sum])
+
+        self.object_and_context_features = object_and_context_features
+
+        fc1 = slim.layers.fully_connected(object_and_context_features,
+                                          self.fc_apres_layer_size,
+                                          activation_fn=tf.nn.relu)
+
+        fc2 = slim.layers.fully_connected(fc1,
+                                          self.fc_apres_layer_size,
+                                          activation_fn=tf.nn.relu)
+
+        fc2_drop = tf.nn.dropout(fc2, self.keep_prob)
+
+        logits = slim.fully_connected(fc2_drop, self.n_classes, activation_fn=None)
+
+        class_scores = tf.nn.sigmoid(logits)
+
+        return iou_feature, logits, class_scores
+
+    def _inference_ops_experimental(self):
+
+        if self.n_classes == 1:
+            highest_prob = tf.reduce_max(self.dt_probs, axis=1)
+        else:
+            # we are considering all classes, skip the backgorund class
+            highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
+
+        _, top_ix = tf.nn.top_k(highest_prob,  k=self.k_top_hyp)
+
+        pairwise_coords_features = spatial.construct_pairwise_features_tf(self.dt_coords)
+
+        pairwise_coords_features_top_k = spatial.construct_pairwise_features_tf(
+            self.dt_coords, tf.gather(self.dt_coords, top_ix))
+
+        spatial_features_list = []
+        n_pairwise_features = 0
+
+        iou_feature = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features)
+        iou_feature_top_k = spatial.compute_pairwise_spatial_features_iou_tf(pairwise_coords_features_top_k)
+
+        if self.use_iou_features:
+            spatial_features_list.append(iou_feature_top_k)
+            n_pairwise_features += 1
+
+        pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
+                                                                             tf.gather(self.dt_features, top_ix))
+
+
+        if self.use_object_features:
+            spatial_features_list.append(pairwise_obj_features_top_k)
+            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+            score_diff_sign_feature = tf.sign(
+                    pairwise_obj_features_top_k[:, :, 0:self.n_dt_features]-
+                    pairwise_obj_features_top_k[:, :, self.n_dt_features:])
+            score_diff_feature = pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -\
+                                 pairwise_obj_features_top_k[:, :, self.n_dt_features:]
+            spatial_features_list.append(score_diff_sign_feature)
+            spatial_features_list.append(score_diff_feature)
+            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+
+        pairwise_features = tf.concat(axis=2, values=spatial_features_list)
+
+        #import ipdb; ipdb.set_trace()
+
+        #update_indices = [[top_ix[i], i] for i in range(0, self.k_top_hyp)]
+        #update_values = [tf.zeros(n_pairwise_features) for i in range(0, self.k_top_hyp)]
+
+        #pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
 
         self.pairwise_obj_features = pairwise_features
 
@@ -292,12 +335,8 @@ class NMSNetwork:
 
         labels = tf.stack(class_labels, axis=1)
 
-        if self.use_hinge_loss:
-            loss = slim.losses.hinge_loss(self.logits, labels)
-        else:
-            loss = tf.nn.weighted_cross_entropy_with_logits(self.logits,
-                                                            labels,
-                                                            pos_weight=self.pos_weight)
+        loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels,
+                                                       logits=self.logits)
 
         self.det_loss_elementwise = loss
 
