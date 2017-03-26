@@ -66,7 +66,7 @@ class NMSNetwork:
 
         if input_ops is None:
             self.dt_coords, self.dt_features, self.dt_probs, \
-                self.gt_labels, self.gt_coords, self.keep_prob = self._inference_ops_experimental()
+                self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
@@ -81,7 +81,7 @@ class NMSNetwork:
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.class_scores = self._inference_ops()
+            self.iou_feature, self.logits, self.class_scores = self._inference_ops_experimental()
             self.det_labels, self.det_loss = self._detection_loss_ops()
             self.labels = self.det_labels
             self.loss = self.det_loss
@@ -247,13 +247,13 @@ class NMSNetwork:
         # self_indices = [[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
         # self_values = [pairwise_features[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
-        pairwise_features_var = tf.Variable(pairwise_features)
+        # pairwise_features_var = tf.Variable(pairwise_features)
 
-        update_mask = tf.sparse_to_dense(self_indices, tf.shape( pairwise_features), self_values)
+        # update_mask = tf.sparse_to_dense(self_indices, tf.shape( pairwise_features), self_values)
 
-        pairwise_features = pairwise_features - update_mask
+        # pairwise_features = pairwise_features - update_mask
 
         # pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
 

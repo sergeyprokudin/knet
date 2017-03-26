@@ -8,15 +8,15 @@ data_provider:
     n_bboxes: 300
 nms_network:
     architecture:
-        knet_hlayer_size: 1024
-        n_kernels: 1024
+        knet_hlayer_size: 2028
+        n_kernels: 512
         n_kernel_iterations: 1
-        fc_apres_layer_size: 1024
+        fc_apres_layer_size: 2028
     training:
         top_k_hypotheses: 50
         learning_rate: 0.0001
         lr_decay_step: 50
-        keep_prob: 1.0
+        keep_prob: 0.1
         n_epochs: 50
     evaluation:
         eval_step: 1
