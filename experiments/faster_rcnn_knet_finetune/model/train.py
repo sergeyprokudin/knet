@@ -228,6 +228,8 @@ def main(_):
 
     config.save_results()
 
+    logging.info("config : %s" % yaml.dump(config.config))
+
     logging.info('loading data..')
     logging.info('train..')
     frames_data_train = load_data(config.train_data_dir,
