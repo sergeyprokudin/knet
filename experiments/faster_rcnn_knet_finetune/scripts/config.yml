@@ -1,25 +1,27 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: person
+    class_of_interest: aeroplane # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121
     n_bboxes: 20
 nms_network:
     architecture:
-        knet_hlayer_size: 2028
-        n_kernels: 512
+        knet_hlayer_size: 512
+        n_kernels: 128
         n_kernel_iterations: 1
-        fc_apres_layer_size: 2028
+        fc_apres_layer_size: 512
+        class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         top_k_hypotheses: 20
         learning_rate: 0.0001
+        optimizer: Adam # possible choices : Adam, SGD
         lr_decay_step: 20
-        keep_prob: 0.2
+        keep_prob: 1.0
         n_epochs: 20
     evaluation:
         eval_step: 1
         full_eval_step: 1
         n_eval_frames: 100
-        nms_thres: 0.5
+        nms_thres: 0.3

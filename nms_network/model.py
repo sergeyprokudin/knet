@@ -49,11 +49,8 @@ class NMSNetwork:
         self.fc_pre_layers_cnt = arch_args.get('fc_pre_layers_cnt', 2)
         self.knet_hlayer_size = arch_args.get('knet_hlayer_size', 256)
         self.n_kernels = arch_args.get('n_kernels', 16)
-        self.n_kernel_iterations = arch_args.get('n_kernel_iterations', 1)
-        self.reuse_kernels = arch_args.get('reuse_kernels', False)
         self.fc_apres_layer_size = arch_args.get('fc_apres_layer_size', 1024)
-        self.fc_apres_layers_cnt = arch_args.get('fc_apres_layers_cnt', 2)
-        self.reuse_apres_fc_layers = arch_args.get('reuse_apres_fc_layers', False)
+        self.class_scores_func = arch_args.get('class_scores_func', 'sigmoid')
         self.use_iou_features = arch_args.get('use_iou_features', True)
         self.use_coords_features = arch_args.get('use_coords_features', True)
         self.use_object_features = arch_args.get('use_object_features', True)
@@ -62,6 +59,7 @@ class NMSNetwork:
         train_args = kwargs.get('training', {})
 
         self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
+        self.optimizer_to_use = train_args.get('optimizer', 'Adam')
         self.learning_rate = tf.placeholder(tf.float32)
 
         if input_ops is None:
@@ -198,7 +196,7 @@ class NMSNetwork:
         if self.n_classes == 1:
             highest_prob = tf.reduce_max(self.dt_probs, axis=1)
         else:
-            # we are considering all classes, skip the backgorund class
+            # we are considering all classes, skipping the backgorund class
             highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
 
         _, top_ix = tf.nn.top_k(highest_prob, k=self.top_k_hypotheses)
@@ -235,28 +233,6 @@ class NMSNetwork:
 
         pairwise_features = tf.concat(axis=2, values=spatial_features_list)
 
-        self_indices = []
-        self_values= []
-
-        # for i in range(0, self.top_k_hypotheses):
-        #     for j in range(0, n_pairwise_features):
-        #         print(i, j)
-        #         self_indices.append([top_ix[i], i, j])
-        #         self_values.append(pairwise_features[top_ix[i], i, j])
-
-        # self_indices = [[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
-        # self_values = [pairwise_features[top_ix[i], i] for i in range(0, self.top_k_hypotheses)]
-
-        # import ipdb; ipdb.set_trace()
-
-        # pairwise_features_var = tf.Variable(pairwise_features)
-
-        # update_mask = tf.sparse_to_dense(self_indices, tf.shape( pairwise_features), self_values)
-
-        # pairwise_features = pairwise_features - update_mask
-
-        # pairwise_features = tf.scatter_nd_update(pairwise_features, update_indices, update_values)
-
         self.pairwise_obj_features = pairwise_features
 
         kernel_features = self._kernel(pairwise_features,
@@ -286,7 +262,10 @@ class NMSNetwork:
 
         logits = slim.fully_connected(fc2_drop, self.n_classes, activation_fn=None)
 
-        class_scores = tf.nn.sigmoid(logits)
+        if self.class_scores_func == 'softmax':
+            class_scores = tf.nn.softmax(logits)
+        else:
+            class_scores = tf.nn.sigmoid(logits)
 
         return iou_feature, logits, class_scores
 
@@ -348,11 +327,6 @@ class NMSNetwork:
                                                        logits=self.logits)
 
         self.det_loss_elementwise = loss
-
-        # hard_indices_tf = misc.data_subselection_hard_negative_tf(
-        #    labels, loss, n_neg_examples=self.n_neg_examples)
-        #
-        # loss_hard_tf = tf.gather(loss, hard_indices_tf)
 
         loss_final = tf.reduce_mean(loss)
 
@@ -457,7 +431,12 @@ class NMSNetwork:
         return train_step
 
     def _train_step(self, loss):
-        train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
+        if self.optimizer_to_use == 'Adam':
+            train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
+        elif self.optimizer_to_use == 'SGD':
+            train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(loss)
+        else:
+            train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
         return train_step
 
     def _summary_ops(self):
