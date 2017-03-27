@@ -339,19 +339,19 @@ def main(_):
                 else:
                     full_eval = False
 
-                # logging.info('evaluating on TRAIN..')
-                # train_out_dir = os.path.join(config.log_dir, 'train')
-                # logging.info('full evaluation : %d' % full_eval)
-                # train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
-                #                                                 frames_data_train,
-                #                                                 global_step=step_id,
-                #                                                 n_eval_frames=config.n_eval_frames,
-                #                                                 out_dir=train_out_dir,
-                #                                                 full_eval=full_eval,
-                #                                                 nms_thres=config.nms_thres,
-                #                                                 one_class=is_one_class,
-                #                                                 class_ix=class_ix)
-                # write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
+                logging.info('evaluating on TRAIN..')
+                train_out_dir = os.path.join(config.log_dir, 'train')
+                logging.info('full evaluation : %d' % full_eval)
+                train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
+                                                                frames_data_train,
+                                                                global_step=step_id,
+                                                                n_eval_frames=config.n_eval_frames,
+                                                                out_dir=train_out_dir,
+                                                                full_eval=full_eval,
+                                                                nms_thres=config.nms_thres,
+                                                                one_class=is_one_class,
+                                                                class_ix=class_ix)
+                write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
 
                 logging.info('evaluating on TEST..')
                 test_out_dir = os.path.join(config.log_dir, 'test')
