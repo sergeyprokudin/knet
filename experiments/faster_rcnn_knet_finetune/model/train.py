@@ -370,8 +370,8 @@ def main(_):
                 write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
 
                 config.update_results(step_id,
-                                      0.0,
-                                      0.0,
+                                      train_map_knet,
+                                      train_map_nms,
                                       test_map_knet,
                                       test_map_nms,
                                       np.mean(step_times))

@@ -22,6 +22,9 @@
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub" afterPath="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tools/experiment_config.py" afterPath="$PROJECT_DIR$/tools/experiment_config.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" afterPath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" afterPath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" afterPath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" />
@@ -51,28 +54,24 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/nms_network/model.py">
+          <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-11.296296">
-                  <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="29" />
-                  <folding>
-                    <element signature="e#4178#7505#0" expanded="false" />
-                    <element signature="e#11279#12045#0" expanded="false" />
-                    <element signature="e#13222#14242#0" expanded="false" />
-                    <element signature="e#14278#15631#0" expanded="false" />
-                    <element signature="e#15854#17434#0" expanded="false" />
-                  </folding>
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="377" column="0" selection-start-line="377" selection-start-column="0" selection-end-line="377" selection-end-column="0" />
+                  <folding />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
+          <file leaf-file-name="experiment_config.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/tools/experiment_config.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.63829786">
-                  <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
-                  <folding />
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="104" column="8" selection-start-line="104" selection-start-column="8" selection-end-line="104" selection-end-column="8" />
+                  <folding>
+                    <element signature="e#0#14#0" expanded="false" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -97,11 +96,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="train_cluster.sub" pinned="false" current-in-tab="false">
+          <file leaf-file-name="train_cluster.sub" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.0">
-                  <caret line="12" column="0" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
+                <state vertical-scroll-proportion="0.09042553">
+                  <caret line="5" column="19" selection-start-line="5" selection-start-column="19" selection-end-line="5" selection-end-column="19" />
                   <folding />
                 </state>
               </provider>
@@ -111,7 +110,7 @@
             <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh">
               <provider selected="true" editor-type-id="text-editor">
                 <state vertical-scroll-proportion="0.0">
-                  <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+                  <caret line="19" column="89" selection-start-line="19" selection-start-column="89" selection-end-line="19" selection-end-column="89" />
                   <folding />
                 </state>
               </provider>
@@ -120,8 +119,8 @@
           <file leaf-file-name="config.yml" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-12.423077">
-                  <caret line="19" column="25" selection-start-line="0" selection-start-column="0" selection-end-line="26" selection-end-column="22" />
+                <state vertical-scroll-proportion="-13.076923">
+                  <caret line="20" column="4" selection-start-line="20" selection-start-column="4" selection-end-line="20" selection-end-column="4" />
                   <folding />
                 </state>
               </provider>
@@ -164,8 +163,8 @@
           <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/nms_network/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.3319149">
-                  <caret line="198" column="54" selection-start-line="198" selection-start-column="54" selection-end-line="198" selection-end-column="54" />
+                <state vertical-scroll-proportion="0.6031915">
+                  <caret line="213" column="0" selection-start-line="213" selection-start-column="0" selection-end-line="213" selection-end-column="0" />
                   <folding>
                     <element signature="e#4178#7505#0" expanded="false" />
                     <element signature="e#11279#12045#0" expanded="false" />
@@ -235,17 +234,17 @@
         <option value="$PROJECT_DIR$/tools/tf_upgrade.py" />
         <option value="$PROJECT_DIR$/report.txt" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py" />
-        <option value="$PROJECT_DIR$/tools/experiment_config.py" />
         <option value="$PROJECT_DIR$/nms_network/spatial.py" />
         <option value="$PROJECT_DIR$/scripts/install.sh" />
         <option value="$USER_HOME$/Faster-RCNN_TF/experiments/scripts/faster_rcnn_end2end_eval_knet.sh" />
         <option value="$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/test.py" />
-        <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml" />
         <option value="$PROJECT_DIR$/nms_network/model.py" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh" />
+        <option value="$PROJECT_DIR$/tools/experiment_config.py" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py" />
+        <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub" />
       </list>
     </option>
   </component>
@@ -741,6 +740,7 @@
           <folding>
             <element signature="e#4178#7505#0" expanded="false" />
             <element signature="e#11279#12045#0" expanded="false" />
+            <element signature="e#12091#13177#0" expanded="false" />
             <element signature="e#13222#14242#0" expanded="false" />
             <element signature="e#14278#15631#0" expanded="false" />
             <element signature="e#15854#17434#0" expanded="false" />
@@ -811,6 +811,7 @@
           <folding>
             <element signature="e#4178#7505#0" expanded="false" />
             <element signature="e#11279#12045#0" expanded="false" />
+            <element signature="e#12091#13177#0" expanded="false" />
             <element signature="e#13222#14242#0" expanded="false" />
             <element signature="e#14278#15631#0" expanded="false" />
             <element signature="e#15854#17434#0" expanded="false" />
@@ -906,6 +907,7 @@
           <folding>
             <element signature="e#4178#7505#0" expanded="false" />
             <element signature="e#11279#12045#0" expanded="false" />
+            <element signature="e#12091#13177#0" expanded="false" />
             <element signature="e#13222#14242#0" expanded="false" />
             <element signature="e#14278#15631#0" expanded="false" />
             <element signature="e#15854#17434#0" expanded="false" />
@@ -1025,16 +1027,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tools/experiment_config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.1910828">
-          <caret line="12" column="8" selection-start-line="12" selection-start-column="8" selection-end-line="12" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#14#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1059,10 +1051,33 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6031915">
+          <caret line="213" column="0" selection-start-line="213" selection-start-column="0" selection-end-line="213" selection-end-column="0" />
+          <folding>
+            <element signature="e#4178#7505#0" expanded="false" />
+            <element signature="e#11279#12045#0" expanded="false" />
+            <element signature="e#12091#13177#0" expanded="false" />
+            <element signature="e#13222#14242#0" expanded="false" />
+            <element signature="e#14278#15631#0" expanded="false" />
+            <element signature="e#15854#17434#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="19" column="89" selection-start-line="19" selection-start-column="89" selection-end-line="19" selection-end-column="89" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.423077">
-          <caret line="19" column="25" selection-start-line="0" selection-start-column="0" selection-end-line="26" selection-end-column="22" />
+        <state vertical-scroll-proportion="-13.076923">
+          <caret line="20" column="4" selection-start-line="20" selection-start-column="4" selection-end-line="20" selection-end-column="4" />
           <folding />
         </state>
       </provider>
@@ -1075,40 +1090,28 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sh">
+    <entry file="file://$PROJECT_DIR$/tools/experiment_config.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="12" column="0" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-11.296296">
-          <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="29" />
+          <caret line="104" column="8" selection-start-line="104" selection-start-column="8" selection-end-line="104" selection-end-column="8" />
           <folding>
-            <element signature="e#4178#7505#0" expanded="false" />
-            <element signature="e#11279#12045#0" expanded="false" />
-            <element signature="e#13222#14242#0" expanded="false" />
-            <element signature="e#14278#15631#0" expanded="false" />
-            <element signature="e#15854#17434#0" expanded="false" />
+            <element signature="e#0#14#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.63829786">
-          <caret line="239" column="0" selection-start-line="239" selection-start-column="0" selection-end-line="239" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="377" column="0" selection-start-line="377" selection-start-column="0" selection-end-line="377" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/train_cluster.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.09042553">
+          <caret line="5" column="19" selection-start-line="5" selection-start-column="19" selection-end-line="5" selection-end-column="19" />
           <folding />
         </state>
       </provider>

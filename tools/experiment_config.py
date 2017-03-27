@@ -140,6 +140,9 @@ class ExperimentConfig:
 
         curr_res['git_hash'] = self.git_hash
 
+        for key, val in self.config['general'].iteritems():
+            curr_res[key] = val
+
         for key, val in self.results.iteritems():
             curr_res[key] = val
 
