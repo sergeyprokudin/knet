@@ -310,7 +310,7 @@ def main(_):
                 learning_rate = 0.0001
                 nnms_model.switch_scoring(loss_mode)
                 logging.info("current loss mode : %s" % loss_mode)
-                logging.info("learning rate : %d" % learning_rate)
+                logging.info("learning rate : %f" % learning_rate)
 
             for fid in shuffle_samples(n_frames_train):
 
@@ -328,10 +328,10 @@ def main(_):
 
                 if loss_mode == 'nms':
                     summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.nms_train_step],
-                                            feed_dict=feed_dict)
+                                            feed_dict = feed_dict)
                 else:
                     summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.det_train_step],
-                                            feed_dict=feed_dict)
+                                            feed_dict = feed_dict)
 
                 end_step = timer()
 
