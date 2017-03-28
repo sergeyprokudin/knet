@@ -79,14 +79,27 @@ class NMSNetwork:
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.class_scores = self._inference_ops_experimental()
+            self.iou_feature, self.logits, self.sigmoid = self._inference_ops_top_k()
+            self.class_scores = self.sigmoid
             self.det_labels, self.det_loss = self._detection_loss_ops()
+            self.nms_labels, self.elementwise_nms_loss, self.nms_loss = self._nms_loss()
+            self.nms_scores = self.sigmoid
             self.labels = self.det_labels
             self.loss = self.det_loss
             self.train_step = self._train_step(self.loss)
+            self.nms_train_step = self._train_step(self.nms_loss)
+            self.det_train_step = self._train_step(self.det_loss)
+            self.class_scores_nms = tf.multiply(1 - self.nms_scores, self.dt_probs)
             self.merged_summaries = self._summary_ops()
 
         self.init_op = self._init_ops()
+
+    def switch_scoring(self, score_name):
+        if score_name == 'detection':
+            self.class_scores = self.sigmoid
+        elif score_name == 'nms':
+            self.class_scores = self.class_scores_nms
+        return
 
     def _input_ops(self):
 
@@ -191,7 +204,7 @@ class NMSNetwork:
 
         return iou_feature, logits, class_scores
 
-    def _inference_ops_experimental(self):
+    def _inference_ops_top_k(self):
 
         if self.n_classes == 1:
             highest_prob = tf.reduce_max(self.dt_probs, axis=1)
@@ -317,14 +330,18 @@ class NMSNetwork:
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id,
                                                                       iou_threshold=self.gt_match_iou_thr)
 
-            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.class_scores,
+            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.sigmoid,
                                                                          gt_per_label,
                                                                          class_id))
 
         labels = tf.stack(class_labels, axis=1)
 
-        loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels,
-                                                       logits=self.logits)
+        if self.class_scores_func == 'softmax':
+            loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
+                                                           logits=self.logits)
+        else:
+            loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels,
+                                                           logits=self.logits)
 
         self.det_loss_elementwise = loss
 
@@ -364,7 +381,7 @@ class NMSNetwork:
         # suppression_map = self.pairwise_obj_features[:, :,
         #                   self.n_dt_features+1] > self.pairwise_obj_features[:, :, 1]
 
-        iou_map = self.pairwise_obj_features[:, :, 0] > 0.5
+        iou_map = self.pairwise_obj_features[:, :, 0] > 0.3
 
         nms_pairwise_labels = tf.logical_and(suppression_map, iou_map)
 
@@ -374,15 +391,8 @@ class NMSNetwork:
 
         nms_labels = tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
 
-        elementwise_loss = tf.nn.weighted_cross_entropy_with_logits(self.logits,
-                                                                    nms_labels,
-                                                                    pos_weight=self.pos_weight)
-
-        # symmetry breaking constraint
-        # exclusive_explainig_constraint = 0.5 * tf.multiply(self.pairwise_explain_probs,
-        #                                                     tf.transpose(self.pairwise_explain_probs))
-
-        # self.exclusive_explainig_constraint = exclusive_explainig_constraint
+        elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
+                                                                   logits=self.logits)
 
         loss_final = tf.reduce_mean(elementwise_loss)
 

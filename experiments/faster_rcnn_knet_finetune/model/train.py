@@ -277,6 +277,7 @@ def main(_):
     lr_decay_applied = False
 
     with tf.Session() as sess:
+
         step_id = 0
 
         sess.run(nnms_model.init_op)
@@ -295,10 +296,21 @@ def main(_):
 
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
+        loss_mode = 'nms'
+        nnms_model.switch_scoring(loss_mode)
+        logging.info("current loss mode : %s" % loss_mode)
+
         logging.info('training started..')
         for epoch_id in range(0, config.n_epochs):
 
             step_times = []
+
+            if epoch_id > 2:
+                loss_mode = 'detection'
+                learning_rate = 0.0001
+                nnms_model.switch_scoring(loss_mode)
+                logging.info("current loss mode : %s" % loss_mode)
+                logging.info("learning rate : %d" % learning_rate)
 
             for fid in shuffle_samples(n_frames_train):
 
@@ -314,8 +326,13 @@ def main(_):
 
                 start_step = timer()
 
-                summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.train_step],
-                                      feed_dict=feed_dict)
+                if loss_mode == 'nms':
+                    summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.nms_train_step],
+                                            feed_dict=feed_dict)
+                else:
+                    summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.det_train_step],
+                                            feed_dict=feed_dict)
+
                 end_step = timer()
 
                 step_times.append(end_step-start_step)

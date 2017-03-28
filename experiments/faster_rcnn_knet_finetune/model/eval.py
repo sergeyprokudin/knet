@@ -54,9 +54,9 @@ def eval_model(sess, nnms_model, frames_data,
                      nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}
 
-        inference_new, dt_dt_iou, loss, labels_tf = sess.run(
+        inference_new,  dt_dt_iou, loss, labels_tf, nms_labels_tf = sess.run(
             [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
-             nnms_model.labels],
+             nnms_model.labels, nnms_model.nms_labels],
             feed_dict=feed_dict)
 
         if one_class:
@@ -81,9 +81,13 @@ def eval_model(sess, nnms_model, frames_data,
 
         # if np.sum(labels_eval != labels_tf) != 0:
         #     import ipdb; ipdb.set_trace()
+
         # else:
         #     if np.sum(labels_eval) > 0:
         #         logging.info('labels are not zero and the same')
+
+        # if np.sum(labels_eval) > 0:
+        #     import ipdb; ipdb.set_trace()
 
         losses.append(loss)
         inference_orig_all.append(inference_original)
