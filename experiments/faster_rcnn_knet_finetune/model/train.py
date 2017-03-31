@@ -220,7 +220,7 @@ def main(_):
                                       root_log_dir=FLAGS.log_dir,
                                       config_path=FLAGS.config_path)
 
-    learning_rate = config.learning_rate
+    learning_rate = config.learning_rate_nms
 
     class_of_interest = config.config['general']['class_of_interest']
 
@@ -315,12 +315,11 @@ def main(_):
             step_times = []
             losses = np.zeros(n_frames_train)
 
-            if epoch_id == 3:
+            if epoch_id == config.loss_change_step:
+                learning_rate = config.learning_rate_det
                 loss_mode = 'detection'
-                learning_rate = 0.000001
-                # nnms_model.switch_scoring(loss_mode)
-                logging.info("current loss mode : %s" % loss_mode)
-                logging.info("learning rate : %f" % learning_rate)
+                logging.info('switching loss to actual detection loss..')
+                logging.info('learning rate to %f' % learning_rate)
 
             for fid in shuffle_samples(n_frames_train):
 
@@ -345,8 +344,8 @@ def main(_):
                                           feed_dict=feed_dict)
                 else:
                     summary, _ = sess.run([nnms_model.merged_summaries,
-                       nnms_model.det_train_step],
-                      feed_dict=feed_dict)
+                                           nnms_model.det_train_step],
+                                          feed_dict=feed_dict)
 
                 end_step = timer()
 
@@ -360,11 +359,6 @@ def main(_):
             # import ipdb; ipdb.set_trace()
 
             logging.info('epoch %d finished ' % epoch_id)
-
-            # if ((epoch_id+1) % config.lr_decay_step == 0) and (not lr_decay_applied):
-            #     learning_rate *= 0.1
-            #     lr_decay_applied = True
-            #     logging.info('decreasing learning rate to %f' % learning_rate)
 
             if (epoch_id+1) % config.eval_step == 0:
 

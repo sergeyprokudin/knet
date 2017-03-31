@@ -50,8 +50,9 @@ class ExperimentConfig:
         self.nms_thres = self.eval_config.get('nms_thres', 0.5)
 
         self.train_config = self.nms_network_config.get('training', {})
-        self.learning_rate = self.train_config.get('learning_rate', 0.001)
-        self.lr_decay_step = self.train_config.get('lr_decay_step', 5)
+        self.learning_rate_nms = self.train_config.get('learning_rate_nms', 0.0001)
+        self.learning_rate_det = self.train_config.get('learning_rate_det', 0.000001)
+        self.loss_change_step = self.train_config.get('loss_change_step', 6)
         self.keep_prob_train = self.train_config.get('keep_prob', 1.0)
         self.top_k_hypotheses = self.train_config.get('top_k_hypotheses', 20)
 
