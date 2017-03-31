@@ -60,6 +60,7 @@ class NMSNetwork:
 
         self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
         self.optimizer_to_use = train_args.get('optimizer', 'Adam')
+        self.nms_label_iou = train_args.get('nms_label_iou', 0.3)
         self.learning_rate = tf.placeholder(tf.float32)
 
         if input_ops is None:
@@ -394,7 +395,7 @@ class NMSNetwork:
         # suppression_map = self.pairwise_obj_features[:, :,
         #                   self.n_dt_features+1] > self.pairwise_obj_features[:, :, 1]
 
-        iou_map = self.pairwise_obj_features[:, :, 0] > 0.3
+        iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
 
         nms_pairwise_labels = tf.logical_and(suppression_map, iou_map)
 

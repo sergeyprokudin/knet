@@ -19,6 +19,7 @@ nms_network:
         optimizer: Adam # possible choices : Adam, SGD
         lr_decay_step: 20
         keep_prob: 1.0
+        nms_label_iou: 0.3
         n_epochs: 50
     evaluation:
         eval_step: 1
