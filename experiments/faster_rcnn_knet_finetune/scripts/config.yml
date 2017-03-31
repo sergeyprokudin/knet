@@ -5,7 +5,7 @@ general:
 data_provider:
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 5
+    n_bboxes: 20
 nms_network:
     architecture:
         knet_hlayer_size: 512
@@ -14,7 +14,7 @@ nms_network:
         fc_apres_layer_size: 512
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
-        top_k_hypotheses: 5
+        top_k_hypotheses: 20
         learning_rate: 0.0001
         optimizer: Adam # possible choices : Adam, SGD
         lr_decay_step: 20

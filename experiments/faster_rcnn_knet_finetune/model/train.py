@@ -83,6 +83,13 @@ def softmax(logits):
     return np.exp(logits) / np.tile(np.sum(np.exp(logits),
                                            axis=1).reshape(-1, 1), [1, n_classes])
 
+def generate_frame_probs(frames_data):
+    gt_cnt = np.zeros([1, len(frames_data)])
+    for fid, data in frames_data.iteritems():
+        gt_cnt[0, fid] = len(frames_data[fid][nms_net.GT_LABELS])
+    frame_probs = softmax(gt_cnt)
+    return frame_probs
+
 def split_by_frames(data, n_bboxes):
     unique_fids = np.unique(np.hstack([data[nms_net.DT_COORDS][:, 0], data[nms_net.GT_COORDS][:, 0]])).astype(int)
     get_frame_data_partial = partial(get_frame_data, data=data, n_bboxes=n_bboxes)
@@ -297,22 +304,28 @@ def main(_):
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
         loss_mode = 'nms'
-        nnms_model.switch_scoring(loss_mode)
+        # nnms_model.switch_scoring(loss_mode)
         logging.info("current loss mode : %s" % loss_mode)
+
+        # train_frame_probs = np.squeeze(generate_frame_probs(frames_data_train), axis=0)
 
         logging.info('training started..')
         for epoch_id in range(0, config.n_epochs):
 
             step_times = []
+            losses = np.zeros(n_frames_train)
 
-            if epoch_id > 2:
+            if epoch_id == 3:
                 loss_mode = 'detection'
-                learning_rate = 0.0001
-                nnms_model.switch_scoring(loss_mode)
+                learning_rate = 0.00001
+                # nnms_model.switch_scoring(loss_mode)
                 logging.info("current loss mode : %s" % loss_mode)
                 logging.info("learning rate : %f" % learning_rate)
 
             for fid in shuffle_samples(n_frames_train):
+
+                # frame_dist = np.squeeze(softmax(losses.reshape([1,-1])))
+                # frame_id = np.random.choice(range(0, n_frames_train), p=frame_dist)
 
                 frame_data = frames_data_train[fid]
 
@@ -327,11 +340,13 @@ def main(_):
                 start_step = timer()
 
                 if loss_mode == 'nms':
-                    summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.nms_train_step],
-                                            feed_dict = feed_dict)
+                    summary, _ = sess.run([nnms_model.merged_summaries,
+                                           nnms_model.nms_train_step],
+                                          feed_dict=feed_dict)
                 else:
-                    summary, _ = sess.run([nnms_model.merged_summaries, nnms_model.det_train_step],
-                                            feed_dict = feed_dict)
+                    summary, _ = sess.run([nnms_model.merged_summaries,
+                       nnms_model.det_train_step],
+                      feed_dict=feed_dict)
 
                 end_step = timer()
 
@@ -342,12 +357,14 @@ def main(_):
 
                 step_id += 1
 
+            # import ipdb; ipdb.set_trace()
+
             logging.info('epoch %d finished ' % epoch_id)
 
-            if ((epoch_id+1) % config.lr_decay_step == 0) and (not lr_decay_applied):
-                learning_rate *= 0.1
-                lr_decay_applied = True
-                logging.info('decreasing learning rate to %f' % learning_rate)
+            # if ((epoch_id+1) % config.lr_decay_step == 0) and (not lr_decay_applied):
+            #     learning_rate *= 0.1
+            #     lr_decay_applied = True
+            #     logging.info('decreasing learning rate to %f' % learning_rate)
 
             if (epoch_id+1) % config.eval_step == 0:
 

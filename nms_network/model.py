@@ -80,7 +80,7 @@ class NMSNetwork:
         with tf.variable_scope(self.VAR_SCOPE):
 
             self.iou_feature, self.logits, self.sigmoid = self._inference_ops_top_k()
-            self.class_scores = self.sigmoid
+            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs)
             self.det_labels, self.det_loss = self._detection_loss_ops()
             self.nms_labels, self.elementwise_nms_loss, self.nms_loss = self._nms_loss()
             self.nms_scores = self.sigmoid
@@ -89,17 +89,17 @@ class NMSNetwork:
             self.train_step = self._train_step(self.loss)
             self.nms_train_step = self._train_step(self.nms_loss)
             self.det_train_step = self._train_step(self.det_loss)
-            self.class_scores_nms = tf.multiply(1 - self.nms_scores, self.dt_probs)
+            # self.class_scores_nms = tf.multiply(self.nms_scores, self.dt_probs)
             self.merged_summaries = self._summary_ops()
 
         self.init_op = self._init_ops()
 
-    def switch_scoring(self, score_name):
-        if score_name == 'detection':
-            self.class_scores = self.sigmoid
-        elif score_name == 'nms':
-            self.class_scores = self.class_scores_nms
-        return
+    # def switch_scoring(self, score_name):
+    #     if score_name == 'detection':
+    #         self.class_scores = self.sigmoid
+    #     elif score_name == 'nms':
+    #         self.class_scores = self.class_scores_nms
+    #     return
 
     def _input_ops(self):
 
@@ -319,7 +319,8 @@ class NMSNetwork:
 
     def _detection_loss_ops(self):
 
-        class_labels = []
+        classes_labels_independent = []
+        classes_labels_final = []
 
         pairwise_dt_gt_coords = spatial.construct_pairwise_features_tf(
             self.dt_coords, self.gt_coords)
@@ -327,14 +328,26 @@ class NMSNetwork:
         dt_gt_iou = tf.squeeze(spatial.compute_pairwise_spatial_features_iou_tf(pairwise_dt_gt_coords), 2)
 
         for class_id in range(0, self.n_classes):
+
+            class_labels_independent = losses.construct_independent_labels(dt_gt_iou,
+                                                                           self.gt_labels,
+                                                                           class_id,
+                                                                           iou_threshold=self.gt_match_iou_thr)
+
+            classes_labels_independent.append(class_labels_independent)
+
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id,
                                                                       iou_threshold=self.gt_match_iou_thr)
 
-            class_labels.append(losses.compute_match_gt_net_per_label_tf(self.sigmoid,
+            classes_labels_final.append(losses.compute_match_gt_net_per_label_tf(self.sigmoid,
                                                                          gt_per_label,
                                                                          class_id))
 
-        labels = tf.stack(class_labels, axis=1)
+        # self.classes_labels_independent = tf.stack(classes_labels_independent, axis=1)
+        self.classes_labels_final = tf.stack(classes_labels_final, axis=1)
+        # self.filter_labels = tf.to_float(tf.equal(self.classes_labels_independent, self.classes_labels_final))
+
+        labels = self.classes_labels_final
 
         if self.class_scores_func == 'softmax':
             loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels,
@@ -389,7 +402,7 @@ class NMSNetwork:
 
         self.nms_pairwise_labels = nms_pairwise_labels
 
-        nms_labels = tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
+        nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
 
         elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
                                                                    logits=self.logits)

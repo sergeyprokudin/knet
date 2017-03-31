@@ -64,6 +64,49 @@ def construct_ground_truth_per_label_tf(dt_gt_iou,
         return tf.cond(tf.equal(n_gt_hypotheses, 0), _empty, _not_empty)
 
 
+def construct_independent_labels(dt_gt_iou,
+                                 gt_labels,
+                                 label,
+                                 iou_threshold=0.5,
+                                 name_or_scope=None):
+    with tf.device('cpu'):
+        with tf.variable_scope(
+                name_or_scope,
+                default_name='construct_ground_truth_per_label',
+                values=[dt_gt_iou, gt_labels]):
+            dt_gt_iou.get_shape().assert_has_rank(2)
+            gt_labels.get_shape().assert_has_rank(1)
+
+            # The gt_coords are in the format
+            # [n_gt_hypotheses, (x, y, w, h, label)]
+            # The dt_gt_iou are in the format
+            # [n_hypotheses, (iou_gt_0, ... , iou_gt_n)]
+
+            # The indices are on the labels which allow us to select the
+            # right subselection of the dt_gt_iou.
+            gt_hypotheses_indices = tf.where(tf.equal(gt_labels, label))
+
+            # We transpose to subselect the gt_hypotheses
+            dt_gt_iou_transpose = tf.transpose(dt_gt_iou)
+            dt_gt_iou_transpose_subset = tf.squeeze(
+                tf.gather(dt_gt_iou_transpose, gt_hypotheses_indices), [1])
+
+            # We want to operate on the hypotheses again, so we transpose back.
+            dt_gt_iou_subset = tf.transpose(dt_gt_iou_transpose_subset)
+
+            dt_gt_shape = tf.shape(dt_gt_iou_subset)
+
+            n_dt_hypotheses = dt_gt_shape[0]
+            n_gt_hypotheses = dt_gt_shape[1]
+
+            def _empty():
+                return tf.zeros([n_dt_hypotheses])
+
+            def _not_empty():
+                return tf.to_float(tf.reduce_max(dt_gt_iou_subset, axis=1) > iou_threshold)
+
+        return tf.cond(tf.equal(n_gt_hypotheses, 0), _empty, _not_empty)
+
 def binarize(tensor, condition):
     return tf.where(
         condition,
