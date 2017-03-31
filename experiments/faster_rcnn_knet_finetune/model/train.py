@@ -317,7 +317,7 @@ def main(_):
 
             if epoch_id == 3:
                 loss_mode = 'detection'
-                learning_rate = 0.00001
+                learning_rate = 0.000001
                 # nnms_model.switch_scoring(loss_mode)
                 logging.info("current loss mode : %s" % loss_mode)
                 logging.info("learning rate : %f" % learning_rate)
