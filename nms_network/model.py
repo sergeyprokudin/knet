@@ -95,12 +95,12 @@ class NMSNetwork:
 
         self.init_op = self._init_ops()
 
-    # def switch_scoring(self, score_name):
-    #     if score_name == 'detection':
-    #         self.class_scores = self.sigmoid
-    #     elif score_name == 'nms':
-    #         self.class_scores = self.class_scores_nms
-    #     return
+    def switch_scoring(self, score_name):
+        if score_name == 'detection':
+            self.class_scores = self.sigmoid
+        elif score_name == 'nms':
+            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs)
+        return
 
     def _input_ops(self):
 

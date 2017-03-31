@@ -1,7 +1,7 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: person # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: aeroplane # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121
@@ -15,8 +15,8 @@ nms_network:
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         top_k_hypotheses: 20
-        learning_rate_nms: 0.0001
-        learning_rate_det: 0.000001
+        learning_rate_nms: 0.001
+        learning_rate_det: 0.00001
         loss_change_step: 6
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
@@ -24,6 +24,6 @@ nms_network:
         n_epochs: 50
     evaluation:
         eval_step: 1
-        full_eval_step: 1
+        full_eval_step: 3
         n_eval_frames: 100
         nms_thres: 0.6
