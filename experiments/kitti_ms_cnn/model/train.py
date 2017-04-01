@@ -13,7 +13,7 @@ from numpy.random import RandomState
 import os
 import tensorflow as tf
 from google.apputils import app
-from nms_network_old import model as nms_net
+from nms_network import model as nms_net
 import eval_supp
 from data import get_frame_data_fixed
 from tools import experiment_config as expconf
