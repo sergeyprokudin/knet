@@ -389,21 +389,28 @@ class NMSNetwork:
 
     def _nms_loss(self):
 
-        suppression_map = self.pairwise_obj_features[:, :,
+        nms_labels = []
+
+        for class_id in range(0, self.n_classes):
+
+            suppression_map = self.pairwise_obj_features[:, :,
                           self.class_ix + self.n_dt_features+1] > self.pairwise_obj_features[:, :, self.class_ix + 1]
+
+            iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
+
+            nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
+
+            nms_labels.append(1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1]))
 
         # suppression_map = self.pairwise_obj_features[:, :,
         #                   self.n_dt_features+1] > self.pairwise_obj_features[:, :, 1]
 
-        iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
-
-        nms_pairwise_labels = tf.logical_and(suppression_map, iou_map)
-
-        nms_pairwise_labels = tf.to_float(nms_pairwise_labels)
-
         self.nms_pairwise_labels = nms_pairwise_labels
 
-        nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
+        nms_labels = tf.stack(nms_labels, axis=1)
+
+        if self.n_classes == 1:
+            nms_labels = tf.squeeze(nms_labels, axis=2)
 
         elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
                                                                    logits=self.logits)
