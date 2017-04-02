@@ -394,7 +394,7 @@ class NMSNetwork:
         for class_id in range(0, self.n_classes):
 
             suppression_map = self.pairwise_obj_features[:, :,
-                          self.class_ix + self.n_dt_features+1] > self.pairwise_obj_features[:, :, self.class_ix + 1]
+                          self.class_id + self.n_dt_features+1] > self.pairwise_obj_features[:, :, self.class_id + 1]
 
             iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
 
