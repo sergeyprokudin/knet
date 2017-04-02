@@ -59,13 +59,9 @@ def eval_model(sess, nnms_model, frames_data,
              nnms_model.labels],
             feed_dict=feed_dict)
 
-        # nms_labels, dt_dt_iou, ppf, sm, ioum, cnmsl = sess.run([nnms_model.nms_labels,
-        #                                              nnms_model.iou_feature,
-        #                                              nnms_model.pairwise_probs_features,
-        #                                              nnms_model.suppression_map,
-        #                                              nnms_model.iou_map,
-        #                                              nnms_model.class_nms_labels], feed_dict=feed_dict)
-        #
+        # nms_labels, dt_dt_iou = sess.run([nnms_model.nms_labels,
+        #                                              nnms_model.iou_feature], feed_dict=feed_dict)
+
 
         if one_class:
             # expecting probability for class being already softmaxed
@@ -135,7 +131,7 @@ def eval_model(sess, nnms_model, frames_data,
                 inference_new,
                 dt_is_suppressed_info=is_suppressed_new))
 
-        # import ipdb; ipdb.set_trace()
+        import ipdb; ipdb.set_trace()
 
     # if loss < 0:
     #     import ipdb; ipdb.set_trace()

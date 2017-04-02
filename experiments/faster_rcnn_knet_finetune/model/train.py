@@ -306,7 +306,7 @@ def main(_):
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
         loss_mode = 'nms'
-        # nnms_model.switch_scoring(loss_mode)
+        nnms_model.switch_loss('nms')
         logging.info("current loss mode : %s" % loss_mode)
 
         # train_frame_probs = np.squeeze(generate_frame_probs(frames_data_train), axis=0)
@@ -320,6 +320,7 @@ def main(_):
             if epoch_id == config.loss_change_step:
                 learning_rate = config.learning_rate_det
                 loss_mode = 'detection'
+                nnms_model.switch_loss('detection')
                 logging.info('switching loss to actual detection loss..')
                 logging.info('learning rate to %f' % learning_rate)
 

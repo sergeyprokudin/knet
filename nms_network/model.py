@@ -96,12 +96,12 @@ class NMSNetwork:
 
         self.init_op = self._init_ops()
 
-    # def switch_scoring(self, score_name):
-    #     if score_name == 'detection':
-    #         self.class_scores = self.sigmoid
-    #     elif score_name == 'nms':
-    #         self.class_scores = self.class_scores_nms
-    #     return
+    def switch_loss(self, score_name):
+        if score_name == 'detection':
+            self.loss = self.det_loss
+        elif score_name == 'nms':
+            self.loss = self.nms_loss
+        return
 
     def _input_ops(self):
 
@@ -416,19 +416,19 @@ class NMSNetwork:
                 suppression_map = self.pairwise_probs_features[:, :, class_id + self.n_classes] >\
                                   self.pairwise_probs_features[:, :, class_id]
 
-                self.suppression_map = suppression_map
+                #self.suppression_map = suppression_map
 
                 iou_map = self.iou_feature[:, :, 0] > self.nms_label_iou
 
-                self.iou_map = iou_map
+                #self.iou_map = iou_map
 
                 nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
 
-                self.nms_pairwise_labels = nms_pairwise_labels
+                #self.nms_pairwise_labels = nms_pairwise_labels
 
                 class_nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
 
-                self.class_nms_labels = class_nms_labels
+                #self.class_nms_labels = class_nms_labels
 
                 nms_labels.append(class_nms_labels)
 
