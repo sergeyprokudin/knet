@@ -400,7 +400,8 @@ class NMSNetwork:
 
             nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
 
-            nms_labels.append(1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1]))
+            nms_labels.append(tf.squeeze(1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1]),
+                                         axis=1))
 
         # suppression_map = self.pairwise_obj_features[:, :,
         #                   self.n_dt_features+1] > self.pairwise_obj_features[:, :, 1]
