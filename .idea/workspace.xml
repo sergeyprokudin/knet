@@ -43,8 +43,8 @@
           <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-3.5580206">
-                  <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                <state vertical-scroll-proportion="0.46075085">
+                  <caret line="90" column="0" selection-start-line="90" selection-start-column="0" selection-end-line="90" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -107,17 +107,17 @@
           <file leaf-file-name="model.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/nms_network/model.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.63993174">
-                  <caret line="104" column="75" selection-start-line="104" selection-start-column="75" selection-end-line="104" selection-end-column="75" />
+                <state vertical-scroll-proportion="0.53754264">
+                  <caret line="94" column="0" selection-start-line="94" selection-start-column="0" selection-end-line="94" selection-end-column="0" />
                   <folding>
                     <element signature="e#43#66#0" expanded="true" />
-                    <element signature="e#4157#5042#0" expanded="false" />
-                    <element signature="e#5083#8418#0" expanded="false" />
-                    <element signature="e#8465#12033#0" expanded="false" />
-                    <element signature="e#12193#12959#0" expanded="false" />
-                    <element signature="e#13005#15087#0" expanded="false" />
-                    <element signature="e#15132#16152#0" expanded="false" />
-                    <element signature="e#16188#18294#0" expanded="false" />
+                    <element signature="e#4129#5014#0" expanded="false" />
+                    <element signature="e#5055#8390#0" expanded="false" />
+                    <element signature="e#8437#12005#0" expanded="false" />
+                    <element signature="e#12165#12931#0" expanded="false" />
+                    <element signature="e#12977#15059#0" expanded="false" />
+                    <element signature="e#15104#16124#0" expanded="false" />
+                    <element signature="e#16160#18266#0" expanded="false" />
                   </folding>
                 </state>
               </provider>
@@ -860,7 +860,7 @@
           <option name="timeStamp" value="27" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="35" />
+      <option name="time" value="36" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -871,13 +871,13 @@
           <caret line="271" column="0" selection-start-line="271" selection-start-column="0" selection-end-line="271" selection-end-column="0" />
           <folding>
             <element signature="e#43#66#0" expanded="true" />
-            <element signature="e#4157#5042#0" expanded="false" />
-            <element signature="e#5083#8418#0" expanded="false" />
-            <element signature="e#8465#12033#0" expanded="false" />
-            <element signature="e#12193#12959#0" expanded="false" />
-            <element signature="e#13005#15087#0" expanded="false" />
-            <element signature="e#15132#16152#0" expanded="false" />
-            <element signature="e#16188#18294#0" expanded="false" />
+            <element signature="e#4129#5014#0" expanded="false" />
+            <element signature="e#5055#8390#0" expanded="false" />
+            <element signature="e#8437#12005#0" expanded="false" />
+            <element signature="e#12165#12931#0" expanded="false" />
+            <element signature="e#12977#15059#0" expanded="false" />
+            <element signature="e#15104#16124#0" expanded="false" />
+            <element signature="e#16160#18266#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1013,13 +1013,13 @@
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#43#66#0" expanded="true" />
-            <element signature="e#4157#5042#0" expanded="false" />
-            <element signature="e#5083#8418#0" expanded="false" />
-            <element signature="e#8465#12033#0" expanded="false" />
-            <element signature="e#12193#12959#0" expanded="false" />
-            <element signature="e#13005#15087#0" expanded="false" />
-            <element signature="e#15132#16152#0" expanded="false" />
-            <element signature="e#16188#18294#0" expanded="false" />
+            <element signature="e#4129#5014#0" expanded="false" />
+            <element signature="e#5055#8390#0" expanded="false" />
+            <element signature="e#8437#12005#0" expanded="false" />
+            <element signature="e#12165#12931#0" expanded="false" />
+            <element signature="e#12977#15059#0" expanded="false" />
+            <element signature="e#15104#16124#0" expanded="false" />
+            <element signature="e#16160#18266#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1217,16 +1217,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-12.777778">
-          <caret line="133" column="10" selection-start-line="133" selection-start-column="10" selection-end-line="133" selection-end-column="10" />
-          <folding>
-            <element signature="e#6354#9322#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-5.5555553">
@@ -1237,27 +1227,37 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-12.777778">
+          <caret line="133" column="10" selection-start-line="133" selection-start-column="10" selection-end-line="133" selection-end-column="10" />
+          <folding>
+            <element signature="e#6354#9322#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-3.5580206">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.46075085">
+          <caret line="90" column="0" selection-start-line="90" selection-start-column="0" selection-end-line="90" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/nms_network/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.63993174">
-          <caret line="104" column="75" selection-start-line="104" selection-start-column="75" selection-end-line="104" selection-end-column="75" />
+        <state vertical-scroll-proportion="0.53754264">
+          <caret line="94" column="0" selection-start-line="94" selection-start-column="0" selection-end-line="94" selection-end-column="0" />
           <folding>
             <element signature="e#43#66#0" expanded="true" />
-            <element signature="e#4157#5042#0" expanded="false" />
-            <element signature="e#5083#8418#0" expanded="false" />
-            <element signature="e#8465#12033#0" expanded="false" />
-            <element signature="e#12193#12959#0" expanded="false" />
-            <element signature="e#13005#15087#0" expanded="false" />
-            <element signature="e#15132#16152#0" expanded="false" />
-            <element signature="e#16188#18294#0" expanded="false" />
+            <element signature="e#4129#5014#0" expanded="false" />
+            <element signature="e#5055#8390#0" expanded="false" />
+            <element signature="e#8437#12005#0" expanded="false" />
+            <element signature="e#12165#12931#0" expanded="false" />
+            <element signature="e#12977#15059#0" expanded="false" />
+            <element signature="e#15104#16124#0" expanded="false" />
+            <element signature="e#16160#18266#0" expanded="false" />
           </folding>
         </state>
       </provider>
