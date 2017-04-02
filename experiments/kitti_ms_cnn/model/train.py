@@ -129,7 +129,7 @@ def main(_):
 
                 feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                              nnms_model.dt_features: frame_data['dt_features'],
-                             nnms_model.dt_probs: frame_data['dt_probs'],
+                             nnms_model.dt_probs_ini: frame_data['dt_probs'],
                              nnms_model.gt_coords: frame_data['gt_coords'],
                              nnms_model.gt_labels: frame_data['gt_labels'],
                              # nnms_model.nms_labels: frame_data['nms_labels'],
@@ -177,7 +177,7 @@ def main(_):
 
                         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                                      nnms_model.dt_features: frame_data['dt_features'],
-                                     nnms_model.dt_probs: frame_data['dt_probs'],
+                                     nnms_model.dt_probs_ini: frame_data['dt_probs'],
                                      nnms_model.gt_coords: frame_data['gt_coords'],
                                      nnms_model.gt_labels: frame_data['gt_labels'],
                                      # nnms_model.nms_labels: frame_data['nms_labels'],
@@ -202,7 +202,7 @@ def main(_):
 
                         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                                      nnms_model.dt_features: frame_data['dt_features'],
-                                     nnms_model.dt_probs: frame_data['dt_probs'],
+                                     nnms_model.dt_probs_ini: frame_data['dt_probs'],
                                      nnms_model.gt_coords: frame_data['gt_coords'],
                                      nnms_model.gt_labels: frame_data['gt_labels'],
                                      # nnms_model.nms_labels: frame_data['nms_labels'],

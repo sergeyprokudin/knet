@@ -31,6 +31,7 @@ class NMSNetwork:
                  input_ops=None,
                  gt_match_iou_thr=0.5,
                  class_ix=15,
+                 softmax_ini_scores=False,
                  **kwargs):
 
         # model main parameters
@@ -64,12 +65,12 @@ class NMSNetwork:
         self.learning_rate = tf.placeholder(tf.float32)
 
         if input_ops is None:
-            self.dt_coords, self.dt_features, self.dt_probs, \
+            self.dt_coords, self.dt_features, self.dt_probs_ini, \
                 self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
-            self.dt_probs = input_ops['dt_probs']
+            self.dt_probs_ini = input_ops['dt_probs']
             self.gt_labels = input_ops['gt_labels']
             self.gt_coords = input_ops['gt_coords']
             self.keep_prob = input_ops['keep_prob']
@@ -131,10 +132,10 @@ class NMSNetwork:
     def _inference_ops(self):
 
         if self.n_classes == 1:
-            highest_prob = tf.reduce_max(self.dt_probs, axis=1)
+            highest_prob = tf.reduce_max(self.dt_probs_ini, axis=1)
         else:
             # we are considering all classes, skip the backgorund class
-            highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
+            highest_prob = tf.reduce_max(self.dt_probs_ini[:, 1:], axis=1)
 
         _, top_ix = tf.nn.top_k(highest_prob, k=self.top_k_hypotheses)
 
@@ -208,10 +209,10 @@ class NMSNetwork:
     def _inference_ops_top_k(self):
 
         if self.n_classes == 1:
-            highest_prob = tf.reduce_max(self.dt_probs, axis=1)
+            highest_prob = tf.reduce_max(self.dt_probs_ini, axis=1)
         else:
             # we are considering all classes, skipping the backgorund class
-            highest_prob = tf.reduce_max(self.dt_probs[:, 1:], axis=1)
+            highest_prob = tf.reduce_max(self.dt_probs_ini[:, 1:], axis=1)
 
         _, top_ix = tf.nn.top_k(highest_prob, k=self.top_k_hypotheses)
 
@@ -393,33 +394,50 @@ class NMSNetwork:
 
         if self.n_classes == 1:
 
-            suppression_map = self.pairwise_obj_features[:, :,
-                              self.class_ix + self.n_dt_features+1] > self.pairwise_obj_features[:, :, self.class_ix + 1]
+            self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_ini)
 
-            iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
+            suppression_map = self.pairwise_probs_features[:, :, 1] > \
+                              self.pairwise_probs_features[:, :, 0]
+
+            iou_map = self.iou_feature[:, :, 0] > self.nms_label_iou
 
             nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
 
             nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
 
         else:
+
+            self.dt_probs_softmax = tf.nn.softmax(self.dt_probs_ini)
+
+            self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_softmax)
+
             for class_id in range(0, self.n_classes):
 
-                suppression_map = self.pairwise_obj_features[:, :,
-                                  class_id + self.n_dt_features+1] > self.pairwise_obj_features[:, :, class_id + 1]
+                suppression_map = self.pairwise_probs_features[:, :, class_id + self.n_classes] >\
+                                  self.pairwise_probs_features[:, :, class_id]
 
-                iou_map = self.pairwise_obj_features[:, :, 0] > self.nms_label_iou
+                self.suppression_map = suppression_map
+
+                iou_map = self.iou_feature[:, :, 0] > self.nms_label_iou
+
+                self.iou_map = iou_map
 
                 nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
 
-                nms_labels.append(1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes]))
+                self.nms_pairwise_labels = nms_pairwise_labels
 
-            nms_labels = tf.stack(nms_labels, axis=1)
+                class_nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
+
+                self.class_nms_labels = class_nms_labels
+
+                nms_labels.append(class_nms_labels)
+
+            nms_labels = tf.squeeze(tf.stack(nms_labels, axis=1), axis=2)
 
         # suppression_map = self.pairwise_obj_features[:, :,
         #                   self.n_dt_features+1] > self.pairwise_obj_features[:, :, 1]
 
-        #self.nms_pairwise_labels = nms_pairwise_labels
+        # self.nms_pairwise_labels = nms_pairwise_labels
 
         elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
                                                                    logits=self.logits)

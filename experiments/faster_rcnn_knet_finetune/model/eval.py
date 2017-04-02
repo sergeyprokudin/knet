@@ -49,7 +49,7 @@ def eval_model(sess, nnms_model, frames_data,
 
         feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                      nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                     nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+                     nnms_model.dt_probs_ini: frame_data[nms_net.DT_SCORES],
                      nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                      nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                      nnms_model.keep_prob: 1.0}
@@ -58,6 +58,14 @@ def eval_model(sess, nnms_model, frames_data,
             [nnms_model.class_scores, nnms_model.iou_feature, nnms_model.loss,
              nnms_model.labels],
             feed_dict=feed_dict)
+
+        # nms_labels, dt_dt_iou, ppf, sm, ioum, cnmsl = sess.run([nnms_model.nms_labels,
+        #                                              nnms_model.iou_feature,
+        #                                              nnms_model.pairwise_probs_features,
+        #                                              nnms_model.suppression_map,
+        #                                              nnms_model.iou_map,
+        #                                              nnms_model.class_nms_labels], feed_dict=feed_dict)
+        #
 
         if one_class:
             # expecting probability for class being already softmaxed
@@ -126,6 +134,8 @@ def eval_model(sess, nnms_model, frames_data,
                 frame_data[nms_net.GT_LABELS],
                 inference_new,
                 dt_is_suppressed_info=is_suppressed_new))
+
+        # import ipdb; ipdb.set_trace()
 
     # if loss < 0:
     #     import ipdb; ipdb.set_trace()

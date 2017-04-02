@@ -221,13 +221,14 @@ def main(_):
                                       config_path=FLAGS.config_path)
 
     learning_rate = config.learning_rate_nms
-
+    softmax_ini_scores = False
     class_of_interest = config.config['general']['class_of_interest']
 
     if class_of_interest == 'all':
         is_one_class = False
         class_ix = 0
         n_classes = TOTAL_NUMBER_OF_CLASSES
+        softmax_ini_scores = True
     else:
         is_one_class = True
         class_ix = CLASSES.index(class_of_interest)
@@ -280,6 +281,7 @@ def main(_):
                                     loss_type='nms_loss',
                                     gt_match_iou_thr=0.5,
                                     class_ix=class_ix,
+                                    softmax_ini_scores=softmax_ini_scores,
                                     **config.nms_network_config)
     lr_decay_applied = False
 
@@ -330,7 +332,7 @@ def main(_):
 
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs: frame_data[nms_net.DT_SCORES],
+                             nnms_model.dt_probs_ini: frame_data[nms_net.DT_SCORES],
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
                              nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
                              nnms_model.keep_prob: config.keep_prob_train,
