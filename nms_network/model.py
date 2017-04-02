@@ -99,8 +99,10 @@ class NMSNetwork:
     def switch_loss(self, score_name):
         if score_name == 'detection':
             self.loss = self.det_loss
+            self.class_scores = self.sigmoid #tf.multiply(self.sigmoid, self.dt_probs)
         elif score_name == 'nms':
             self.loss = self.nms_loss
+            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs)
         return
 
     def _input_ops(self):
