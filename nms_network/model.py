@@ -81,7 +81,7 @@ class NMSNetwork:
         with tf.variable_scope(self.VAR_SCOPE):
 
             self.iou_feature, self.logits, self.sigmoid = self._inference_ops_top_k()
-            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs)
+            self.class_scores = self.sigmoid #tf.multiply(self.sigmoid, self.dt_probs)
             self.det_labels, self.det_loss = self._detection_loss_ops()
             self.nms_labels, self.elementwise_nms_loss, self.nms_loss = self._nms_loss()
             self.nms_scores = self.sigmoid
