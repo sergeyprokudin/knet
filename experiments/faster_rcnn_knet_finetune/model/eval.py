@@ -131,7 +131,7 @@ def eval_model(sess, nnms_model, frames_data,
                 inference_new,
                 dt_is_suppressed_info=is_suppressed_new))
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
     # if loss < 0:
     #     import ipdb; ipdb.set_trace()
