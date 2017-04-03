@@ -20,10 +20,10 @@ nms_network:
         loss_change_step: 5
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
-        nms_label_iou: 0.5
+        nms_label_iou: 0.3
         n_epochs: 50
     evaluation:
         eval_step: 1
         full_eval_step: 1
         n_eval_frames: 100
-        nms_thres: 0.5
+        nms_thres: 0.3

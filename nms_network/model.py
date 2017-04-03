@@ -395,8 +395,6 @@ class NMSNetwork:
 
     def _nms_loss(self):
 
-        nms_labels = []
-
         if self.n_classes == 1:
 
             self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_ini)
@@ -416,24 +414,22 @@ class NMSNetwork:
 
             self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_softmax)
 
-            for class_id in range(0, self.n_classes):
+            nms_labels = []
+
+            background_class_labels = tf.zeros([self.n_bboxes, 1])
+
+            nms_labels.append(background_class_labels)
+
+            for class_id in range(1, self.n_classes):
 
                 suppression_map = self.pairwise_probs_features[:, :, class_id + self.n_classes] >\
                                   self.pairwise_probs_features[:, :, class_id]
 
-                #self.suppression_map = suppression_map
-
                 iou_map = self.iou_feature[:, :, 0] > self.nms_label_iou
-
-                #self.iou_map = iou_map
 
                 nms_pairwise_labels = tf.to_float(tf.logical_and(suppression_map, iou_map))
 
-                #self.nms_pairwise_labels = nms_pairwise_labels
-
                 class_nms_labels = 1 - tf.reshape(tf.reduce_max(nms_pairwise_labels, axis=1), [self.n_bboxes, 1])
-
-                #self.class_nms_labels = class_nms_labels
 
                 nms_labels.append(class_nms_labels)
 
