@@ -101,7 +101,11 @@ class NMSNetwork:
             self.class_scores = self.sigmoid #tf.multiply(self.sigmoid, self.dt_probs)
         elif score_name == 'nms':
             self.loss = self.nms_loss
-            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs_ini)
+            if self.n_classes != 1:
+                scores = tf.nn.softmax(self.dt_probs_ini)
+            else:
+                scores = self.dt_probs_ini
+            self.class_scores = tf.multiply(self.sigmoid, scores)
         return
 
     def _input_ops(self):
