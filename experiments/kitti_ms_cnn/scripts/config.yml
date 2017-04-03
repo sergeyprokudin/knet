@@ -1,35 +1,29 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
+    class_of_interest: car # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
-    n_features: 100
-    n_bboxes: 20
+    shuffle_train_test: False
+    n_features : 121
+    n_bboxes: 300
 nms_network:
     architecture:
-        use_object_features: True
-        use_coords_features: False
-        use_iou_features: True
-        fc_ini_layer_size: 256
-        fc_ini_layers_cnt: 2
-        fc_pre_layer_size: 256
-        fc_pre_layers_cnt: 2
         knet_hlayer_size: 512
         n_kernels: 128
-        n_kernel_iterations: 2
-        reuse_kernels: False
-        fc_apres_layer_size: 256
-        fc_apres_layers_cnt: 2
-        reuse_apres_fc_layers: False
-        softmax_kernel: True
+        n_kernel_iterations: 1
+        fc_apres_layer_size: 512
+        class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
-        pos_weight: 1.0
-        n_neg_samples: 10
-        use_hinge_loss: False
-        optimizer_step: 0.001
-        keep_prob: 0.5
-        n_epochs: 100
-        n_neg_examples: 10
+        top_k_hypotheses: 300
+        learning_rate_nms: 0.0001
+        learning_rate_det: 0.00001
+        loss_change_step: 5
+        optimizer: Adam # possible choices : Adam, SGD
+        keep_prob: 1.0
+        nms_label_iou: 0.3
+        n_epochs: 50
     evaluation:
         eval_step: 1
-        full_eval: True
-        nms_thres: 0.75
+        full_eval_step: 1
+        n_eval_frames: 100
+        nms_thres: 0.3

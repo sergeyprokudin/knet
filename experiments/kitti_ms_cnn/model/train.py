@@ -78,7 +78,7 @@ def main(_):
     frames_ids = np.asarray([int(ntpath.basename(path).split('.')[0]) for path in os.listdir(labels_dir)])
 
     n_frames = len(frames_ids)
-    n_bboxes_test = 20
+    n_bboxes_test = config.n_bboxes
     n_classes = 1
     half = n_frames/2
     learning_rate = 0.001
@@ -95,9 +95,12 @@ def main(_):
 
     nnms_model = nms_net.NMSNetwork(n_classes=1,
                                     input_ops=in_ops,
-                                    loss_type='nms_loss',
+                                    loss_type='detection',
                                     gt_match_iou_thr=0.7,
+                                    class_ix=0,
                                     **config.nms_network_config)
+
+    # import ipdb; ipdb.set_trace()
 
     logging.info('training started..')
 
@@ -136,22 +139,8 @@ def main(_):
                              nnms_model.keep_prob: config.keep_prob_train,
                              nnms_model.learning_rate: learning_rate}
 
-                # if step_id == 3000:
-                #     learning_rate = 0.0001
-                #     logging.info('decreasing learning rate to %s' % str(learning_rate))
-
-                # if step_id < 1000:
-                #
-                #     _ = sess.run([nnms_model.pair_loss_train_step],
-                #                  feed_dict=feed_dict,
-                #                  options=run_options,
-                #                  run_metadata=run_metadata)
-                # else:
-
                 _ = sess.run([nnms_model.det_train_step],
                                  feed_dict=feed_dict)
-
-                # import ipdb; ipdb.set_trace()
 
                 step_id += 1
 
