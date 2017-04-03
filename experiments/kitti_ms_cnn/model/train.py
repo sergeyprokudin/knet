@@ -148,7 +148,7 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 5000 == 0:
+                if step_id % 50 == 0:
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
@@ -156,7 +156,7 @@ def main(_):
 
                     train_losses = []
 
-                    for tfid in train_frames[0:100]:
+                    for tfid in train_frames[0:10]:
 
                         frame_data = get_frame_data_fixed(frame_id=tfid,
                                                     labels_dir=labels_dir,
@@ -181,7 +181,7 @@ def main(_):
 
                     test_losses = []
 
-                    for tfid in test_frames[0:100]:
+                    for tfid in test_frames[0:10]:
 
                         frame_data = get_frame_data_fixed(frame_id=tfid,
                                                     labels_dir=labels_dir,
