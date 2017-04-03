@@ -416,11 +416,11 @@ class NMSNetwork:
 
             nms_labels = []
 
-            background_class_labels = tf.zeros([self.n_bboxes, 1])
+            # background_class_labels = tf.ones([self.n_bboxes, 1])
 
-            nms_labels.append(background_class_labels)
+            # nms_labels.append(background_class_labels)
 
-            for class_id in range(1, self.n_classes):
+            for class_id in range(0, self.n_classes):
 
                 suppression_map = self.pairwise_probs_features[:, :, class_id + self.n_classes] >\
                                   self.pairwise_probs_features[:, :, class_id]
