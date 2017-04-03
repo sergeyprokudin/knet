@@ -16,6 +16,6 @@ cd ${PROJECT_DIR}
 set -x
 
 ${PYENV_BIN} experiments/kitti_ms_cnn/model/train.py  \
-            --data_dir="${EXPERIMENT_DIR}/data/" \
+            --data_dir="${EXPERIMENT_DIR}/data/~old/" \
             --root_log_dir="${EXPERIMENT_DIR}/logs/" \
             --config_path="${SCRIPT_DIR}/config_cluster.yml"
