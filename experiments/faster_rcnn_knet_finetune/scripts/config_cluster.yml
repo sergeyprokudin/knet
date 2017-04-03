@@ -1,17 +1,17 @@
 general:
     start_from_scratch: True
     logging_to_stdout: False
-    class_of_interest: aeroplane # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: all # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121
     n_bboxes: 300
 nms_network:
     architecture:
-        knet_hlayer_size: 512
-        n_kernels: 128
+        knet_hlayer_size: 1024
+        n_kernels: 256
         n_kernel_iterations: 1
-        fc_apres_layer_size: 512
+        fc_apres_layer_size: 1024
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         top_k_hypotheses: 300
