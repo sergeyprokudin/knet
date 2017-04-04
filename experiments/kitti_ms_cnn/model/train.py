@@ -152,7 +152,9 @@ def main(_):
 
         for epoch_id in range(0, 10):
 
-            for fid in train_frames:
+            epoch_frames = train_frames[shuffle_samples(n_train_samples)]
+
+            for fid in epoch_frames:
 
                 start_step = timer()
 
@@ -188,18 +190,18 @@ def main(_):
                                                                                                      str(np.mean(step_times)),
                                                                                                      str(np.mean(data_times))))
 
-                    # logging.info("eval on TRAIN..")
-                    # train_out_dir = os.path.join(config.log_dir, 'train')
-                    # train_map_knet, train_map_nms = eval_supp.eval_model(sess,
-                    #                                           nnms_model,
-                    #                                           detections_dir=detections_dir,
-                    #                                           labels_dir=labels_dir,
-                    #                                           eval_frames=train_frames,
-                    #                                           n_bboxes=config.n_bboxes,
-                    #                                           n_features=config.n_dt_features,
-                    #                                           global_step=step_id,
-                    #                                           out_dir=train_out_dir,
-                    #                                           nms_thres=0.75)
+                    logging.info("eval on TRAIN..")
+                    train_out_dir = os.path.join(config.log_dir, 'train')
+                    train_map_knet, train_map_nms = eval_supp.eval_model(sess,
+                                                              nnms_model,
+                                                              detections_dir=detections_dir,
+                                                              labels_dir=labels_dir,
+                                                              eval_frames=train_frames,
+                                                              n_bboxes=config.n_bboxes,
+                                                              n_features=config.n_dt_features,
+                                                              global_step=step_id,
+                                                              out_dir=train_out_dir,
+                                                              nms_thres=0.75)
 
                     logging.info("eval on TEST..")
                     test_out_dir = os.path.join(config.log_dir, 'test')

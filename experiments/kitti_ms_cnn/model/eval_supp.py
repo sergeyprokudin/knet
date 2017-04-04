@@ -107,7 +107,7 @@ def eval_model(sess,
 
         dt_coords_xywh = frame_data['dt_coords']
         dt_coords_xywh[:, 2] = dt_coords_xywh[:, 2] - dt_coords_xywh[:, 0]
-        dt_coords_xywh[:, 2] = dt_coords_xywh[:, 3] - dt_coords_xywh[:, 1]
+        dt_coords_xywh[:, 3] = dt_coords_xywh[:, 3] - dt_coords_xywh[:, 1]
         frame_col = (fid+1) * np.ones([len(dt_coords_xywh), 1])
 
         data_orig = np.hstack([frame_col, dt_coords_xywh, inference_orig])
