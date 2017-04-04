@@ -38,10 +38,12 @@ def eval_model(sess,
     inference_new_all = []
     inference_oracle_all = []
     gt_labels_all = []
+    losses = []
 
     eval_data = {}
     total_number_of_nms_fails = 0
     total_number_of_nms_supps = 0
+
     for fid in eval_frames:
 
         eval_data[fid] = {}
@@ -67,10 +69,10 @@ def eval_model(sess,
         inference_orig_all.append(inference_orig)
         eval_data[fid]['inference_orig'] = inference_orig
 
-        inference_new, inference_oracle,  dt_dt_iou = sess.run(
-            [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature], feed_dict=feed_dict)
+        inference_new, inference_oracle,  dt_dt_iou, loss = sess.run(
+            [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
 
-
+        losses.append(loss)
         inference_new_all.append(inference_new)
         inference_oracle_all.append(inference_oracle)
         eval_data[fid]['inference_new'] = inference_new
@@ -207,6 +209,7 @@ def eval_model(sess,
     map_knet_nms = np.nanmean(ap_new_nms)
     mean_nms_fails = total_number_of_nms_fails / float(total_number_of_nms_supps)
 
+    logging.info('loss : %d' % np.mean(losses))
     logging.info('mAP oracle : %f' % map_oracle)
     logging.info('mAP original inference : %f' % map_orig)
     logging.info('mAP original inference (best NMS IoU = %f) : %f' % (max_nms_thres, max_map_orig_nms))
