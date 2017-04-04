@@ -30,7 +30,7 @@ class NMSNetwork:
                  loss_type='best_iou',
                  input_ops=None,
                  gt_match_iou_thr=0.5,
-                 class_ix=0,
+                 class_ix=15,
                  **kwargs):
 
         # model main parameters

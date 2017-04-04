@@ -20,8 +20,13 @@ def eval_model(sess,
                eval_frames,
                n_bboxes,
                n_features,
+               global_step,
+               out_dir,
                nms_thres=0.7,
                gt_match_iou_thres=0.7):
+
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
     dt_gt_match_orig = []
     dt_gt_match_new = []
@@ -40,13 +45,12 @@ def eval_model(sess,
     gt_labels_all = []
     losses = []
 
-    eval_data = {}
+    eval_data_new = []
+    eval_data_orig = []
     total_number_of_nms_fails = 0
     total_number_of_nms_supps = 0
 
     for fid in eval_frames:
-
-        eval_data[fid] = {}
 
         frame_data = get_frame_data_fixed(frame_id=fid,
                                     labels_dir=labels_dir,
@@ -64,10 +68,7 @@ def eval_model(sess,
                      nnms_model.keep_prob: 1.0}
 
         inference_orig = frame_data['dt_probs']
-        eval_data[fid]['dt_coords'] = frame_data['dt_coords']
-
         inference_orig_all.append(inference_orig)
-        eval_data[fid]['inference_orig'] = inference_orig
 
         inference_new, inference_oracle,  dt_dt_iou, loss = sess.run(
             [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
@@ -75,8 +76,6 @@ def eval_model(sess,
         losses.append(loss)
         inference_new_all.append(inference_new)
         inference_oracle_all.append(inference_oracle)
-        eval_data[fid]['inference_new'] = inference_new
-        eval_data[fid]['inference_oracle'] = inference_oracle
 
         dt_gt_match_orig.append(
             metrics.match_dt_gt_all_classes(
@@ -106,9 +105,20 @@ def eval_model(sess,
                                                                     inference_orig,
                                                                     thrs=nms_thresholds)
 
+        dt_coords_xywh = frame_data['dt_coords']
+        dt_coords_xywh[:, 2] = dt_coords_xywh[:, 2] - dt_coords_xywh[:, 0]
+        dt_coords_xywh[:, 2] = dt_coords_xywh[:, 3] - dt_coords_xywh[:, 1]
+        frame_col = (fid+1) * np.ones([len(dt_coords_xywh), 1])
+
+        data_orig = np.hstack([frame_col, dt_coords_xywh, inference_orig])
+        data_orig = data_orig[np.where(is_suppressed_orig==False)[0]]
+        eval_data_orig.append(data_orig)
+        data_new = np.hstack([frame_col, dt_coords_xywh, inference_new])
+        eval_data_new.append(data_new)
+
         for i in range(0, is_suppressed_orig_all.shape[2]):
             dt_gt_match_orig_nms_all[i].append(metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
+                    frame_data[nms_net.DT_GT_IOU],
                 frame_data[nms_net.GT_LABELS],
                 inference_orig,
                 dt_is_suppressed_info=is_suppressed_orig_all[:, :, i],
@@ -209,7 +219,7 @@ def eval_model(sess,
     map_knet_nms = np.nanmean(ap_new_nms)
     mean_nms_fails = total_number_of_nms_fails / float(total_number_of_nms_supps)
 
-    logging.info('loss : %d' % np.mean(losses))
+    logging.info('loss : %f' % np.mean(losses))
     logging.info('mAP oracle : %f' % map_oracle)
     logging.info('mAP original inference : %f' % map_orig)
     logging.info('mAP original inference (best NMS IoU = %f) : %f' % (max_nms_thres, max_map_orig_nms))
@@ -218,6 +228,14 @@ def eval_model(sess,
     logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
     logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
                                                                                  str(mean_nms_fails)))
+
+    eval_data_orig = np.vstack(eval_data_orig)
+    out_file_orig = os.path.join(out_dir, 'kitti_car_mscnn_nms_' + str(global_step) + '.txt')
+    np.savetxt(out_file_orig, eval_data_orig, fmt='%.6f', delimiter=',')
+
+    eval_data_new = np.vstack(eval_data_new)
+    out_file_new = os.path.join(out_dir, 'kitti_car_mscnn_knet_' + str(global_step) + '.txt')
+    np.savetxt(out_file_new, eval_data_new, fmt='%.6f', delimiter=',')
 
     return map_knet, max_map_orig_nms
 

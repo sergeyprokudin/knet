@@ -15,7 +15,7 @@ import tensorflow as tf
 from google.apputils import app
 from nms_network import model as nms_net
 import eval_supp
-from data import get_frame_data_fixed
+from data import get_frame_data, get_frame_data_fixed
 from tools import experiment_config as expconf
 
 
@@ -113,10 +113,18 @@ def main(_):
     half = n_frames/2
     learning_rate = config.learning_rate_det
 
-    shuffled_samples = shuffle_samples(n_frames)
-    train_frames = frames_ids[shuffled_samples[0:half]]
+    # shuffled_samples = shuffle_samples(n_frames)
+    # train_frames = frames_ids[shuffled_samples[0:half]]
+
+    # test_frames = frames_ids[shuffled_samples[half:]]
+
+    train_frames_path = os.path.join(FLAGS.data_dir, 'train.txt')
+    train_frames = np.loadtxt(train_frames_path, dtype=int)
+
+    test_frames_path = os.path.join(FLAGS.data_dir, 'val.txt')
+    test_frames = np.loadtxt(test_frames_path, dtype=int)
+
     n_train_samples = len(train_frames)
-    test_frames = frames_ids[shuffled_samples[half:]]
     n_test_samples = len(test_frames)
 
     logging.info('building model graph..')
@@ -129,8 +137,6 @@ def main(_):
                                     gt_match_iou_thr=0.7,
                                     class_ix=0,
                                     **config.nms_network_config)
-
-    # import ipdb; ipdb.set_trace()
 
     saver = tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=1.0)
 
@@ -182,17 +188,21 @@ def main(_):
                                                                                                      str(np.mean(step_times)),
                                                                                                      str(np.mean(data_times))))
 
-                    logging.info("eval on TRAIN..")
-                    train_map_knet, train_map_nms = eval_supp.eval_model(sess,
-                                                              nnms_model,
-                                                              detections_dir=detections_dir,
-                                                              labels_dir=labels_dir,
-                                                              eval_frames=train_frames,
-                                                              n_bboxes=config.n_bboxes,
-                                                              n_features=config.n_dt_features,
-                                                              nms_thres=0.75)
+                    # logging.info("eval on TRAIN..")
+                    # train_out_dir = os.path.join(config.log_dir, 'train')
+                    # train_map_knet, train_map_nms = eval_supp.eval_model(sess,
+                    #                                           nnms_model,
+                    #                                           detections_dir=detections_dir,
+                    #                                           labels_dir=labels_dir,
+                    #                                           eval_frames=train_frames,
+                    #                                           n_bboxes=config.n_bboxes,
+                    #                                           n_features=config.n_dt_features,
+                    #                                           global_step=step_id,
+                    #                                           out_dir=train_out_dir,
+                    #                                           nms_thres=0.75)
 
                     logging.info("eval on TEST..")
+                    test_out_dir = os.path.join(config.log_dir, 'test')
                     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                                              nnms_model,
                                                              detections_dir=detections_dir,
@@ -200,6 +210,8 @@ def main(_):
                                                              eval_frames=test_frames,
                                                              n_bboxes=config.n_bboxes,
                                                              n_features=config.n_dt_features,
+                                                             global_step=step_id,
+                                                             out_dir=test_out_dir,
                                                              nms_thres=0.75)
 
                     if test_map_knet > test_map_nms:
@@ -207,8 +219,8 @@ def main(_):
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 
                     config.update_results(step_id,
-                                          train_map_knet,
-                                          train_map_nms,
+                                          0,
+                                          0,
                                           test_map_knet,
                                           test_map_nms,
                                           np.mean(step_times))

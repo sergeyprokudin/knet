@@ -21,10 +21,15 @@
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/knet.iml" afterPath="$PROJECT_DIR$/.idea/knet.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nms_network/model.py" afterPath="$PROJECT_DIR$/nms_network/model.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" afterPath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" afterPath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" afterPath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" />
@@ -54,11 +59,33 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="model.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/nms_network/model.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="107" column="16" selection-start-line="107" selection-start-column="16" selection-end-line="107" selection-end-column="16" />
+                  <folding>
+                    <element signature="e#18527#20107#0" expanded="false" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="val.txt" pinned="false" current-in-tab="false">
+            <entry file="file://$USER_HOME$/KITTI/ImageSets/val.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
           <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.7568757">
-                  <caret line="234" column="10" selection-start-line="234" selection-start-column="10" selection-end-line="234" selection-end-column="10" />
+                <state vertical-scroll-proportion="0.9064906">
+                  <caret line="139" column="0" selection-start-line="139" selection-start-column="0" selection-end-line="139" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -67,18 +94,18 @@
           <file leaf-file-name="config.yml" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="-11.769231">
-                  <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
+                <state vertical-scroll-proportion="-12.423077">
+                  <caret line="19" column="27" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
                   <folding />
                 </state>
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="eval_supp.py" pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+          <file leaf-file-name="config_cluster.yml" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.0">
-                  <caret line="211" column="45" selection-start-line="211" selection-start-column="45" selection-end-line="211" selection-end-column="45" />
+                <state vertical-scroll-proportion="-11.769231">
+                  <caret line="18" column="30" selection-start-line="18" selection-start-column="30" selection-end-line="18" selection-end-column="30" />
                   <folding />
                 </state>
               </provider>
@@ -87,12 +114,52 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
+        <leaf>
+          <file leaf-file-name="data.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.850385">
-                  <caret line="404" column="27" selection-start-line="404" selection-start-column="27" selection-end-line="404" selection-end-column="27" />
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="138" column="0" selection-start-line="138" selection-start-column="0" selection-end-line="138" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="eval_supp.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.15841584">
+                  <caret line="112" column="74" selection-start-line="112" selection-start-column="74" selection-end-line="112" selection-end-column="74" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="npyio.py" pinned="false" current-in-tab="false">
+            <entry file="file:///usr/local/lib/python2.7/site-packages/numpy/lib/npyio.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="968" column="45" selection-start-line="968" selection-start-column="35" selection-end-line="968" selection-end-column="45" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="eval.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="19" column="0" selection-start-line="19" selection-start-column="0" selection-end-line="20" selection-end-column="28" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="shape_base.py" pinned="false" current-in-tab="false">
+            <entry file="file:///usr/local/lib/python2.7/site-packages/numpy/core/shape_base.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.0">
+                  <caret line="231" column="4" selection-start-line="231" selection-start-column="4" selection-end-line="231" selection-end-column="4" />
                   <folding />
                 </state>
               </provider>
@@ -115,10 +182,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$USER_HOME$/Faster-RCNN_TF/tools/nmsnet.py" />
-        <option value="$USER_HOME$/Faster-RCNN_TF/experiments/scripts/faster_rcnn_end2end_test_nmsnet.sh" />
-        <option value="$USER_HOME$/Faster-RCNN_TF/experiments/scripts/faster_rcnn_end2end_train_nmsnet.sh" />
-        <option value="$USER_HOME$/Faster-RCNN_TF/experiments/cfgs/faster_rcnn_nmsnet_e2e.yml" />
         <option value="$USER_HOME$/Faster-RCNN_TF/experiments/cfgs/faster_rcnn_end2end.yml" />
         <option value="$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/train.py" />
         <option value="$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/frcnn_nmsnet.py" />
@@ -137,7 +200,6 @@
         <option value="$PROJECT_DIR$/nms_network/model_suppresion.py" />
         <option value="$PROJECT_DIR$/nms_network/knet.py" />
         <option value="$PROJECT_DIR$/tools/nms.py" />
-        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval.py" />
         <option value="$PROJECT_DIR$/tools/metrics.py" />
         <option value="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" />
@@ -159,11 +221,16 @@
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config.yml" />
         <option value="$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/test.py" />
         <option value="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts/config_cluster.yml" />
-        <option value="$PROJECT_DIR$/nms_network/model.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/train_cluster.sh" />
-        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
+        <option value="$USER_HOME$/mscnn/examples/kitti_result/eval/evaluate_object.cpp" />
+        <option value="$USER_HOME$/mscnn/examples/kitti_car/detections/val/vgg_7s_576_2x_25k_val/data/000001.txt" />
+        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py" />
+        <option value="$USER_HOME$/KITTI/ImageSets/train.txt" />
+        <option value="$USER_HOME$/KITTI/training/train.txt" />
+        <option value="$PROJECT_DIR$/nms_network/model.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" />
+        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" />
       </list>
@@ -214,7 +281,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="mscnn" />
+              <option name="myItemId" value="TensorBox" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -224,11 +291,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="mscnn" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
+              <option name="myItemId" value="KITTI" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -238,15 +301,11 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="mscnn" />
+              <option name="myItemId" value="KITTI" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="kitti" />
+              <option name="myItemId" value="training" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -313,10 +372,6 @@
               <option name="myItemId" value="kitti_ms_cnn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="model" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -329,72 +384,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="experiments" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="kitti_ms_cnn" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="experiments" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="faster_rcnn_knet_finetune" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="experiments" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="faster_rcnn_knet_finetune" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="model" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="knet" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="experiments" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="faster_rcnn_knet_finetune" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -404,24 +393,24 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$USER_HOME$/Faster-RCNN_TF" />
+    <property name="last_opened_file_path" value="$USER_HOME$/KITTI" />
     <property name="settings.editor.selected.configurable" value="terminal" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts" />
-      <recent name="$USER_HOME$/Faster-RCNN_TF/lib/datasets" />
-      <recent name="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts" />
-      <recent name="$PROJECT_DIR$/experiments/kitti_ms_cnn/model" />
-      <recent name="$PROJECT_DIR$/nms_network" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$USER_HOME$/KITTI/training" />
       <recent name="$USER_HOME$/TensorBox/data" />
       <recent name="$PROJECT_DIR$/knet" />
       <recent name="$PROJECT_DIR$/tf_layers" />
       <recent name="$PROJECT_DIR$/knet/" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$USER_HOME$/KITTI/ImageSets" />
+      <recent name="$USER_HOME$/KITTI/training" />
+      <recent name="$USER_HOME$/KITTI" />
       <recent name="$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/scripts" />
+      <recent name="$USER_HOME$/Faster-RCNN_TF/lib/datasets" />
     </key>
   </component>
   <component name="RunManager">
@@ -582,7 +571,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="2560" height="1337" extended-state="6" />
+    <frame x="0" y="23" width="2560" height="1337" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27530524" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -592,7 +581,7 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32895815" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32895815" sideWeight="0.4986215" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24970461" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23259623" sideWeight="0.49389523" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23133716" sideWeight="0.49389523" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -686,159 +675,17 @@
           <line>312</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py</url>
+          <line>52</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="36" />
+      <option name="time" value="37" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/experiments/scripts/faster_rcnn_end2end_eval_knet.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6029724">
-          <caret line="34" column="25" selection-start-line="34" selection-start-column="25" selection-end-line="34" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/nms_network/spatial.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="37" column="70" selection-start-line="37" selection-start-column="70" selection-end-line="37" selection-end-column="70" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train_e2e.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000014.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000015.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000016.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000017.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000018.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000019.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000021.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000022.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000024.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000026.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000027.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000028.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000029.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000030.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000031.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000045.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000044.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000042.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000041.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000040.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000039.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000038.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000037.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000033.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/Faster-RCNN_TF/data/VOCdevkit2007/VOC2007/JPEGImages/000032.jpg">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
     <entry file="file:///usr/local/lib/python2.7/site-packages/tensorflow/python/ops/nn.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -921,14 +768,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6633663">
-          <caret line="74" column="59" selection-start-line="74" selection-start-column="59" selection-end-line="74" selection-end-column="59" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.6171617">
@@ -942,16 +781,6 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="89" column="57" selection-start-line="89" selection-start-column="57" selection-end-line="89" selection-end-column="57" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="67" column="8" selection-start-line="67" selection-start-column="8" selection-end-line="67" selection-end-column="8" />
-          <folding>
-            <element signature="e#18526#20106#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -987,42 +816,262 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+    <entry file="file://$USER_HOME$/mscnn/data/kitti/ImageSets/trainval.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="211" column="45" selection-start-line="211" selection-start-column="45" selection-end-line="211" selection-end-column="45" />
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml">
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000033.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-11.769231">
-          <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000007.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000005.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.79427946">
+          <caret line="108" column="5" selection-start-line="108" selection-start-column="5" selection-end-line="108" selection-end-column="5" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/examples/kitti_result/eval/evaluate_object.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.7667767">
+          <caret line="776" column="4" selection-start-line="776" selection-start-column="4" selection-end-line="776" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/train_cluster.sub">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="12" column="0" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/examples/kitti_car/detections/kitti_8s_768_35k_trainval_car.txt">
+      <provider selected="true" editor-type-id="LargeFileEditor">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/data/kitti/ImageSets/val.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/data/kitti/ImageSets/test.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/ImageSets/test.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000010.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000008.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000006.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000004.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000002.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/mscnn/examples/kitti_car/detections/kitti_8s_768_35k_trainval_car_no_nms.txt">
+      <provider selected="true" editor-type-id="LargeFileEditor">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/site-packages/numpy/core/shape_base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="231" column="4" selection-start-line="231" selection-start-column="4" selection-end-line="231" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/ImageSets/train.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.31405896">
+          <caret line="3499" column="6" selection-start-line="3499" selection-start-column="6" selection-end-line="3499" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="19" column="0" selection-start-line="19" selection-start-column="0" selection-end-line="20" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="138" column="0" selection-start-line="138" selection-start-column="0" selection-end-line="138" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/site-packages/numpy/lib/npyio.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="968" column="45" selection-start-line="968" selection-start-column="35" selection-end-line="968" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/train.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.04070407">
+          <caret line="3499" column="6" selection-start-line="3499" selection-start-column="6" selection-end-line="3499" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/val.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nms_network/model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="107" column="16" selection-start-line="107" selection-start-column="16" selection-end-line="107" selection-end-column="16" />
+          <folding>
+            <element signature="e#18527#20107#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000000.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/training/label_2/000001.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.50056624">
-          <caret line="26" column="25" selection-start-line="26" selection-start-column="25" selection-end-line="26" selection-end-column="25" />
+        <state vertical-scroll-proportion="-11.769231">
+          <caret line="18" column="30" selection-start-line="18" selection-start-column="30" selection-end-line="18" selection-end-column="30" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/experiments/faster_rcnn_knet_finetune/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.850385">
-          <caret line="404" column="27" selection-start-line="404" selection-start-column="27" selection-end-line="404" selection-end-column="27" />
+        <state vertical-scroll-proportion="0.5137514">
+          <caret line="372" column="8" selection-start-line="372" selection-start-column="8" selection-end-line="372" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/KITTI/ImageSets/val.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.15841584">
+          <caret line="112" column="74" selection-start-line="112" selection-start-column="74" selection-end-line="112" selection-end-column="74" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-12.423077">
+          <caret line="19" column="27" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7568757">
-          <caret line="234" column="10" selection-start-line="234" selection-start-column="10" selection-end-line="234" selection-end-column="10" />
+        <state vertical-scroll-proportion="0.9064906">
+          <caret line="139" column="0" selection-start-line="139" selection-start-column="0" selection-end-line="139" selection-end-column="0" />
           <folding />
         </state>
       </provider>

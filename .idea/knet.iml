@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="mscnn" />
     <orderEntry type="module" module-name="py-faster-rcnn" />
     <orderEntry type="module" module-name="Faster-RCNN_TF" />
+    <orderEntry type="module" module-name="KITTI" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="myDocStringFormat" value="NumPy" />

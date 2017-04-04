@@ -94,6 +94,8 @@ def get_frame_data_fixed(frame_id,
                           usecols=[0, 4, 5, 6, 7],
                           names=['class', 'x1', 'y1', 'w', 'h'])
 
+    # gt_info = gt_info[gt_info['class'].isin(['Car', 'Van', 'Truck', 'Bus'])]
+
     gt_info = gt_info[gt_info['class'] == 'Car']
 
     dt_info = sio.loadmat(frame_dt_path)
