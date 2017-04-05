@@ -208,7 +208,8 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 5000 == 0:
+                if step_id % 10000 == 0:
+
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
