@@ -21,8 +21,7 @@
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_face_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_small_tf.py" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" afterPath="$USER_HOME$/YOLO_tensorflow/YOLO_tiny_tf.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" afterPath="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" afterPath="$USER_HOME$/mscnn/examples/kitti_car/run_mscnn_detection.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" afterPath="$USER_HOME$/mscnn/examples/kitti_result/writeDetForEval.m" />
       <change type="MODIFICATION" beforePath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" afterPath="$USER_HOME$/neural_nms/knet/knet_nms/model_knet_nms.py" />
@@ -52,10 +51,10 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="train.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.9438944">
+                <state vertical-scroll-proportion="0.0">
                   <caret line="210" column="30" selection-start-line="210" selection-start-column="30" selection-end-line="210" selection-end-column="30" />
                   <folding>
                     <element signature="e#915#1754#0" expanded="false" />
@@ -70,6 +69,16 @@
               <provider selected="true" editor-type-id="text-editor">
                 <state vertical-scroll-proportion="-11.769231">
                   <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="config_cluster.yml" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
+              <provider selected="true" editor-type-id="text-editor">
+                <state vertical-scroll-proportion="0.30804077">
+                  <caret line="16" column="28" selection-start-line="16" selection-start-column="28" selection-end-line="16" selection-end-column="28" />
                   <folding />
                 </state>
               </provider>
@@ -203,12 +212,12 @@
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py" />
         <option value="$USER_HOME$/KITTI/ImageSets/train.txt" />
         <option value="$USER_HOME$/KITTI/training/train.txt" />
-        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
         <option value="$USER_HOME$/Faster-RCNN_TF/lib/fast_rcnn/test.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/eval_supp.py" />
         <option value="$PROJECT_DIR$/nms_network/model.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py" />
         <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml" />
+        <option value="$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml" />
       </list>
     </option>
   </component>
@@ -1100,14 +1109,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34654588">
-          <caret line="18" column="30" selection-start-line="18" selection-start-column="30" selection-end-line="18" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/data.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1136,6 +1137,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="210" column="30" selection-start-line="210" selection-start-column="30" selection-end-line="210" selection-end-column="30" />
+          <folding>
+            <element signature="e#915#1754#0" expanded="false" />
+            <element signature="e#1915#2866#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config.yml">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-11.769231">
@@ -1144,14 +1156,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/model/train.py">
+    <entry file="file://$PROJECT_DIR$/experiments/kitti_ms_cnn/scripts/config_cluster.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.9438944">
-          <caret line="210" column="30" selection-start-line="210" selection-start-column="30" selection-end-line="210" selection-end-column="30" />
-          <folding>
-            <element signature="e#915#1754#0" expanded="false" />
-            <element signature="e#1915#2866#0" expanded="false" />
-          </folding>
+        <state vertical-scroll-proportion="0.30804077">
+          <caret line="16" column="28" selection-start-line="16" selection-start-column="28" selection-end-line="16" selection-end-column="28" />
+          <folding />
         </state>
       </provider>
     </entry>
