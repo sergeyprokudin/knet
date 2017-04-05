@@ -96,15 +96,15 @@ class NMSNetwork:
         self.init_op = self._init_ops()
 
     def switch_loss(self, score_name):
+        if self.n_classes != 1:
+            scores = tf.nn.softmax(self.dt_probs_ini)
+        else:
+            scores = self.dt_probs_ini
         if score_name == 'detection':
             self.loss = self.det_loss
-            self.class_scores = self.sigmoid #tf.multiply(self.sigmoid, self.dt_probs)
+            self.class_scores = tf.multiply(self.sigmoid, scores)
         elif score_name == 'nms':
             self.loss = self.nms_loss
-            if self.n_classes != 1:
-                scores = tf.nn.softmax(self.dt_probs_ini)
-            else:
-                scores = self.dt_probs_ini
             self.class_scores = tf.multiply(self.sigmoid, scores)
         return
 

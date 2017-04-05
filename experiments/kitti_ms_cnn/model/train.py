@@ -124,6 +124,9 @@ def main(_):
     test_frames_path = os.path.join(FLAGS.data_dir, 'val.txt')
     test_frames = np.loadtxt(test_frames_path, dtype=int)
 
+
+    train_out_dir = os.path.join(config.log_dir, 'train')
+    test_out_dir = os.path.join(config.log_dir, 'test')
     n_train_samples = len(train_frames)
     n_test_samples = len(test_frames)
 
@@ -154,9 +157,10 @@ def main(_):
         nnms_model.switch_loss('nms')
         logging.info("current loss mode : %s" % loss_mode)
 
-        for epoch_id in range(0, 10):
+        for epoch_id in range(0, config.n_epochs):
 
             epoch_frames = train_frames[shuffle_samples(n_train_samples)]
+            losses = []
 
             if epoch_id == config.loss_change_step:
                 learning_rate = config.learning_rate_det
@@ -187,14 +191,18 @@ def main(_):
                              nnms_model.learning_rate: learning_rate}
 
                 if loss_mode == 'nms':
-                    summary, _ = sess.run([nnms_model.merged_summaries,
+                    summary, loss, _ = sess.run([nnms_model.merged_summaries,
+                                            nnms_model.nms_loss,
                                            nnms_model.nms_train_step],
                                           feed_dict=feed_dict)
                 else:
-                    summary, _ = sess.run([nnms_model.merged_summaries,
+                    summary, loss,  _ = sess.run([nnms_model.merged_summaries,
+                                           nnms_model.det_loss,
                                            nnms_model.det_train_step],
                                           feed_dict=feed_dict)
+
                 step_id += 1
+                losses.append(loss)
 
                 end_step = timer()
                 step_times.append(end_step-start_step)
@@ -207,7 +215,7 @@ def main(_):
                                                                                                      str(np.mean(data_times))))
 
                     logging.info("eval on TRAIN..")
-                    train_out_dir = os.path.join(config.log_dir, 'train')
+
                     train_map_knet, train_map_nms = eval_supp.eval_model(sess,
                                                               nnms_model,
                                                               detections_dir=detections_dir,
@@ -220,7 +228,7 @@ def main(_):
                                                               nms_thres=config.nms_thres)
 
                     logging.info("eval on TEST..")
-                    test_out_dir = os.path.join(config.log_dir, 'test')
+
                     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                                                          nnms_model,
                                                                          detections_dir=detections_dir,
@@ -253,6 +261,8 @@ def main(_):
                                               eval_frames=train_frames,
                                               n_bboxes=config.n_bboxes,
                                               n_features=config.n_dt_features,
+                                              global_step=step_id,
+                                              out_dir=train_out_dir,
                                               nms_thres=config.nms_thres)
 
         test_map_knet, test_map_nms = eval_supp.eval_model(sess,
