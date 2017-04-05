@@ -173,7 +173,7 @@ def main(_):
                              nnms_model.gt_labels: frame_data['gt_labels'],
                              # nnms_model.nms_labels: frame_data['nms_labels'],
                              nnms_model.keep_prob: config.keep_prob_train,
-                             nnms_model.learning_rate: config.learning_rate_det}
+                             nnms_model.learning_rate: learning_rate}
 
                 _ = sess.run([nnms_model.det_train_step],
                                  feed_dict=feed_dict)
@@ -184,7 +184,7 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 5000 == 0:
+                if step_id % 2000 == 0:
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
@@ -201,51 +201,55 @@ def main(_):
                                                               n_features=config.n_dt_features,
                                                               global_step=step_id,
                                                               out_dir=train_out_dir,
-                                                              nms_thres=0.75)
+                                                              nms_thres=config.nms_thres)
 
                     logging.info("eval on TEST..")
                     test_out_dir = os.path.join(config.log_dir, 'test')
                     test_map_knet, test_map_nms = eval_supp.eval_model(sess,
-                                                             nnms_model,
-                                                             detections_dir=detections_dir,
-                                                             labels_dir=labels_dir,
-                                                             eval_frames=test_frames,
-                                                             n_bboxes=config.n_bboxes,
-                                                             n_features=config.n_dt_features,
-                                                             global_step=step_id,
-                                                             out_dir=test_out_dir,
-                                                             nms_thres=0.75)
+                                                                         nnms_model,
+                                                                         detections_dir=detections_dir,
+                                                                         labels_dir=labels_dir,
+                                                                         eval_frames=test_frames,
+                                                                         n_bboxes=config.n_bboxes,
+                                                                         n_features=config.n_dt_features,
+                                                                         global_step=step_id,
+                                                                         out_dir=test_out_dir,
+                                                                         nms_thres=config.nms_thres)
 
                     if test_map_knet > test_map_nms:
-                        learning_rate = 0.0001
+                        learning_rate *= 0.1
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 
                     config.update_results(step_id,
-                                          0,
-                                          0,
+                                          train_map_knet,
+                                          train_map_nms,
                                           test_map_knet,
                                           test_map_nms,
                                           np.mean(step_times))
                     config.save_results()
                     saver.save(sess, config.model_file, global_step=step_id)
 
-    train_map_knet, train_map_nms = eval_supp.eval_model(sess,
+        train_map_knet, train_map_nms = eval_supp.eval_model(sess,
                                               nnms_model,
                                               detections_dir=detections_dir,
                                               labels_dir=labels_dir,
                                               eval_frames=train_frames,
                                               n_bboxes=config.n_bboxes,
                                               n_features=config.n_dt_features,
-                                              nms_thres=0.75)
+                                              nms_thres=config.nms_thres)
 
-    test_map_knet, test_map_nms = eval_supp.eval_model(sess,
+        test_map_knet, test_map_nms = eval_supp.eval_model(sess,
                                              nnms_model,
                                              detections_dir=detections_dir,
                                              labels_dir=labels_dir,
                                              eval_frames=test_frames,
                                              n_bboxes=config.n_bboxes,
                                              n_features=config.n_dt_features,
-                                             nms_thres=0.75)
+                                             global_step=step_id,
+                                             out_dir=test_out_dir,
+                                             nms_thres=config.nms_thres)
+        config.save_results()
+        saver.save(sess, config.model_file, global_step=step_id)
     return
 
 if __name__ == '__main__':
