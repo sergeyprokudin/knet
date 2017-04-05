@@ -120,7 +120,7 @@ def eval_model(sess,
         data_orig = data_orig[np.where(inference_orig > det_thres)[0]]
         eval_data_orig.append(data_orig)
         data_new = np.hstack([frame_col, dt_coords_xywh, inference_new])
-        data_new = data_new[np.where(inference_new > det_thres)[0]]
+        # data_new = data_new[np.where(inference_new > det_thres)[0]]
         eval_data_new.append(data_new)
 
         for i in range(0, is_suppressed_orig_all.shape[2]):

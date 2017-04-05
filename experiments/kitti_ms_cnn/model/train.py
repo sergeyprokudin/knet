@@ -150,9 +150,20 @@ def main(_):
         step_times = []
         data_times = []
 
+        loss_mode = 'nms'
+        nnms_model.switch_loss('nms')
+        logging.info("current loss mode : %s" % loss_mode)
+
         for epoch_id in range(0, 10):
 
             epoch_frames = train_frames[shuffle_samples(n_train_samples)]
+
+            if epoch_id == config.loss_change_step:
+                learning_rate = config.learning_rate_det
+                loss_mode = 'detection'
+                nnms_model.switch_loss('detection')
+                logging.info('switching loss to actual detection loss..')
+                logging.info('learning rate to %f' % learning_rate)
 
             for fid in epoch_frames:
 
@@ -175,9 +186,14 @@ def main(_):
                              nnms_model.keep_prob: config.keep_prob_train,
                              nnms_model.learning_rate: learning_rate}
 
-                _ = sess.run([nnms_model.det_train_step],
-                                 feed_dict=feed_dict)
-
+                if loss_mode == 'nms':
+                    summary, _ = sess.run([nnms_model.merged_summaries,
+                                           nnms_model.nms_train_step],
+                                          feed_dict=feed_dict)
+                else:
+                    summary, _ = sess.run([nnms_model.merged_summaries,
+                                           nnms_model.det_train_step],
+                                          feed_dict=feed_dict)
                 step_id += 1
 
                 end_step = timer()
@@ -216,10 +232,10 @@ def main(_):
                                                                          out_dir=test_out_dir,
                                                                          nms_thres=config.nms_thres)
 
-                    if (train_map_knet > train_map_nms) and (not lr_decay_applied):
-                        learning_rate *= 0.1
-                        lr_decay_applied = True
-                        logging.info('decreasing learning rate to %s' % str(learning_rate))
+                    # if (train_map_knet > train_map_nms) and (not lr_decay_applied):
+                    #     learning_rate *= 0.1
+                    #     lr_decay_applied = True
+                    #     logging.info('decreasing learning rate to %s' % str(learning_rate))
 
                     config.update_results(step_id,
                                           train_map_knet,
