@@ -112,7 +112,7 @@ def main(_):
     n_classes = 1
     half = n_frames/2
     learning_rate = config.learning_rate_det
-
+    lr_decay_applied = False
     # shuffled_samples = shuffle_samples(n_frames)
     # train_frames = frames_ids[shuffled_samples[0:half]]
 
@@ -184,7 +184,7 @@ def main(_):
                 step_times.append(end_step-start_step)
                 data_times.append(data_step-start_step)
 
-                if step_id % 2000 == 0:
+                if step_id % 5000 == 0:
 
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
@@ -216,8 +216,9 @@ def main(_):
                                                                          out_dir=test_out_dir,
                                                                          nms_thres=config.nms_thres)
 
-                    if test_map_knet > test_map_nms:
+                    if (train_map_knet > train_map_nms) and (not lr_decay_applied):
                         learning_rate *= 0.1
+                        lr_decay_applied = True
                         logging.info('decreasing learning rate to %s' % str(learning_rate))
 
                     config.update_results(step_id,

@@ -23,7 +23,8 @@ def eval_model(sess,
                global_step,
                out_dir,
                nms_thres=0.7,
-               gt_match_iou_thres=0.7):
+               gt_match_iou_thres=0.7,
+               det_thres=0.0001):
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -45,8 +46,11 @@ def eval_model(sess,
     gt_labels_all = []
     losses = []
 
-    eval_data_new = []
+
     eval_data_orig = []
+    eval_data_orig_nms = []
+    eval_data_new = []
+
     total_number_of_nms_fails = 0
     total_number_of_nms_supps = 0
 
@@ -111,9 +115,12 @@ def eval_model(sess,
         frame_col = (fid+1) * np.ones([len(dt_coords_xywh), 1])
 
         data_orig = np.hstack([frame_col, dt_coords_xywh, inference_orig])
-        data_orig = data_orig[np.where(is_suppressed_orig==False)[0]]
+        data_orig_nms = data_orig[np.where(is_suppressed_orig == False)[0]]
+        eval_data_orig_nms.append(data_orig_nms)
+        data_orig = data_orig[np.where(inference_orig > det_thres)[0]]
         eval_data_orig.append(data_orig)
         data_new = np.hstack([frame_col, dt_coords_xywh, inference_new])
+        data_new = data_new[np.where(inference_new > det_thres)[0]]
         eval_data_new.append(data_new)
 
         for i in range(0, is_suppressed_orig_all.shape[2]):
@@ -230,8 +237,12 @@ def eval_model(sess,
                                                                                  str(mean_nms_fails)))
 
     eval_data_orig = np.vstack(eval_data_orig)
-    out_file_orig = os.path.join(out_dir, 'kitti_car_mscnn_nms_' + str(global_step) + '.txt')
+    out_file_orig = os.path.join(out_dir, 'kitti_car_mscnn_nonms_' + str(global_step) + '.txt')
     np.savetxt(out_file_orig, eval_data_orig, fmt='%.6f', delimiter=',')
+
+    eval_data_orig_nms = np.vstack(eval_data_orig_nms)
+    out_file_orig_nms = os.path.join(out_dir, 'kitti_car_mscnn_nms_' + str(global_step) + '.txt')
+    np.savetxt(out_file_orig_nms, eval_data_orig_nms, fmt='%.6f', delimiter=',')
 
     eval_data_new = np.vstack(eval_data_new)
     out_file_new = os.path.join(out_dir, 'kitti_car_mscnn_knet_' + str(global_step) + '.txt')
