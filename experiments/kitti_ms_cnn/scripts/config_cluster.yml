@@ -15,7 +15,7 @@ nms_network:
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         top_k_hypotheses: 20
-        learning_rate_nms: 0.001
+        learning_rate_nms: 0.01
         learning_rate_det: 0.001
         loss_change_step: 50
         optimizer: Adam # possible choices : Adam, SGD

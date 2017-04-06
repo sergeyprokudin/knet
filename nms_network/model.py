@@ -27,7 +27,7 @@ class NMSNetwork:
 
     def __init__(self,
                  n_classes,
-                 loss_type='best_iou',
+                 loss_type='nms',
                  input_ops=None,
                  gt_match_iou_thr=0.5,
                  class_ix=15,
@@ -61,7 +61,14 @@ class NMSNetwork:
         self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
         self.optimizer_to_use = train_args.get('optimizer', 'Adam')
         self.nms_label_iou = train_args.get('nms_label_iou', 0.3)
-        self.learning_rate = tf.placeholder(tf.float32)
+
+        self.starter_learning_rate_nms = train_args.get('learning_rate_nms', 0.001)
+        self.decay_steps_nms = train_args.get('decay_steps_nms', 10000)
+        self.decay_rate_nms = train_args.get('decay_rate_nms', 0.96)
+
+        self.starter_learning_rate_det = train_args.get('learning_rate_det', 0.001)
+        self.decay_steps_det = train_args.get('decay_steps_det', 10000)
+        self.decay_rate_det = train_args.get('decay_rate_det', 0.96)
 
         if input_ops is None:
             self.dt_coords, self.dt_features, self.dt_probs_ini, \
@@ -81,31 +88,50 @@ class NMSNetwork:
         with tf.variable_scope(self.VAR_SCOPE):
 
             self.iou_feature, self.logits, self.sigmoid = self._inference_ops_top_k()
-            self.class_scores = self.sigmoid #tf.multiply(self.sigmoid, self.dt_probs)
+
+            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs_ini)
+
+            # NMS labels
+            self.nms_labels, self.nms_loss = self._nms_loss_ops()
+            self.global_step_nms = tf.Variable(0, trainable=False)
+            self.learning_rate_nms = tf.train.exponential_decay(self.starter_learning_rate_nms,
+                                                                self.global_step_nms,
+                                                                self.decay_steps_nms,
+                                                                self.decay_rate_nms,
+                                                                staircase=True)
+            self.nms_train_step = tf.train.AdamOptimizer(self.learning_rate_nms).minimize(self.nms_loss,
+                                                                        global_step=self.global_step_nms)
+
+            # detection labels
             self.det_labels, self.det_loss = self._detection_loss_ops()
-            self.nms_labels, self.elementwise_nms_loss, self.nms_loss = self._nms_loss()
-            self.nms_scores = self.sigmoid
-            self.labels = self.det_labels
-            self.loss = self.det_loss
-            self.train_step = self._train_step(self.loss)
-            self.nms_train_step = self._train_step(self.nms_loss)
-            self.det_train_step = self._train_step(self.det_loss)
-            # self.class_scores_nms = tf.multiply(self.nms_scores, self.dt_probs)
+            self.global_step_det = tf.Variable(0, trainable=False)
+            self.learning_rate_det = tf.train.exponential_decay(self.starter_learning_rate_det,
+                                                                self.global_step_det,
+                                                                self.decay_steps_det,
+                                                                self.decay_rate_det,
+                                                                staircase=True)
+            self.det_train_step = self._train_step(loss=self.det_loss,
+                                                   learning_rate=self.learning_rate_det,
+                                                   global_step=self.global_step_det)
+
+            if loss_type == 'nms':
+                self.loss = self.nms_loss
+                self.labels = self.nms_labels
+            else:
+                self.loss = self.det_loss
+                self.labels = self.det_labels
+
             self.merged_summaries = self._summary_ops()
 
         self.init_op = self._init_ops()
 
     def switch_loss(self, score_name):
-        if self.n_classes != 1:
-            scores = tf.nn.softmax(self.dt_probs_ini)
-        else:
-            scores = self.dt_probs_ini
         if score_name == 'detection':
             self.loss = self.det_loss
-            self.class_scores = tf.multiply(self.sigmoid, scores)
+            self.labels = self.det_labels
         elif score_name == 'nms':
             self.loss = self.nms_loss
-            self.class_scores = tf.multiply(self.sigmoid, scores)
+            self.labels = self.nms_labels
         return
 
     def _input_ops(self):
@@ -365,9 +391,9 @@ class NMSNetwork:
 
         self.det_loss_elementwise = loss
 
-        loss_final = tf.reduce_mean(loss)
+        det_loss_final = tf.reduce_mean(loss, name='detection_loss')
 
-        return labels, loss_final
+        return labels, det_loss_final
 
     def _pairwise_nms_loss(self):
 
@@ -393,7 +419,7 @@ class NMSNetwork:
 
         return suppression_map, iou_map, nms_pairwise_labels, pairwise_loss, loss_final
 
-    def _nms_loss(self):
+    def _nms_loss_ops(self):
 
         if self.n_classes == 1:
 
@@ -440,12 +466,12 @@ class NMSNetwork:
 
         # self.nms_pairwise_labels = nms_pairwise_labels
 
-        elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
-                                                                   logits=self.logits)
+        nms_elementwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=nms_labels,
+                                                                       logits=self.logits)
 
-        loss_final = tf.reduce_mean(elementwise_loss)
+        nms_loss_final = tf.reduce_mean(nms_elementwise_loss, name='nms_loss')
 
-        return nms_labels, elementwise_loss, loss_final
+        return nms_labels, nms_loss_final
 
     def _fc_layer_chain(self,
                         input_tensor,
@@ -485,17 +511,16 @@ class NMSNetwork:
 
         return fc_chain
 
-    def _det_train_ops(self):
-        train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(self.det_loss)
-        return train_step
-
-    def _train_step(self, loss):
+    def _train_step(self, loss, learning_rate, global_step):
         if self.optimizer_to_use == 'Adam':
-            train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
+            train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss,
+                                                                        global_step=global_step)
         elif self.optimizer_to_use == 'SGD':
-            train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(loss)
+            train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss,
+                                                                                   global_step=global_step)
         else:
-            train_step = tf.train.AdamOptimizer(self.learning_rate).minimize(loss)
+            train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss,
+                                                                             global_step=global_step)
         return train_step
 
     def _summary_ops(self):

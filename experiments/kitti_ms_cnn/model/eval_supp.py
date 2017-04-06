@@ -24,7 +24,7 @@ def eval_model(sess,
                out_dir,
                nms_thres=0.5,
                gt_match_iou_thres=0.7,
-               det_thres=0.0001):
+               det_thres=0.001):
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -49,7 +49,9 @@ def eval_model(sess,
 
     eval_data_orig = []
     eval_data_orig_nms = []
-    eval_data_new = []
+    eval_data_filtered = []
+    eval_data_filter_only = []
+    eval_data_filter_reduced = []
 
     total_number_of_nms_fails = 0
     total_number_of_nms_supps = 0
@@ -62,7 +64,7 @@ def eval_model(sess,
                                     n_detections=n_bboxes,
                                     n_features=n_features)
 
-        gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
+        # gt_labels_all.append(frame_data[nms_net.GT_LABELS].reshape(-1, 1))
 
         feed_dict = {nnms_model.dt_coords: frame_data['dt_coords'],
                      nnms_model.dt_features: frame_data['dt_features'],
@@ -74,33 +76,34 @@ def eval_model(sess,
         inference_orig = frame_data['dt_probs']
         inference_orig_all.append(inference_orig)
 
-        inference_new, inference_oracle,  dt_dt_iou, loss = sess.run(
-            [nnms_model.class_scores, nnms_model.det_labels, nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
+        inference_filtered, inference_filter, inference_oracle,  dt_dt_iou, loss = sess.run(
+            [nnms_model.class_scores, nnms_model.sigmoid, nnms_model.det_labels,
+             nnms_model.iou_feature, nnms_model.loss], feed_dict=feed_dict)
 
         losses.append(loss)
-        inference_new_all.append(inference_new)
-        inference_oracle_all.append(inference_oracle)
+        # inference_new_all.append(inference_filtered)
+        # inference_oracle_all.append(inference_oracle)
 
-        dt_gt_match_orig.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
-                frame_data[nms_net.GT_LABELS],
-                inference_orig,
-                iou_thr=gt_match_iou_thres))
-
-        dt_gt_match_new.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
-                frame_data[nms_net.GT_LABELS],
-                inference_new,
-                iou_thr=gt_match_iou_thres))
-
-        dt_gt_match_oracle.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
-                frame_data[nms_net.GT_LABELS],
-                inference_oracle,
-                iou_thr=gt_match_iou_thres))
+        # dt_gt_match_orig.append(
+        #     metrics.match_dt_gt_all_classes(
+        #         frame_data[nms_net.DT_GT_IOU],
+        #         frame_data[nms_net.GT_LABELS],
+        #         inference_orig,
+        #         iou_thr=gt_match_iou_thres))
+        #
+        # dt_gt_match_new.append(
+        #     metrics.match_dt_gt_all_classes(
+        #         frame_data[nms_net.DT_GT_IOU],
+        #         frame_data[nms_net.GT_LABELS],
+        #         inference_filtered,
+        #         iou_thr=gt_match_iou_thres))
+        #
+        # dt_gt_match_oracle.append(
+        #     metrics.match_dt_gt_all_classes(
+        #         frame_data[nms_net.DT_GT_IOU],
+        #         frame_data[nms_net.GT_LABELS],
+        #         inference_oracle,
+        #         iou_thr=gt_match_iou_thres))
 
         is_suppressed_orig = nms.nms_all_classes(
             dt_dt_iou, inference_orig, iou_thr=nms_thres)
@@ -115,13 +118,17 @@ def eval_model(sess,
         frame_col = (fid+1) * np.ones([len(dt_coords_xywh), 1])
 
         data_orig = np.hstack([frame_col, dt_coords_xywh, inference_orig])
-        data_orig_nms = data_orig[np.where(is_suppressed_orig == False)[0]]
-        eval_data_orig_nms.append(data_orig_nms)
-        data_orig = data_orig[np.where(inference_orig > det_thres)[0]]
         eval_data_orig.append(data_orig)
-        data_new = np.hstack([frame_col, dt_coords_xywh, inference_new])
+        data_orig_nms = np.copy(data_orig)
+        data_orig_nms[np.where(is_suppressed_orig == True)[0], 5] = 0
+        eval_data_orig_nms.append(data_orig_nms)
+        # data_orig = data_orig[np.where(inference_orig > det_thres)[0]]
+
+        data_filtered = np.hstack([frame_col, dt_coords_xywh, inference_filtered])
+        data_filter_only = np.hstack([frame_col, dt_coords_xywh, inference_filter])
         # data_new = data_new[np.where(inference_new > det_thres)[0]]
-        eval_data_new.append(data_new)
+        eval_data_filtered.append(data_filtered)
+        eval_data_filter_only.append(data_filter_only)
 
         # for i in range(0, is_suppressed_orig_all.shape[2]):
         #     dt_gt_match_orig_nms_all[i].append(metrics.match_dt_gt_all_classes(
@@ -131,8 +138,8 @@ def eval_model(sess,
         #         dt_is_suppressed_info=is_suppressed_orig_all[:, :, i],
         #         iou_thr=gt_match_iou_thres))
 
-        is_suppressed_new = nms.nms_all_classes(
-            dt_dt_iou, inference_new, iou_thr=nms_thres)
+        # is_suppressed_new = nms.nms_all_classes(
+        #     dt_dt_iou, inference_filtered, iou_thr=nms_thres)
 
         # is_suppressed_oracle = nms.nms_all_classes(
         #     dt_dt_iou, inference_oracle, iou_thr=nms_thres)
@@ -161,52 +168,52 @@ def eval_model(sess,
         #         iou_thr=gt_match_iou_thres,
         #         dt_is_suppressed_info=is_suppressed_ideal_case))
 
-        dt_gt_match_orig_nms.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
-                frame_data[nms_net.GT_LABELS],
-                inference_orig,
-                iou_thr=gt_match_iou_thres,
-                dt_is_suppressed_info=is_suppressed_orig))
+        # dt_gt_match_orig_nms.append(
+        #     metrics.match_dt_gt_all_classes(
+        #         frame_data[nms_net.DT_GT_IOU],
+        #         frame_data[nms_net.GT_LABELS],
+        #         inference_orig,
+        #         iou_thr=gt_match_iou_thres,
+        #         dt_is_suppressed_info=is_suppressed_orig))
 
-        dt_gt_match_new_nms.append(
-            metrics.match_dt_gt_all_classes(
-                frame_data[nms_net.DT_GT_IOU],
-                frame_data[nms_net.GT_LABELS],
-                inference_new,
-                iou_thr=gt_match_iou_thres,
-                dt_is_suppressed_info=is_suppressed_new))
+        # dt_gt_match_new_nms.append(
+        #     metrics.match_dt_gt_all_classes(
+        #         frame_data[nms_net.DT_GT_IOU],
+        #         frame_data[nms_net.GT_LABELS],
+        #         inference_filtered,
+        #         iou_thr=gt_match_iou_thres,
+        #         dt_is_suppressed_info=is_suppressed_new))
 
-    gt_labels = np.vstack(gt_labels_all)
+    # gt_labels = np.vstack(gt_labels_all)
+    #
+    # inference_orig = np.vstack(inference_orig_all)
+    # inference_filtered = np.vstack(inference_new_all)
+    # inference_oracle = np.vstack(inference_oracle_all)
+    #
+    # dt_gt_match_oracle = np.vstack(dt_gt_match_oracle)
+    # # dt_gt_match_perfect_nms = np.vstack(dt_gt_match_perfect_nms)
+    # dt_gt_match_orig = np.vstack(dt_gt_match_orig)
+    # dt_gt_match_new = np.vstack(dt_gt_match_new)
+    # dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
+    #
+    # # for i in range(0, len(dt_gt_match_orig_nms_all)):
+    # #     dt_gt_match_orig_nms_all[i] = np.vstack(dt_gt_match_orig_nms_all[i])
+    #
+    # dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
 
-    inference_orig = np.vstack(inference_orig_all)
-    inference_new = np.vstack(inference_new_all)
-    inference_oracle = np.vstack(inference_oracle_all)
-
-    dt_gt_match_oracle = np.vstack(dt_gt_match_oracle)
-    # dt_gt_match_perfect_nms = np.vstack(dt_gt_match_perfect_nms)
-    dt_gt_match_orig = np.vstack(dt_gt_match_orig)
-    dt_gt_match_new = np.vstack(dt_gt_match_new)
-    dt_gt_match_orig_nms = np.vstack(dt_gt_match_orig_nms)
-
-    # for i in range(0, len(dt_gt_match_orig_nms_all)):
-    #     dt_gt_match_orig_nms_all[i] = np.vstack(dt_gt_match_orig_nms_all[i])
-
-    dt_gt_match_new_nms = np.vstack(dt_gt_match_new_nms)
-
-    ap_oracle, roc_oracle = metrics.average_precision_all_classes(
-        dt_gt_match_oracle, inference_oracle, gt_labels)
+    # ap_oracle, roc_oracle = metrics.average_precision_all_classes(
+    #     dt_gt_match_oracle, inference_oracle, gt_labels)
     # ap_perfect_nms, _ = metrics.average_precision_all_classes(
     #     dt_gt_match_perfect_nms, inference_orig, gt_labels)
 
-    ap_orig, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig, inference_orig, gt_labels)
-    ap_orig_nms, _ = metrics.average_precision_all_classes(
-        dt_gt_match_orig_nms, inference_orig, gt_labels)
-    ap_new, _ = metrics.average_precision_all_classes(
-        dt_gt_match_new, inference_new, gt_labels)
-    ap_new_nms, _ = metrics.average_precision_all_classes(
-        dt_gt_match_new_nms, inference_new, gt_labels)
+    # ap_orig, _ = metrics.average_precision_all_classes(
+    #     dt_gt_match_orig, inference_orig, gt_labels)
+    # ap_orig_nms, _ = metrics.average_precision_all_classes(
+    #     dt_gt_match_orig_nms, inference_orig, gt_labels)
+    # ap_new, _ = metrics.average_precision_all_classes(
+    #     dt_gt_match_new, inference_filtered, gt_labels)
+    # ap_new_nms, _ = metrics.average_precision_all_classes(
+    #     dt_gt_match_new_nms, inference_filtered, gt_labels)
 
     # max_map_orig_nms = 0
 
@@ -218,24 +225,24 @@ def eval_model(sess,
     #         max_map_orig_nms = map_orig_nms
     #         max_nms_thres = nms_thresholds[i]
 
-    map_oracle = np.nanmean(ap_oracle)
-    # map_perfect_nms = np.nanmean(ap_perfect_nms)
-    map_orig = np.nanmean(ap_orig)
-    map_orig_nms = np.nanmean(ap_orig_nms)
-    map_knet = np.nanmean(ap_new)
-    map_knet_nms = np.nanmean(ap_new_nms)
+    # map_oracle = np.nanmean(ap_oracle)
+    # # map_perfect_nms = np.nanmean(ap_perfect_nms)
+    # map_orig = np.nanmean(ap_orig)
+    # map_orig_nms = np.nanmean(ap_orig_nms)
+    # map_knet = np.nanmean(ap_new)
+    # map_knet_nms = np.nanmean(ap_new_nms)
     # mean_nms_fails = total_number_of_nms_fails / float(total_number_of_nms_supps)
 
     logging.info('loss : %f' % np.mean(losses))
-    logging.info('mAP oracle : %f' % map_oracle)
-    logging.info('mAP original inference : %f' % map_orig)
-    logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
-    # logging.info('mAP original inference (best NMS IoU = %f) : %f' % (max_nms_thres, max_map_orig_nms))
-    # logging.info('mAP original inference (perfect NMS) : %f' % map_perfect_nms)
-    logging.info('mAP knet inference : %f' % map_knet)
-    logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
-    #logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
-    #                                                                             str(mean_nms_fails)))
+    # logging.info('mAP oracle : %f' % map_oracle)
+    # logging.info('mAP original inference : %f' % map_orig)
+    # logging.info('mAP original inference (NMS) : %f' % map_orig_nms)
+    # # logging.info('mAP original inference (best NMS IoU = %f) : %f' % (max_nms_thres, max_map_orig_nms))
+    # # logging.info('mAP original inference (perfect NMS) : %f' % map_perfect_nms)
+    # logging.info('mAP knet inference : %f' % map_knet)
+    # logging.info('mAP knet inference (NMS) : %f' % map_knet_nms)
+    # #logging.info('total number of NMS fails : %d, percent of all suppressions : %s' % (total_number_of_nms_fails,
+    # #                                                                             str(mean_nms_fails)))
 
     eval_data_orig = np.vstack(eval_data_orig)
     out_file_orig = os.path.join(out_dir, 'kitti_car_mscnn_nonms_' + str(global_step) + '.txt')
@@ -245,11 +252,15 @@ def eval_model(sess,
     out_file_orig_nms = os.path.join(out_dir, 'kitti_car_mscnn_nms_' + str(global_step) + '.txt')
     np.savetxt(out_file_orig_nms, eval_data_orig_nms, fmt='%.6f', delimiter=',')
 
-    eval_data_new = np.vstack(eval_data_new)
-    out_file_new = os.path.join(out_dir, 'kitti_car_mscnn_knet_' + str(global_step) + '.txt')
-    np.savetxt(out_file_new, eval_data_new, fmt='%.6f', delimiter=',')
+    eval_data_filtered = np.vstack(eval_data_filtered)
+    out_filer_only = os.path.join(out_dir, 'kitti_car_mscnn_knet_filtered_' + str(global_step) + '.txt')
+    np.savetxt(out_filer_only, eval_data_filtered, fmt='%.6f', delimiter=',')
 
-    return map_knet, map_orig_nms
+    eval_data_filter_only = np.vstack(eval_data_filter_only)
+    out_file_filter_only = os.path.join(out_dir, 'kitti_car_mscnn_knet_filters_only_' + str(global_step) + '.txt')
+    np.savetxt(out_file_filter_only, eval_data_filter_only, fmt='%.6f', delimiter=',')
+
+    return loss
 
 
 def print_debug_info(nnms_model, sess, frame_data, outdir, fid):
