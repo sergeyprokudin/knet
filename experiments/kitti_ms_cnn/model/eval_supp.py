@@ -51,6 +51,7 @@ def eval_model(sess,
     eval_data_orig_nms = []
     eval_data_filtered = []
     eval_data_filter_only = []
+    eval_data_oracle = []
     eval_data_filter_reduced = []
 
     total_number_of_nms_fails = 0
@@ -129,6 +130,9 @@ def eval_model(sess,
         # data_new = data_new[np.where(inference_new > det_thres)[0]]
         eval_data_filtered.append(data_filtered)
         eval_data_filter_only.append(data_filter_only)
+
+        data_oracle = np.hstack([frame_col, dt_coords_xywh, inference_oracle])
+        eval_data_oracle.append(data_oracle)
 
         # for i in range(0, is_suppressed_orig_all.shape[2]):
         #     dt_gt_match_orig_nms_all[i].append(metrics.match_dt_gt_all_classes(
@@ -259,6 +263,10 @@ def eval_model(sess,
     eval_data_filter_only = np.vstack(eval_data_filter_only)
     out_file_filter_only = os.path.join(out_dir, 'kitti_car_mscnn_knet_filters_only_' + str(global_step) + '.txt')
     np.savetxt(out_file_filter_only, eval_data_filter_only, fmt='%.6f', delimiter=',')
+
+    eval_data_oracle = np.vstack(eval_data_oracle)
+    out_file_oracle = os.path.join(out_dir, 'kitti_car_mscnn_knet_oracle_' + str(global_step) + '.txt')
+    np.savetxt(out_file_oracle, eval_data_oracle, fmt='%.6f', delimiter=',')
 
     return loss
 

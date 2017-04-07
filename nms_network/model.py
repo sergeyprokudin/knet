@@ -372,7 +372,7 @@ class NMSNetwork:
             gt_per_label = losses.construct_ground_truth_per_label_tf(dt_gt_iou, self.gt_labels, class_id,
                                                                       iou_threshold=self.gt_match_iou_thr)
 
-            classes_labels_final.append(losses.compute_match_gt_net_per_label_tf(self.sigmoid,
+            classes_labels_final.append(losses.compute_match_gt_net_per_label_tf(self.dt_probs_ini,
                                                                          gt_per_label,
                                                                          class_id))
 

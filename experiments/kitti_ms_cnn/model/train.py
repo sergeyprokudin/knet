@@ -160,14 +160,15 @@ def main(_):
 
             epoch_frames = train_frames[shuffle_samples(n_train_samples)]
 
-            if epoch_id == config.loss_change_step:
-                learning_rate = config.learning_rate_det
-                loss_mode = 'detection'
-                nnms_model.switch_loss('detection')
-                logging.info('switching loss to actual detection loss..')
-                logging.info('learning rate to %f' % learning_rate)
 
             for fid in epoch_frames:
+
+                if step_id == config.loss_change_step:
+                    # learning_rate = config.learning_rate_det
+                    loss_mode = 'detection'
+                    nnms_model.switch_loss('detection')
+                    logging.info('switching loss to actual detection loss..')
+                    # logging.info('learning rate to %f' % learning_rate)
 
                 start_step = timer()
 
