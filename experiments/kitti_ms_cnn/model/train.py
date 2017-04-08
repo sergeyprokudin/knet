@@ -203,6 +203,8 @@ def main(_):
 
                 if step_id % config.eval_step == 0:
 
+                    logging.info("learning rate %s" % str(nnms_model.learning_rate_det.eval()))
+
                     logging.info('curr step : %d, mean time for step : %s, for getting data : %s' % (step_id,
                                                                                                      str(np.mean(step_times)),
                                                                                                      str(np.mean(data_times))))
