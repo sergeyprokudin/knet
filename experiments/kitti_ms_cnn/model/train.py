@@ -14,7 +14,7 @@ import os
 import tensorflow as tf
 from google.apputils import app
 from nms_network import model as nms_net
-import eval_supp
+import eval
 from data import get_frame_data, get_frame_data_fixed
 from tools import experiment_config as expconf
 
@@ -211,52 +211,52 @@ def main(_):
 
 
                     logging.info("eval on TRAIN..")
-                    train_loss = eval_supp.eval_model(sess,
-                                                      nnms_model,
-                                                      detections_dir=detections_dir,
-                                                      labels_dir=labels_dir,
-                                                      eval_frames=train_frames,
-                                                      n_bboxes=config.n_bboxes,
-                                                      n_features=config.n_dt_features,
-                                                      global_step=step_id,
-                                                      out_dir=train_out_dir,
-                                                      nms_thres=config.nms_thres)
+                    train_loss = eval.eval_model(sess,
+                                                 nnms_model,
+                                                 detections_dir=detections_dir,
+                                                 labels_dir=labels_dir,
+                                                 eval_frames=train_frames[0:100],
+                                                 n_bboxes=config.n_bboxes,
+                                                 n_features=config.n_dt_features,
+                                                 global_step=step_id,
+                                                 out_dir=train_out_dir,
+                                                 nms_thres=config.nms_thres)
 
                     logging.info("eval on TEST..")
-                    test_loss = eval_supp.eval_model(sess,
-                                                     nnms_model,
-                                                     detections_dir=detections_dir,
-                                                     labels_dir=labels_dir,
-                                                     eval_frames=test_frames,
-                                                     n_bboxes=config.n_bboxes,
-                                                     n_features=config.n_dt_features,
-                                                     global_step=step_id,
-                                                     out_dir=test_out_dir,
-                                                     nms_thres=config.nms_thres)
+                    test_loss = eval.eval_model(sess,
+                                                nnms_model,
+                                                detections_dir=detections_dir,
+                                                labels_dir=labels_dir,
+                                                eval_frames=test_frames,
+                                                n_bboxes=config.n_bboxes,
+                                                n_features=config.n_dt_features,
+                                                global_step=step_id,
+                                                out_dir=test_out_dir,
+                                                nms_thres=config.nms_thres)
 
                     saver.save(sess, config.model_file, global_step=step_id)
 
-        train_loss = eval_supp.eval_model(sess,
-                                              nnms_model,
-                                              detections_dir=detections_dir,
-                                              labels_dir=labels_dir,
-                                              eval_frames=train_frames,
-                                              n_bboxes=config.n_bboxes,
-                                              n_features=config.n_dt_features,
-                                              global_step=step_id,
-                                              out_dir=train_out_dir,
-                                              nms_thres=config.nms_thres)
+        train_loss = eval.eval_model(sess,
+                                     nnms_model,
+                                     detections_dir=detections_dir,
+                                     labels_dir=labels_dir,
+                                     eval_frames=train_frames,
+                                     n_bboxes=config.n_bboxes,
+                                     n_features=config.n_dt_features,
+                                     global_step=step_id,
+                                     out_dir=train_out_dir,
+                                     nms_thres=config.nms_thres)
 
-        test_loss = eval_supp.eval_model(sess,
-                                             nnms_model,
-                                             detections_dir=detections_dir,
-                                             labels_dir=labels_dir,
-                                             eval_frames=test_frames,
-                                             n_bboxes=config.n_bboxes,
-                                             n_features=config.n_dt_features,
-                                             global_step=step_id,
-                                             out_dir=test_out_dir,
-                                             nms_thres=config.nms_thres)
+        test_loss = eval.eval_model(sess,
+                                    nnms_model,
+                                    detections_dir=detections_dir,
+                                    labels_dir=labels_dir,
+                                    eval_frames=test_frames,
+                                    n_bboxes=config.n_bboxes,
+                                    n_features=config.n_dt_features,
+                                    global_step=step_id,
+                                    out_dir=test_out_dir,
+                                    nms_thres=config.nms_thres)
 
 
 
