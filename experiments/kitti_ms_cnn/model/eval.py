@@ -146,8 +146,10 @@ def eval_model(sess,
     fnet_fails_data.to_csv(out_file_fnet_fails)
 
     nms_fails_per_frame = float(len(nms_fails_data)) / len(eval_frames)
+    n_suppressions = len(info_data_all[info_data_all.is_suppressed_orig == 1])
+    nms_accuracy = 1- len(nms_fails_data) / float(n_suppressions)
     high_score_nms_fails_per_frame = float(len([nms_fails_data.inference_orig > nnms_model.filter_threshold])) / len(eval_frames)
     logging.info('number of NMS fails per frame : %f' % nms_fails_per_frame)
     logging.info('number of high score NMS fails per frame : %f' % high_score_nms_fails_per_frame)
-
+    logging.info('suppression accuracy : %f' % nms_accuracy)
     return mean_opt_loss, mean_fin_loss
