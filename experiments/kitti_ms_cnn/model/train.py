@@ -91,6 +91,18 @@ def mean_loss(sess, nms_model, frames,
     return np.mean(losses)
 
 
+def write_scalar_summary(value, name, summary_writer, step_id):
+    test_map_summ = tf.Summary(
+        value=[
+            tf.Summary.Value(
+                tag=name,
+                simple_value=value),
+        ])
+    summary_writer.add_summary(
+        test_map_summ, global_step=step_id)
+    return
+
+
 def main(_):
 
     config = expconf.ExperimentConfig(data_dir=FLAGS.data_dir,
@@ -110,6 +122,7 @@ def main(_):
     n_frames = len(frames_ids)
     n_bboxes_test = config.n_bboxes
     n_classes = 1
+    class_name = config.general_params.get('class_of_interest', 'Car')
     half = n_frames/2
     learning_rate = config.learning_rate_det
 
@@ -136,7 +149,7 @@ def main(_):
     nnms_model = nms_net.NMSNetwork(n_classes=1,
                                     input_ops=in_ops,
                                     loss_type='nms',
-                                    gt_match_iou_thr=0.7,
+                                    gt_match_iou_thr=0.5,
                                     class_ix=0,
                                     **config.nms_network_config)
 
@@ -156,19 +169,20 @@ def main(_):
         nnms_model.switch_loss('nms')
         logging.info("current loss mode : %s" % loss_mode)
 
+        summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
+
         for epoch_id in range(0, config.n_epochs):
 
             epoch_frames = train_frames[shuffle_samples(n_train_samples)]
 
-
             for fid in epoch_frames:
 
                 if step_id == config.loss_change_step:
-                    # learning_rate = config.learning_rate_det
+                    learning_rate = config.learning_rate_det
                     loss_mode = 'detection'
                     nnms_model.switch_loss('detection')
                     logging.info('switching loss to actual detection loss..')
-                    # logging.info('learning rate to %f' % learning_rate)
+                    logging.info('learning rate to %f' % learning_rate)
 
                 start_step = timer()
 
@@ -176,6 +190,7 @@ def main(_):
                                             labels_dir=labels_dir,
                                             detections_dir=detections_dir,
                                             n_detections=config.n_bboxes,
+                                            class_name=class_name,
                                             n_features=config.n_dt_features)
                 data_step = timer()
 
@@ -195,7 +210,13 @@ def main(_):
                                            nnms_model.det_train_step],
                                           feed_dict=feed_dict)
 
+                pair_features = sess.run(nnms_model.pairwise_obj_features, feed_dict=feed_dict)
+                # import ipdb; ipdb.set_trace()
+
                 step_id += 1
+
+                summary_writer.add_summary(summary, global_step=step_id)
+                summary_writer.flush()
 
                 end_step = timer()
                 step_times.append(end_step-start_step)
@@ -211,32 +232,34 @@ def main(_):
 
 
                     logging.info("eval on TRAIN..")
-                    train_loss = eval.eval_model(sess,
+                    train_loss_opt, train_loss_fin = eval.eval_model(sess,
                                                  nnms_model,
                                                  detections_dir=detections_dir,
                                                  labels_dir=labels_dir,
-                                                 eval_frames=train_frames[0:100],
+                                                 eval_frames=train_frames[0:500],
                                                  n_bboxes=config.n_bboxes,
                                                  n_features=config.n_dt_features,
                                                  global_step=step_id,
                                                  out_dir=train_out_dir,
-                                                 nms_thres=config.nms_thres)
+                                                 nms_thres=config.nms_thres,
+                                                 class_name=class_name)
 
                     logging.info("eval on TEST..")
-                    test_loss = eval.eval_model(sess,
+                    test_loss_opt, test_loss_fin = eval.eval_model(sess,
                                                 nnms_model,
                                                 detections_dir=detections_dir,
                                                 labels_dir=labels_dir,
-                                                eval_frames=test_frames,
+                                                eval_frames=test_frames[0:500],
                                                 n_bboxes=config.n_bboxes,
                                                 n_features=config.n_dt_features,
                                                 global_step=step_id,
                                                 out_dir=test_out_dir,
-                                                nms_thres=config.nms_thres)
+                                                nms_thres=config.nms_thres,
+                                                class_name=class_name)
 
                     saver.save(sess, config.model_file, global_step=step_id)
 
-        train_loss = eval.eval_model(sess,
+        train_loss_opt, train_loss_fin = eval.eval_model(sess,
                                      nnms_model,
                                      detections_dir=detections_dir,
                                      labels_dir=labels_dir,
@@ -245,9 +268,10 @@ def main(_):
                                      n_features=config.n_dt_features,
                                      global_step=step_id,
                                      out_dir=train_out_dir,
-                                     nms_thres=config.nms_thres)
+                                     nms_thres=config.nms_thres,
+                                     class_name=class_name)
 
-        test_loss = eval.eval_model(sess,
+        test_loss_opt, test_loss_fin = eval.eval_model(sess,
                                     nnms_model,
                                     detections_dir=detections_dir,
                                     labels_dir=labels_dir,
@@ -256,9 +280,8 @@ def main(_):
                                     n_features=config.n_dt_features,
                                     global_step=step_id,
                                     out_dir=test_out_dir,
-                                    nms_thres=config.nms_thres)
-
-
+                                    nms_thres=config.nms_thres,
+                                    class_name=class_name)
 
         # config.save_results()
 

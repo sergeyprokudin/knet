@@ -139,3 +139,54 @@ def compute_pairwise_spatial_features_iou_tf(
         # Each kernel has to be of the shape
         # [n_hypotheses, n_hypotheses, feature].
         return tf.expand_dims(tf.div(intersection, union, name='iou'), 2)
+
+
+def compute_misc_pairwise_spatial_features_tf(
+        pairwise_spatial_features, name_or_scope=None):
+    """
+
+    Parameters
+    ----------
+    pairwise_spatial_features - Tensor of format [n1_hypotheses, n2_hypotheses, 8]
+                                where last dimension contains information about coordinates of a pair of
+                                boxes in format [x11, y11, x12, y12, x21, y21, x22, y22]
+    name_or_scope
+
+    Returns
+    -------
+    Tensor of format [n1_hypotheses, n2_hypotheses, n_bbox_features] containing information on bboxes mutual
+    orientation
+    """
+    with tf.variable_scope(
+            name_or_scope,
+            default_name='construct_misc_pairwise_spatial_features_iou',
+            values=[pairwise_spatial_features]):
+        # We only support flat features and thus have to have a rank of 3
+        # [num_hypotheses, num_hypotheses, feature_size].
+        pairwise_spatial_features.get_shape().assert_has_rank(3)
+
+        # Assert ops cannot be executed on gpus
+        # assert_ops = []
+        # pairwise_spatial_features_shape = tf.shape(pairwise_spatial_features)
+        # assert_ops.append(
+        #     tf.Assert(tf.equal(pairwise_spatial_features_shape[0],
+        #                        pairwise_spatial_features_shape[1]),
+        #               [pairwise_spatial_features_shape]))
+
+        # with tf.control_dependencies(assert_ops):
+        x1 = pairwise_spatial_features[:, :, 0]
+        y1 = pairwise_spatial_features[:, :, 1]
+        w1 = pairwise_spatial_features[:, :, 2] - pairwise_spatial_features[:, :, 0]
+        h1 = pairwise_spatial_features[:, :, 3] - pairwise_spatial_features[:, :, 1]
+        x2 = pairwise_spatial_features[:, :, 4]
+        y2 = pairwise_spatial_features[:, :, 5]
+        w2 = pairwise_spatial_features[:, :, 6] - pairwise_spatial_features[:, :, 4]
+        h2 = pairwise_spatial_features[:, :, 7] - pairwise_spatial_features[:, :, 5]
+
+        ar    = (w1*h1) / (w2*h2)
+        aspr1 = w1 / h1
+        aspr2 = w2 / h2
+        wr  = w1 / w2
+        hr  = h1 / h2
+
+        return tf.stack([ar, aspr1, aspr2, wr, hr], axis=2)

@@ -52,6 +52,7 @@ def get_frame_data(frame_id,
 
     frame_data['dt_gt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['gt_coords'])
 
+
     # frame_data['dt_dt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['dt_coords'])
 
     # frame_data['nms_labels'] = np.invert(nms.nms_all_classes(frame_data['dt_dt_iou'],
@@ -66,6 +67,7 @@ def get_frame_data(frame_id,
 def get_frame_data_fixed(frame_id,
                    labels_dir,
                    detections_dir,
+                   class_name='Pedestrian',
                    n_detections=None,
                    n_features=None):
     """
@@ -82,7 +84,11 @@ def get_frame_data_fixed(frame_id,
     -------
 
     """
-    dt_fname = format(frame_id, '06') + '_car.mat'
+    if class_name == 'Car':
+        dt_fname = format(frame_id, '06') + '_car.mat'
+    else:
+        dt_fname = format(frame_id, '06') + '.png_ped.mat'
+
     gt_fname = format(frame_id, '06') + '.txt'
 
     frame_dt_path = os.path.join(detections_dir, dt_fname)
@@ -96,11 +102,16 @@ def get_frame_data_fixed(frame_id,
 
     # gt_info = gt_info[gt_info['class'].isin(['Car', 'Van', 'Truck', 'Bus'])]
 
-    gt_info = gt_info[gt_info['class'] == 'Car']
+    gt_info = gt_info[gt_info['class'] == class_name]
 
     dt_info = sio.loadmat(frame_dt_path)
 
-    n_all_features, n_all_detections = dt_info['feat'].shape
+    if class_name == 'Car':
+        n_all_features, n_all_detections = dt_info['feat'].shape
+    else:
+        n_all_features = dt_info['feat'].shape[0]
+        n_all_detections = dt_info['detection_result'][0, 0].shape[0]
+
     n_detections_actual = min(n_all_detections, n_detections)
 
     if n_detections is None:
@@ -112,7 +123,13 @@ def get_frame_data_fixed(frame_id,
     frame_data['gt_labels'] = np.zeros(frame_data['gt_coords'].shape[0])
 
     frame_data['dt_probs'] = np.zeros([n_detections, 1])
-    frame_data['dt_probs'][0:n_detections_actual] = dt_info['detection_result'][0, 0][0:n_detections_actual, 4].reshape(-1, 1)
+
+    if class_name == 'Car':
+        frame_data['dt_probs'][0:n_detections_actual] = dt_info['detection_result'][0, 0][0:n_detections_actual, 4].reshape(-1, 1)
+    elif class_name == 'Pedestrian':
+        frame_data['dt_probs'][0:n_detections_actual] = dt_info['detection_result'][0, 0][0:n_detections_actual, 4].reshape(-1, 1)
+    elif class_name == 'Cyclist':
+        frame_data['dt_probs'][0:n_detections_actual] = dt_info['detection_result'][1, 0][0:n_detections_actual, 4].reshape(-1, 1)
 
     frame_data['dt_features'] = np.zeros([n_detections, n_features])
     frame_data['dt_features'][0:n_detections_actual] = dt_info['feat'][0:n_features, 0:n_detections_actual].T
@@ -130,12 +147,12 @@ def get_frame_data_fixed(frame_id,
     #frame_data['detection_result'] = dt_info['detection_result']
 
     frame_data['dt_gt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['gt_coords'])
+
     #
     # frame_data['dt_dt_iou'] = bbox_utils.compute_sets_iou(frame_data['dt_coords'], frame_data['dt_coords'])
 
     # frame_data['nms_labels'] = np.invert(nms.nms_all_classes(frame_data['dt_dt_iou'],
     #                                                      frame_data['dt_probs'],
     #                                                       iou_thr=0.5)).astype('int')
-
 
     return frame_data

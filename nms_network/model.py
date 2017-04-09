@@ -81,16 +81,21 @@ class NMSNetwork:
             self.gt_coords = input_ops['gt_coords']
             self.keep_prob = input_ops['keep_prob']
 
+        # # !!!!!!!
+        # self.dt_features = self.dt_probs_ini
+
         self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
         self.n_bboxes = tf.shape(self.dt_features)[0]
 
         with tf.variable_scope(self.VAR_SCOPE):
 
-            self.iou_feature, self.logits, self.sigmoid = self._inference_ops_top_k()
+            self.iou_feature, self.logits, self.sigmoid = self._inference_ops()
 
-            self.class_scores = tf.multiply(self.sigmoid, self.dt_probs_ini)
+            self.filter_threshold = 0.5
+            self.binary_filter = tf.to_float(tf.greater(self.sigmoid, self.filter_threshold), name='binary_filter')
 
+            self.class_scores = tf.multiply(self.binary_filter, self.dt_probs_ini)
             # NMS labels
             self.nms_labels, self.nms_loss = self._nms_loss_ops()
             self.global_step_nms = tf.Variable(0, trainable=False)
@@ -114,13 +119,14 @@ class NMSNetwork:
                                                    learning_rate=self.learning_rate_det,
                                                    global_step=self.global_step_det)
 
-            if loss_type == 'nms':
-                self.loss = self.nms_loss
-                self.labels = self.nms_labels
-            else:
+            if loss_type == 'detection':
                 self.loss = self.det_loss
                 self.labels = self.det_labels
+            elif loss_type == 'nms':
+                self.loss = self.nms_loss
+                self.labels = self.nms_labels
 
+            self.final_loss = self._final_cross_entropy_loss()
             self.merged_summaries = self._summary_ops()
 
         self.init_op = self._init_ops()
@@ -262,6 +268,10 @@ class NMSNetwork:
             spatial_features_list.append(iou_feature_top_k)
             n_pairwise_features += 1
 
+        misc_spatial_features = spatial.compute_misc_pairwise_spatial_features_tf(pairwise_coords_features)
+        spatial_features_list.append(misc_spatial_features)
+        n_pairwise_features += 5
+
         pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
                                                                              tf.gather(self.dt_features, top_ix))
 
@@ -310,6 +320,8 @@ class NMSNetwork:
 
         if self.class_scores_func == 'softmax':
             class_scores = tf.nn.softmax(logits)
+        elif self.class_scores_func == 'sigmoid':
+            class_scores = tf.nn.sigmoid(logits)
         else:
             class_scores = tf.nn.sigmoid(logits)
 
@@ -473,6 +485,14 @@ class NMSNetwork:
 
         return nms_labels, nms_loss_final
 
+    def _final_cross_entropy_loss(self):
+        labels_ohe = tf.stack([1-self.det_labels, self.det_labels], axis=1)
+        probs_ohe = tf.stack([1-self.class_scores, self.class_scores], axis=1)
+        clipped_probs = tf.clip_by_value(probs_ohe, 0.0001, 0.9999)
+        cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels_ohe * tf.log(clipped_probs),
+                                                      reduction_indices=[1]))
+        return cross_entropy
+
     def _fc_layer_chain(self,
                         input_tensor,
                         layer_size,
@@ -524,7 +544,9 @@ class NMSNetwork:
         return train_step
 
     def _summary_ops(self):
-        tf.summary.scalar('loss', self.loss)
+        tf.summary.scalar('det_loss', self.det_loss)
+        tf.summary.scalar('nms_loss', self.nms_loss)
+        tf.summary.scalar('final_loss', self.final_loss)
         merged_summaries = tf.summary.merge_all()
         return merged_summaries
 
