@@ -16,19 +16,19 @@ nms_network:
     training:
         gt_match_iou_thr: 0.7
         top_k_hypotheses: 20
-        learning_rate_nms: 0.001
-        decay_steps_nms: 10000
+        learning_rate_nms: 0.0001
+        decay_steps_nms: 6000
         decay_rate_nms: 0.96
-        learning_rate_det: 0.0001
+        learning_rate_det: 0.00001
         decay_steps_det: 10000
         decay_rate_det: 0.8
-        loss_change_step: 0
+        loss_change_step: 6000
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
         nms_label_iou: 0.5
-        n_epochs: 50
+        n_epochs: 20
     evaluation:
-        eval_step: 100
+        eval_step: 3000
         full_eval_step: 100
         n_eval_frames: 100
         nms_thres: 0.5
