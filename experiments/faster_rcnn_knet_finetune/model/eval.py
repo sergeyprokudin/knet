@@ -71,8 +71,6 @@ def eval_model(sess, nnms_model, frames_data,
         eval_data[fid]['inference_orig'] = inference_orig_all_classes
         eval_data[fid]['inference_new'] = inference_new_all_classes
 
-        import ipdb; ipdb.set_trace()
-
         losses_opt.append(loss_opt)
         losses_final.append(loss_final)
 

@@ -8,22 +8,27 @@ data_provider:
     n_bboxes: 300
 nms_network:
     architecture:
-        knet_hlayer_size: 1024
-        n_kernels: 256
+        knet_hlayer_size: 512
+        n_kernels: 128
         n_kernel_iterations: 1
-        fc_apres_layer_size: 1024
+        fc_apres_layer_size: 512
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
+        gt_match_iou_thr: 0.5
         top_k_hypotheses: 300
         learning_rate_nms: 0.0001
+        decay_steps_nms: 6000
+        decay_rate_nms: 0.96
         learning_rate_det: 0.00001
-        loss_change_step: 5
+        decay_steps_det: 6000
+        decay_rate_det: 0.8
+        loss_change_step: 6000
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
-        nms_label_iou: 0.3
-        n_epochs: 50
+        nms_label_iou: 0.6
+        n_epochs: 20
     evaluation:
-        eval_step: 1
-        full_eval_step: 1
+        eval_step: 2000
+        full_eval_step: 2000
         n_eval_frames: 100
-        nms_thres: 0.3
+        nms_thres: 0.6
