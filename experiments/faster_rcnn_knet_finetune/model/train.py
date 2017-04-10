@@ -227,7 +227,7 @@ def main(_):
     if class_of_interest == 'all':
         is_one_class = False
         class_ix = 0
-        n_classes = TOTAL_NUMBER_OF_CLASSES
+        n_classes = TOTAL_NUMBER_OF_CLASSES-1
         softmax_ini_scores = True
     else:
         is_one_class = True
@@ -315,29 +315,24 @@ def main(_):
         for epoch_id in range(0, config.n_epochs):
 
             step_times = []
-            losses = np.zeros(n_frames_train)
-
-            if epoch_id == config.loss_change_step:
-                learning_rate = config.learning_rate_det
-                loss_mode = 'detection'
-                nnms_model.switch_loss('detection')
-                logging.info('switching loss to actual detection loss..')
-                logging.info('learning rate to %f' % learning_rate)
 
             for fid in shuffle_samples(n_frames_train):
 
-                # frame_dist = np.squeeze(softmax(losses.reshape([1,-1])))
-                # frame_id = np.random.choice(range(0, n_frames_train), p=frame_dist)
-
                 frame_data = frames_data_train[fid]
+
+                if n_classes == 1:
+                    dt_probs_ini = frame_data[nms_net.DT_SCORES]
+                    gt_labels = frame_data[nms_net.GT_LABELS]
+                else:
+                    dt_probs_ini = softmax(frame_data[nms_net.DT_SCORES])[:, 1:]
+                    gt_labels = frame_data[nms_net.GT_LABELS] - 1
 
                 feed_dict = {nnms_model.dt_coords: frame_data[nms_net.DT_COORDS],
                              nnms_model.dt_features: frame_data[nms_net.DT_FEATURES],
-                             nnms_model.dt_probs_ini: frame_data[nms_net.DT_SCORES],
+                             nnms_model.dt_probs_ini: dt_probs_ini,
                              nnms_model.gt_coords: frame_data[nms_net.GT_COORDS],
-                             nnms_model.gt_labels: frame_data[nms_net.GT_LABELS],
-                             nnms_model.keep_prob: config.keep_prob_train,
-                             nnms_model.learning_rate: learning_rate}
+                             nnms_model.gt_labels: gt_labels,
+                             nnms_model.keep_prob: config.keep_prob_train}
 
                 start_step = timer()
 
@@ -359,57 +354,58 @@ def main(_):
 
                 step_id += 1
 
-            # import ipdb; ipdb.set_trace()
+                if step_id == config.loss_change_step:
+                    learning_rate = config.learning_rate_det
+                    loss_mode = 'detection'
+                    nnms_model.switch_loss('detection')
+                    logging.info('switching loss to actual detection loss..')
 
-            logging.info('epoch %d finished ' % epoch_id)
+                if step_id % config.eval_step == 0:
 
-            if (epoch_id+1) % config.eval_step == 0:
+                    logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
 
-                logging.info('step : %d, mean time for step : %s' % (step_id, str(np.mean(step_times))))
+                    if step_id % config.full_eval_step == 0:
+                        full_eval = True
+                    else:
+                        full_eval = False
 
-                if (epoch_id+1) % config.full_eval_step == 0:
-                    full_eval = True
-                else:
-                    full_eval = False
+                    logging.info('evaluating on TRAIN..')
+                    train_out_dir = os.path.join(config.log_dir, 'train')
+                    logging.info('full evaluation : %d' % full_eval)
+                    train_loss_opt, train_loss_final = eval.eval_model(sess, nnms_model,
+                                                                    frames_data_train,
+                                                                    global_step=step_id,
+                                                                    n_eval_frames=config.n_eval_frames,
+                                                                    out_dir=train_out_dir,
+                                                                    full_eval=full_eval,
+                                                                    nms_thres=config.nms_thres,
+                                                                    one_class=is_one_class,
+                                                                    class_ix=class_ix)
 
-                logging.info('evaluating on TRAIN..')
-                train_out_dir = os.path.join(config.log_dir, 'train')
-                logging.info('full evaluation : %d' % full_eval)
-                train_map_knet, train_map_nms = eval.eval_model(sess, nnms_model,
-                                                                frames_data_train,
-                                                                global_step=step_id,
-                                                                n_eval_frames=config.n_eval_frames,
-                                                                out_dir=train_out_dir,
-                                                                full_eval=full_eval,
-                                                                nms_thres=config.nms_thres,
-                                                                one_class=is_one_class,
-                                                                class_ix=class_ix)
-                write_scalar_summary(train_map_knet, 'train_map', summary_writer, step_id)
+                    write_scalar_summary(train_loss_opt, 'train_loss_opt', summary_writer, step_id)
+                    logging.info('evaluating on TEST..')
+                    test_out_dir = os.path.join(config.log_dir, 'test')
+                    logging.info('full evaluation : %d' % full_eval)
+                    test_loss_opt, test_loss_final = eval.eval_model(sess, nnms_model,
+                                                                  frames_data_test,
+                                                                  global_step=step_id,
+                                                                  n_eval_frames=config.n_eval_frames,
+                                                                  out_dir=test_out_dir,
+                                                                  full_eval=full_eval,
+                                                                  nms_thres=config.nms_thres,
+                                                                  one_class=is_one_class,
+                                                                  class_ix=class_ix)
+                    write_scalar_summary(test_loss_opt, 'test_loss_opt', summary_writer, step_id)
 
-                logging.info('evaluating on TEST..')
-                test_out_dir = os.path.join(config.log_dir, 'test')
-                logging.info('full evaluation : %d' % full_eval)
-                test_map_knet, test_map_nms = eval.eval_model(sess, nnms_model,
-                                                              frames_data_test,
-                                                              global_step=step_id,
-                                                              n_eval_frames=config.n_eval_frames,
-                                                              out_dir=test_out_dir,
-                                                              full_eval=full_eval,
-                                                              nms_thres=config.nms_thres,
-                                                              one_class=is_one_class,
-                                                              class_ix=class_ix)
-                write_scalar_summary(test_map_knet, 'test_map', summary_writer, step_id)
+                    config.update_results(step_id,
+                                          train_loss_opt,
+                                          train_loss_final,
+                                          test_loss_opt,
+                                          test_loss_final,
+                                          np.mean(step_times))
+                    config.save_results()
 
-                config.update_results(step_id,
-                                      train_map_knet,
-                                      train_map_nms,
-                                      test_map_knet,
-                                      test_map_nms,
-                                      np.mean(step_times))
-
-                config.save_results()
-
-                saver.save(sess, config.model_file, global_step=step_id)
+                    saver.save(sess, config.model_file, global_step=step_id)
 
     logging.info('all done.')
     return

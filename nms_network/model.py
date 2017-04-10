@@ -485,11 +485,11 @@ class NMSNetwork:
         return nms_labels, nms_loss_final
 
     def _final_cross_entropy_loss(self):
-        labels_ohe = tf.stack([1-self.det_labels, self.det_labels], axis=1)
-        probs_ohe = tf.stack([1-self.class_scores, self.class_scores], axis=1)
+        labels_ohe = tf.stack([1-self.det_labels, self.det_labels], axis=2)
+        probs_ohe = tf.stack([1-self.class_scores, self.class_scores], axis=2)
         clipped_probs = tf.clip_by_value(probs_ohe, 0.0001, 0.9999)
         cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels_ohe * tf.log(clipped_probs),
-                                                      reduction_indices=[1]))
+                                                      reduction_indices=[2]))
         return cross_entropy
 
     def _fc_layer_chain(self,
