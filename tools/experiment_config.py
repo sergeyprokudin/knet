@@ -62,17 +62,19 @@ class ExperimentConfig:
         self.mean_train_step_time = 0.0
 
         self.results = {}
-        self.results['max_test_map'] = 0.0
-        self.results['max_train_map'] = 0.0
-        self.results['max_train_nms_map'] = 0.0
-        self.results['max_train_map_step_id'] = 0.0
-        self.results['max_test_nms_map'] = 0.0
-        self.results['max_test_map_step_id'] = 0.0
-        self.results['curr_step_id'] = 0.0
-        self.results['curr_train_map'] = 0.0
-        self.results['curr_train_nms_map'] = 0.0
-        self.results['curr_test_map'] = 0.0
-        self.results['curr_test_nms_map'] = 0.0
+        self.results['min_train_opt_loss'] = 100.0
+        self.results['min_train_opt_loss_step_id'] = 0
+        self.results['min_train_fin_loss'] = 100.0
+        self.results['min_train_fin_loss_step_id'] = 0
+        self.results['min_test_opt_loss'] = 100.0
+        self.results['min_test_opt_loss_step_id'] = 0
+        self.results['min_test_fin_loss'] = 100.0
+        self.results['min_test_fin_loss_step_id'] = 0
+
+        self.results['curr_train_opt_loss'] = 100.0
+        self.results['curr_train_fin_loss'] = 100.0
+        self.results['curr_test_opt_loss'] = 100.0
+        self.results['curr_test_fin_loss'] = 100.0
 
 
     def _set_logging(self, to_stdout=True):
@@ -105,30 +107,32 @@ class ExperimentConfig:
 
     def update_results(self,
                        step_id,
-                       train_map,
-                       train_map_nms,
-                       test_map,
-                       test_map_nms,
+                       loss_opt_train,
+                       loss_fin_train,
+                       loss_opt_test,
+                       loss_fin_test,
                        mean_step_time):
 
-            if test_map > self.results['max_test_map']:
-                self.results['max_test_map'] = test_map
-                self.results['max_test_map_step_id'] = step_id
+            if loss_opt_train < self.results['min_train_opt_loss']:
+                self.results['min_train_opt_loss'] = loss_opt_train
+                self.results['min_train_opt_loss_step_id'] = step_id
 
-            if test_map_nms > self.results['max_test_nms_map']:
-                self.results['max_test_nms_map'] = test_map_nms
+            if loss_fin_train < self.results['min_train_fin_loss']:
+                self.results['min_train_fin_loss'] = loss_fin_train
+                self.results['min_train_fin_loss_step_id'] = step_id
 
-            if train_map > self.results['max_train_map']:
-                self.results['max_train_map'] = train_map
-                self.results['max_train_map_step_id'] = step_id
+            if loss_opt_test < self.results['min_test_opt_loss']:
+                self.results['min_test_opt_loss'] = loss_opt_test
+                self.results['min_test_opt_loss_step_id'] = step_id
 
-            if train_map_nms > self.results['max_train_nms_map']:
-                self.results['max_train_nms_map'] = train_map_nms
+            if loss_fin_test < self.results['min_test_fin_loss']:
+                self.results['min_test_fin_loss'] = loss_fin_test
+                self.results['min_test_fin_loss_step_id'] = step_id
 
-            self.results['curr_train_map'] = train_map
-            self.results['curr_train_nms_map'] = train_map_nms
-            self.results['curr_test_map'] = test_map
-            self.results['curr_test_nms_map'] = test_map_nms
+            self.results['curr_train_opt_loss'] = loss_opt_train
+            self.results['curr_train_fin_loss'] = loss_fin_train
+            self.results['curr_test_opt_loss'] = loss_opt_test
+            self.results['curr_test_fin_loss'] = loss_fin_test
 
             self.results['curr_step_id'] = step_id
 

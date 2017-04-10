@@ -149,11 +149,12 @@ def main(_):
     nnms_model = nms_net.NMSNetwork(n_classes=1,
                                     input_ops=in_ops,
                                     loss_type='nms',
-                                    gt_match_iou_thr=0.5,
                                     class_ix=0,
                                     **config.nms_network_config)
 
     saver = tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=1.0)
+
+    config.save_results()
 
     logging.info('training started..')
 
@@ -210,9 +211,6 @@ def main(_):
                                            nnms_model.det_train_step],
                                           feed_dict=feed_dict)
 
-                pair_features = sess.run(nnms_model.pairwise_obj_features, feed_dict=feed_dict)
-                # import ipdb; ipdb.set_trace()
-
                 step_id += 1
 
                 summary_writer.add_summary(summary, global_step=step_id)
@@ -236,7 +234,7 @@ def main(_):
                                                  nnms_model,
                                                  detections_dir=detections_dir,
                                                  labels_dir=labels_dir,
-                                                 eval_frames=train_frames,
+                                                 eval_frames=train_frames[0:100],
                                                  n_bboxes=config.n_bboxes,
                                                  n_features=config.n_dt_features,
                                                  global_step=step_id,
@@ -249,13 +247,22 @@ def main(_):
                                                 nnms_model,
                                                 detections_dir=detections_dir,
                                                 labels_dir=labels_dir,
-                                                eval_frames=test_frames,
+                                                eval_frames=test_frames[0:100],
                                                 n_bboxes=config.n_bboxes,
                                                 n_features=config.n_dt_features,
                                                 global_step=step_id,
                                                 out_dir=test_out_dir,
                                                 nms_thres=config.nms_thres,
                                                 class_name=class_name)
+
+                    config.update_results(step_id,
+                                          train_loss_opt,
+                                          train_loss_fin,
+                                          test_loss_opt,
+                                          test_loss_fin,
+                                          np.mean(step_times))
+
+                    config.save_results()
 
                     saver.save(sess, config.model_file, global_step=step_id)
 
@@ -283,8 +290,14 @@ def main(_):
                                     nms_thres=config.nms_thres,
                                     class_name=class_name)
 
-        # config.save_results()
+        config.update_results(step_id,
+                              train_loss_opt,
+                              train_loss_fin,
+                              test_loss_opt,
+                              test_loss_fin,
+                              np.mean(step_times))
 
+        config.save_results()
         saver.save(sess, config.model_file, global_step=step_id)
     return
 

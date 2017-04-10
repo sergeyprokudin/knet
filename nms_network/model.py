@@ -29,7 +29,6 @@ class NMSNetwork:
                  n_classes,
                  loss_type='nms',
                  input_ops=None,
-                 gt_match_iou_thr=0.5,
                  class_ix=15,
                  **kwargs):
 
@@ -37,7 +36,6 @@ class NMSNetwork:
         self.n_dt_coords = 4
         self.n_classes = n_classes
 
-        self.gt_match_iou_thr = gt_match_iou_thr
         self.class_ix = class_ix
         #self.n_bboxes = n_bboxes
 
@@ -58,6 +56,7 @@ class NMSNetwork:
         # training procedure params
         train_args = kwargs.get('training', {})
 
+        self.gt_match_iou_thr = train_args.get('gt_match_iou_thr', 0.7)
         self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
         self.optimizer_to_use = train_args.get('optimizer', 'Adam')
         self.nms_label_iou = train_args.get('nms_label_iou', 0.3)
