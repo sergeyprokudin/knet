@@ -51,20 +51,26 @@ def eval_model(sess, nnms_model, frames_data,
                      nnms_model.gt_labels: gt_labels,
                      nnms_model.keep_prob: 1.0}
 
-        inference_filtered, loss_opt, loss_final = sess.run(
-            [nnms_model.class_scores, nnms_model.loss, nnms_model.final_loss],
+        inference_filtered, filter_inference, loss_opt, loss_final, dt_dt_iou = sess.run(
+            [nnms_model.class_scores, nnms_model.sigmoid,
+             nnms_model.loss, nnms_model.final_loss, nnms_model.iou_feature],
             feed_dict=feed_dict)
+
+        nms_inference = 1 - filter_inference
+        nms_labels_np = nms.nms_all_classes(dt_dt_iou, softmax(frame_data[nms_net.DT_SCORES])[:, 1:],
+                                            iou_thr=nms_thres)
+        nms_labels_np = nms_labels_np.astype('int')
 
         if one_class:
             # expecting probability for class being already softmaxed
             inference_orig_all_classes = frame_data[nms_net.DT_SCORES_ORIGINAL]
             # inference_original = inference_orig_all_classes[:, class_ix].reshape(-1, 1)
             inference_new_all_classes = np.copy(inference_orig_all_classes)
-            inference_new_all_classes[:, class_ix] = np.squeeze(inference_filtered, axis=1)
+            inference_new_all_classes[:, class_ix] = np.squeeze(filter_inference, axis=1)
         else:
             inference_orig_all_classes = softmax(frame_data[nms_net.DT_SCORES])
             inference_new_all_classes = np.copy(inference_orig_all_classes)
-            inference_new_all_classes[:, 1:] = inference_filtered
+            inference_new_all_classes[:, 1:] = filter_inference
             # inference_original = inference_orig_all_classes
 
         eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
@@ -78,6 +84,7 @@ def eval_model(sess, nnms_model, frames_data,
         eval_data_file = os.path.join(
             out_dir, 'eval_data_step' + str(global_step) + '.pkl')
         joblib.dump(eval_data, eval_data_file)
+        import ipdb; ipdb.set_trace()
 
     mean_loss_opt = np.mean(losses_opt)
     mean_loss_fin = np.mean(losses_final)

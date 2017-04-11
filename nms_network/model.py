@@ -80,8 +80,8 @@ class NMSNetwork:
             self.gt_coords = input_ops['gt_coords']
             self.keep_prob = input_ops['keep_prob']
 
-        # # !!!!!!!
-        # self.dt_features = self.dt_probs_ini
+        # !!!!!!!
+        self.dt_features = self.dt_probs_ini
 
         self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
@@ -402,6 +402,10 @@ class NMSNetwork:
 
         self.det_loss_elementwise = loss
 
+        # weighted_loss = tf.multiply(loss, self.dt_probs_ini)
+        #
+        # loss_weighted = tf.reduce_mean(weighted_loss, name='detection_loss_weighted')
+
         det_loss_final = tf.reduce_mean(loss, name='detection_loss')
 
         return labels, det_loss_final
@@ -447,9 +451,7 @@ class NMSNetwork:
 
         else:
 
-            self.dt_probs_softmax = tf.nn.softmax(self.dt_probs_ini)
-
-            self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_softmax)
+            self.pairwise_probs_features = spatial.construct_pairwise_features_tf(self.dt_probs_ini)
 
             nms_labels = []
 
@@ -481,6 +483,10 @@ class NMSNetwork:
                                                                        logits=self.logits)
 
         nms_loss_final = tf.reduce_mean(nms_elementwise_loss, name='nms_loss')
+
+        weighted_loss = tf.multiply(nms_elementwise_loss, self.dt_probs_ini)
+
+        loss_weighted = tf.reduce_mean(weighted_loss, name='nms_loss_weighted')
 
         return nms_labels, nms_loss_final
 
