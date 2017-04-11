@@ -5,30 +5,30 @@ general:
 data_provider:
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 300
+    n_bboxes: 20
 nms_network:
     architecture:
-        knet_hlayer_size: 512
-        n_kernels: 128
+        knet_hlayer_size: 1024
+        n_kernels: 256
         n_kernel_iterations: 1
-        fc_apres_layer_size: 512
+        fc_apres_layer_size: 1024
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         gt_match_iou_thr: 0.5
-        top_k_hypotheses: 300
-        learning_rate_nms: 0.0001
-        decay_steps_nms: 6000
+        top_k_hypotheses: 20
+        learning_rate_nms: 0.001
+        decay_steps_nms: 10000
         decay_rate_nms: 0.96
         learning_rate_det: 0.00001
-        decay_steps_det: 6000
-        decay_rate_det: 0.8
-        loss_change_step: 6000
+        decay_steps_det: 10000
+        decay_rate_det: 0.96
+        loss_change_step: 30000
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
-        nms_label_iou: 0.6
-        n_epochs: 20
+        nms_label_iou: 0.3
+        n_epochs: 50
     evaluation:
         eval_step: 2000
-        full_eval_step: 2000
-        n_eval_frames: 100
-        nms_thres: 0.6
+        full_eval_step: 10000
+        n_eval_frames: 300
+        nms_thres: 0.3
