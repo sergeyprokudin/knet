@@ -8,10 +8,10 @@ data_provider:
     n_bboxes: 300
 nms_network:
     architecture:
-        knet_hlayer_size: 1024
-        n_kernels: 256
+        knet_hlayer_size: 512
+        n_kernels: 128
         n_kernel_iterations: 1
-        fc_apres_layer_size: 1024
+        fc_apres_layer_size: 512
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
         gt_match_iou_thr: 0.5
