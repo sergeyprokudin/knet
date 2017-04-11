@@ -81,7 +81,7 @@ class NMSNetwork:
             self.keep_prob = input_ops['keep_prob']
 
         # !!!!!!!
-        self.dt_features = self.dt_probs_ini
+        # self.dt_features = self.dt_probs_ini
 
         self.n_dt_features = self.dt_features.get_shape().as_list()[1]
 
@@ -402,13 +402,13 @@ class NMSNetwork:
 
         self.det_loss_elementwise = loss
 
-        # weighted_loss = tf.multiply(loss, self.dt_probs_ini)
-        #
-        # loss_weighted = tf.reduce_mean(weighted_loss, name='detection_loss_weighted')
+        weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
+
+        loss_weighted = tf.reduce_mean(weighted_loss, name='detection_loss_weighted')
 
         det_loss_final = tf.reduce_mean(loss, name='detection_loss')
 
-        return labels, det_loss_final
+        return labels, weighted_loss
 
     def _pairwise_nms_loss(self):
 
@@ -484,18 +484,20 @@ class NMSNetwork:
 
         nms_loss_final = tf.reduce_mean(nms_elementwise_loss, name='nms_loss')
 
-        weighted_loss = tf.multiply(nms_elementwise_loss, self.dt_probs_ini)
+        weighted_loss = tf.multiply(nms_elementwise_loss, 10*self.dt_probs_ini)
 
         loss_weighted = tf.reduce_mean(weighted_loss, name='nms_loss_weighted')
 
-        return nms_labels, nms_loss_final
+        return nms_labels, loss_weighted
 
     def _final_cross_entropy_loss(self):
         labels_ohe = tf.stack([1-self.det_labels, self.det_labels], axis=2)
         probs_ohe = tf.stack([1-self.class_scores, self.class_scores], axis=2)
         clipped_probs = tf.clip_by_value(probs_ohe, 0.0001, 0.9999)
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels_ohe * tf.log(clipped_probs),
-                                                      reduction_indices=[2]))
+        loss = -tf.reduce_sum(labels_ohe * tf.log(clipped_probs),
+                                                      reduction_indices=[2])
+        weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
+        cross_entropy = tf.reduce_mean()
         return cross_entropy
 
     def _fc_layer_chain(self,
