@@ -84,7 +84,7 @@ def eval_model(sess, nnms_model, frames_data,
         eval_data_file = os.path.join(
             out_dir, 'eval_data_step' + str(global_step) + '.pkl')
         joblib.dump(eval_data, eval_data_file)
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
 
     mean_loss_opt = np.mean(losses_opt)
     mean_loss_fin = np.mean(losses_final)
