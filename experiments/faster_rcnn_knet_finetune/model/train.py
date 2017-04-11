@@ -318,6 +318,12 @@ def main(_):
 
             for fid in shuffle_samples(n_frames_train):
 
+                if step_id == config.loss_change_step:
+                    learning_rate = config.learning_rate_det
+                    loss_mode = 'detection'
+                    nnms_model.switch_loss('detection')
+                    logging.info('switching loss to actual detection loss..')
+
                 frame_data = frames_data_train[fid]
 
                 if n_classes == 1:
@@ -354,11 +360,6 @@ def main(_):
 
                 step_id += 1
 
-                if step_id == config.loss_change_step:
-                    learning_rate = config.learning_rate_det
-                    loss_mode = 'detection'
-                    nnms_model.switch_loss('detection')
-                    logging.info('switching loss to actual detection loss..')
 
                 if step_id % config.eval_step == 0:
 

@@ -1,7 +1,7 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: Car # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: Cyclist # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121

@@ -90,7 +90,7 @@ def eval_model(sess, nnms_model, frames_data,
     mean_loss_fin = np.mean(losses_final)
 
     logging.info('optimization loss : %f' % mean_loss_opt)
-    logging.info('final loss : %f' % mean_loss_fin)
+    # logging.info('final loss : %f' % mean_loss_fin)
 
     return mean_loss_opt, mean_loss_fin
 

@@ -71,7 +71,7 @@ class NMSNetwork:
 
         if input_ops is None:
             self.dt_coords, self.dt_features, self.dt_probs_ini, \
-                self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
+            self.gt_labels, self.gt_coords, self.keep_prob = self._input_ops()
         else:
             self.dt_coords = input_ops['dt_coords']
             self.dt_features = input_ops['dt_features']
@@ -80,12 +80,11 @@ class NMSNetwork:
             self.gt_coords = input_ops['gt_coords']
             self.keep_prob = input_ops['keep_prob']
 
-        # !!!!!!!
-        # self.dt_features = self.dt_probs_ini
+        self.dt_features_merged = tf.concat([self.dt_probs_ini, self.dt_features], axis=1)
 
-        self.n_dt_features = self.dt_features.get_shape().as_list()[1]
+        self.n_dt_features = self.dt_features_merged.get_shape().as_list()[1]
 
-        self.n_bboxes = tf.shape(self.dt_features)[0]
+        self.n_bboxes = tf.shape(self.dt_features_merged)[0]
 
         with tf.variable_scope(self.VAR_SCOPE):
 
@@ -186,11 +185,11 @@ class NMSNetwork:
             spatial_features_list.append(iou_feature)
             n_pairwise_features += 1
 
-        pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features)
+        pairwise_obj_features = spatial.construct_pairwise_features_tf(self.dt_features_merged)
 
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features)
-            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+            n_pairwise_features += self.dt_features_merged.get_shape().as_list()[1] * 2
             score_diff_sign_feature = tf.sign(
                     pairwise_obj_features[:, :, 0:self.n_dt_features]-
                     pairwise_obj_features[:, :, self.n_dt_features:])
@@ -198,7 +197,7 @@ class NMSNetwork:
                                  pairwise_obj_features[:, :, self.n_dt_features:]
             spatial_features_list.append(score_diff_sign_feature)
             spatial_features_list.append(score_diff_feature)
-            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+            n_pairwise_features += self.dt_features_merged.get_shape().as_list()[1] * 2
         pairwise_features = tf.concat(axis=2, values=spatial_features_list)
 
         diagonals = []
@@ -222,7 +221,7 @@ class NMSNetwork:
 
         kernel_sum = tf.reshape(tf.reduce_sum(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
 
-        object_and_context_features = tf.concat(axis=1, values=[self.dt_features, kernel_max, kernel_sum])
+        object_and_context_features = tf.concat(axis=1, values=[self.dt_features_merged, kernel_max, kernel_sum])
 
         self.object_and_context_features = object_and_context_features
 
@@ -271,12 +270,12 @@ class NMSNetwork:
         spatial_features_list.append(misc_spatial_features)
         n_pairwise_features += 5
 
-        pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features,
-                                                                             tf.gather(self.dt_features, top_ix))
+        pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features_merged,
+                                                                             tf.gather(self.dt_features_merged, top_ix))
 
         if self.use_object_features:
             spatial_features_list.append(pairwise_obj_features_top_k)
-            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+            n_pairwise_features += self.dt_features_merged.get_shape().as_list()[1] * 2
             score_diff_sign_feature = tf.sign(
                     pairwise_obj_features_top_k[:, :, 0:self.n_dt_features] -
                     pairwise_obj_features_top_k[:, :, self.n_dt_features:])
@@ -284,7 +283,7 @@ class NMSNetwork:
                                  pairwise_obj_features_top_k[:, :, self.n_dt_features:]
             spatial_features_list.append(score_diff_sign_feature)
             spatial_features_list.append(score_diff_feature)
-            n_pairwise_features += self.dt_features.get_shape().as_list()[1] * 2
+            n_pairwise_features += self.dt_features_merged.get_shape().as_list()[1] * 2
 
         pairwise_features = tf.concat(axis=2, values=spatial_features_list)
 
@@ -301,7 +300,7 @@ class NMSNetwork:
 
         kernel_sum = tf.reshape(tf.reduce_sum(kernel_features_sigmoid, axis=1), [self.n_bboxes, self.n_kernels])
 
-        object_and_context_features = tf.concat(axis=1, values=[self.dt_features, kernel_max, kernel_sum])
+        object_and_context_features = tf.concat(axis=1, values=[self.dt_features_merged, kernel_max, kernel_sum])
 
         self.object_and_context_features = object_and_context_features
 
@@ -402,13 +401,13 @@ class NMSNetwork:
 
         self.det_loss_elementwise = loss
 
-        weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
+        # weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
 
-        loss_weighted = tf.reduce_mean(weighted_loss, name='detection_loss_weighted')
+        # det_loss_final_weighted = tf.reduce_mean(weighted_loss, name='detection_loss_weighted')
 
         det_loss_final = tf.reduce_mean(loss, name='detection_loss')
 
-        return labels, weighted_loss
+        return labels, det_loss_final
 
     def _pairwise_nms_loss(self):
 
@@ -484,11 +483,11 @@ class NMSNetwork:
 
         nms_loss_final = tf.reduce_mean(nms_elementwise_loss, name='nms_loss')
 
-        weighted_loss = tf.multiply(nms_elementwise_loss, 10*self.dt_probs_ini)
+        # weighted_loss = tf.multiply(nms_elementwise_loss, 10*self.dt_probs_ini)
+        #
+        # nms_loss_final_weighted = tf.reduce_mean(weighted_loss, name='nms_loss_weighted')
 
-        loss_weighted = tf.reduce_mean(weighted_loss, name='nms_loss_weighted')
-
-        return nms_labels, loss_weighted
+        return nms_labels, nms_loss_final
 
     def _final_cross_entropy_loss(self):
         labels_ohe = tf.stack([1-self.det_labels, self.det_labels], axis=2)
@@ -496,8 +495,8 @@ class NMSNetwork:
         clipped_probs = tf.clip_by_value(probs_ohe, 0.0001, 0.9999)
         loss = -tf.reduce_sum(labels_ohe * tf.log(clipped_probs),
                                                       reduction_indices=[2])
-        weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
-        cross_entropy = tf.reduce_mean()
+        # weighted_loss = tf.multiply(loss, 10*self.dt_probs_ini)
+        cross_entropy = tf.reduce_mean(loss)
         return cross_entropy
 
     def _fc_layer_chain(self,
