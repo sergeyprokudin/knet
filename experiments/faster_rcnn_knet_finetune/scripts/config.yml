@@ -1,10 +1,10 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: person # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: tvmonitor # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
-    n_features : 121
+    n_features : 211
     n_bboxes: 20
 nms_network:
     architecture:
