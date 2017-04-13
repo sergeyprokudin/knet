@@ -148,7 +148,6 @@ def main(_):
 
     nnms_model = nms_net.NMSNetwork(n_classes=1,
                                     input_ops=in_ops,
-                                    loss_type='nms',
                                     class_ix=0,
                                     **config.nms_network_config)
 
@@ -166,9 +165,9 @@ def main(_):
         step_times = []
         data_times = []
 
-        loss_mode = 'nms'
-        nnms_model.switch_loss('nms')
-        logging.info("current loss mode : %s" % loss_mode)
+        # loss_mode = 'nms'
+        # nnms_model.switch_loss('nms')
+        # logging.info("current loss mode : %s" % loss_mode)
 
         summary_writer = tf.summary.FileWriter(config.log_dir, sess.graph)
 
@@ -178,12 +177,12 @@ def main(_):
 
             for fid in epoch_frames:
 
-                if step_id == config.loss_change_step:
-                    learning_rate = config.learning_rate_det
-                    loss_mode = 'detection'
-                    nnms_model.switch_loss('detection')
-                    logging.info('switching loss to actual detection loss..')
-                    logging.info('learning rate to %f' % learning_rate)
+                # if step_id == config.loss_change_step:
+                #     learning_rate = config.learning_rate_det
+                #     loss_mode = 'detection'
+                #     nnms_model.switch_loss('detection')
+                #     logging.info('switching loss to actual detection loss..')
+                #     logging.info('learning rate to %f' % learning_rate)
 
                 start_step = timer()
 
@@ -202,7 +201,7 @@ def main(_):
                              nnms_model.gt_labels: frame_data['gt_labels'],
                              nnms_model.keep_prob: config.keep_prob_train}
 
-                if loss_mode == 'nms':
+                if nnms_model.loss_type == 'nms':
                     summary,  _ = sess.run([nnms_model.merged_summaries,
                                            nnms_model.nms_train_step],
                                           feed_dict=feed_dict)

@@ -1,11 +1,11 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: Cyclist # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: Pedestrian # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 20
+    n_bboxes: 300
 nms_network:
     architecture:
         knet_hlayer_size: 512
@@ -14,21 +14,21 @@ nms_network:
         fc_apres_layer_size: 512
         class_scores_func: sigmoid # possible choices : sigmoid, softmax
     training:
-        gt_match_iou_thr: 0.7
-        top_k_hypotheses: 20
+        loss_type: nms
+        gt_match_iou_thr: 0.5
+        top_k_hypotheses: 300
         learning_rate_nms: 0.0001
-        decay_steps_nms: 6000
+        decay_steps_nms: 10000
         decay_rate_nms: 0.96
         learning_rate_det: 0.0001
         decay_steps_det: 10000
-        decay_rate_det: 0.8
-        loss_change_step: 6000
+        decay_rate_det: 0.96
         optimizer: Adam # possible choices : Adam, SGD
         keep_prob: 1.0
         nms_label_iou: 0.5
         n_epochs: 20
     evaluation:
         eval_step: 3000
-        full_eval_step: 100
+        full_eval_step: 3000
         n_eval_frames: 100
         nms_thres: 0.5

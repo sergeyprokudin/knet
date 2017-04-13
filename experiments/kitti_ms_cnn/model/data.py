@@ -124,6 +124,9 @@ def get_frame_data_fixed(frame_id,
 
     frame_data['dt_probs'] = np.zeros([n_detections, 1])
 
+    # if len(gt_info != 0):
+    #     import ipdb; ipdb.set_trace()
+
     if class_name == 'Car':
         frame_data['dt_probs'][0:n_detections_actual] = dt_info['detection_result'][0, 0][0:n_detections_actual, 4].reshape(-1, 1)
     elif class_name == 'Pedestrian':

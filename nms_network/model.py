@@ -27,7 +27,6 @@ class NMSNetwork:
 
     def __init__(self,
                  n_classes,
-                 loss_type='nms',
                  input_ops=None,
                  class_ix=15,
                  **kwargs):
@@ -60,6 +59,7 @@ class NMSNetwork:
         self.top_k_hypotheses = train_args.get('top_k_hypotheses', 20)
         self.optimizer_to_use = train_args.get('optimizer', 'Adam')
         self.nms_label_iou = train_args.get('nms_label_iou', 0.3)
+        self.loss_type = train_args.get('loss_type', 'detection')
 
         self.starter_learning_rate_nms = train_args.get('learning_rate_nms', 0.001)
         self.decay_steps_nms = train_args.get('decay_steps_nms', 10000)
@@ -80,7 +80,13 @@ class NMSNetwork:
             self.gt_coords = input_ops['gt_coords']
             self.keep_prob = input_ops['keep_prob']
 
-        self.dt_features_merged = tf.concat([self.dt_probs_ini, self.dt_features], axis=1)
+        # self.dt_features_merged = tf.concat([self.dt_probs_ini, self.dt_features], axis=1)
+
+        if self.loss_type == 'nms':
+            # use only scores
+            self.dt_features_merged = self.dt_probs_ini
+        else:
+            self.dt_features_merged = tf.concat([self.dt_probs_ini, self.dt_features], axis=1)
 
         self.n_dt_features = self.dt_features_merged.get_shape().as_list()[1]
 
@@ -117,10 +123,10 @@ class NMSNetwork:
                                                    learning_rate=self.learning_rate_det,
                                                    global_step=self.global_step_det)
 
-            if loss_type == 'detection':
+            if self.loss_type == 'detection':
                 self.loss = self.det_loss
                 self.labels = self.det_labels
-            elif loss_type == 'nms':
+            elif self.loss_type == 'nms':
                 self.loss = self.nms_loss
                 self.labels = self.nms_labels
 
@@ -129,14 +135,14 @@ class NMSNetwork:
 
         self.init_op = self._init_ops()
 
-    def switch_loss(self, score_name):
-        if score_name == 'detection':
-            self.loss = self.det_loss
-            self.labels = self.det_labels
-        elif score_name == 'nms':
-            self.loss = self.nms_loss
-            self.labels = self.nms_labels
-        return
+    # def switch_loss(self, score_name):
+    #     if score_name == 'detection':
+    #         self.loss = self.det_loss
+    #         self.labels = self.det_labels
+    #     elif score_name == 'nms':
+    #         self.loss = self.nms_loss
+    #         self.labels = self.nms_labels
+    #     return
 
     def _input_ops(self):
 
@@ -266,9 +272,10 @@ class NMSNetwork:
             spatial_features_list.append(iou_feature_top_k)
             n_pairwise_features += 1
 
-        misc_spatial_features = spatial.compute_misc_pairwise_spatial_features_tf(pairwise_coords_features)
-        spatial_features_list.append(misc_spatial_features)
-        n_pairwise_features += 5
+        if self.loss_type == 'detection':
+            misc_spatial_features = spatial.compute_misc_pairwise_spatial_features_tf(pairwise_coords_features)
+            spatial_features_list.append(misc_spatial_features)
+            n_pairwise_features += 5
 
         pairwise_obj_features_top_k = spatial.construct_pairwise_features_tf(self.dt_features_merged,
                                                                              tf.gather(self.dt_features_merged, top_ix))
