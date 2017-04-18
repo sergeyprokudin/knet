@@ -369,18 +369,18 @@ def main(_):
                     else:
                         full_eval = False
 
-                    logging.info('evaluating on TRAIN..')
-                    train_out_dir = os.path.join(config.log_dir, 'train')
-                    logging.info('full evaluation : %d' % full_eval)
-                    train_loss_opt, train_loss_final = eval.eval_model(sess, nnms_model,
-                                                                    frames_data_train,
-                                                                    global_step=step_id,
-                                                                    n_eval_frames=config.n_eval_frames,
-                                                                    out_dir=train_out_dir,
-                                                                    full_eval=full_eval,
-                                                                    nms_thres=config.nms_thres,
-                                                                    one_class=is_one_class,
-                                                                    class_ix=class_ix)
+                    # logging.info('evaluating on TRAIN..')
+                    # train_out_dir = os.path.join(config.log_dir, 'train')
+                    # logging.info('full evaluation : %d' % full_eval)
+                    # train_loss_opt, train_loss_final = eval.eval_model(sess, nnms_model,
+                    #                                                 frames_data_train,
+                    #                                                 global_step=step_id,
+                    #                                                 n_eval_frames=config.n_eval_frames,
+                    #                                                 out_dir=train_out_dir,
+                    #                                                 full_eval=full_eval,
+                    #                                                 nms_thres=config.nms_thres,
+                    #                                                 one_class=is_one_class,
+                    #                                                 class_ix=class_ix)
 
                     write_scalar_summary(train_loss_opt, 'train_loss_opt', summary_writer, step_id)
                     logging.info('evaluating on TEST..')

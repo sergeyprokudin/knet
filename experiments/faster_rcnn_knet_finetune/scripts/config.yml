@@ -1,11 +1,11 @@
 general:
     start_from_scratch: True
     logging_to_stdout: True
-    class_of_interest: person # possible choices : all, aeroplane, ..., tvmonitor
+    class_of_interest: all # possible choices : all, aeroplane, ..., tvmonitor
 data_provider:
     shuffle_train_test: False
     n_features : 121
-    n_bboxes: 20
+    n_bboxes: 300
 nms_network:
     architecture:
         knet_hlayer_size: 512
@@ -16,7 +16,7 @@ nms_network:
     training:
         loss_type: nms
         gt_match_iou_thr: 0.5
-        top_k_hypotheses: 20
+        top_k_hypotheses: 300
         learning_rate_nms: 0.0001
         decay_steps_nms: 10000
         decay_rate_nms: 0.9
@@ -28,7 +28,7 @@ nms_network:
         nms_label_iou: 0.3
         n_epochs: 50
     evaluation:
-        eval_step: 1000
-        full_eval_step: 10000
+        eval_step: 1
+        full_eval_step: 1
         n_eval_frames: 100
         nms_thres: 0.3

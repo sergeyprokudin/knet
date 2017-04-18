@@ -68,10 +68,13 @@ def eval_model(sess, nnms_model, frames_data,
             inference_new_all_classes = np.copy(inference_orig_all_classes)
             inference_new_all_classes[:, class_ix] = np.squeeze(filter_inference, axis=1)
         else:
+            import ipdb; ipdb.set_trace()
             inference_orig_all_classes = softmax(frame_data[nms_net.DT_SCORES])
             inference_new_all_classes = np.copy(inference_orig_all_classes)
-            inference_new_all_classes[:, 1:] = filter_inference
+            inference_new_all_classes[:, 1:] = nms_labels_np
             # inference_original = inference_orig_all_classes
+
+        # import ipdb; ipdb.set_trace()
 
         eval_data[fid]['dt_coords'] = frame_data[nms_net.DT_COORDS]
         eval_data[fid]['inference_orig'] = inference_orig_all_classes
